@@ -1,0 +1,88 @@
+{% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-1">Halo, {{ kesiswaan.nama }} 👋</h4>
+<p class="text-muted mb-4">{{ kesiswaan.jabatan }}</p>
+
+{% if not tahun_ajaran_aktif %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i>
+        Belum ada tahun ajaran aktif. Statistik di bawah ini tidak bisa dihitung sampai admin mengaktifkan tahun ajaran.
+    </div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small mb-1">Jumlah Siswa Aktif</div>
+            <div class="fs-3 fw-bold">{{ total_siswa_aktif }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small mb-1">Tahun Ajaran Aktif</div>
+            {% if tahun_ajaran_aktif %}
+                <div class="fs-4 fw-bold" style="color:#0d9488;">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
+            {% else %}
+                <div class="fs-6 text-danger">Belum ada</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <div class="text-muted small mb-1">Prestasi Tahun Ini</div>
+            <div class="fs-3 fw-bold">{{ total_prestasi_tahun_ini }}</div>
+            {% if total_pending %}
+                <div class="small text-warning-emphasis mt-1">
+                    <i class="bi bi-hourglass-split"></i> {{ total_pending }} menunggu verifikasi
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card p-4">
+    <h6 class="fw-bold mb-3">Prestasi per Kategori (Tahun Ajaran Ini)</h6>
+    <div class="row g-3 text-center">
+        <div class="col-4">
+            <div class="border rounded p-3">
+                <i class="bi bi-trophy fs-3 text-warning"></i>
+                <div class="fs-4 fw-bold mt-1">{{ kategori_counts.kejuaraan }}</div>
+                <div class="text-muted small">Kejuaraan</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border rounded p-3">
+                <i class="bi bi-mortarboard fs-3 text-primary"></i>
+                <div class="fs-4 fw-bold mt-1">{{ kategori_counts.akademik }}</div>
+                <div class="text-muted small">Akademik</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border rounded p-3">
+                <i class="bi bi-people fs-3 text-success"></i>
+                <div class="fs-4 fw-bold mt-1">{{ kategori_counts.non_akademik }}</div>
+                <div class="text-muted small">Non-Akademik</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4 text-center mt-3">
+    <i class="bi bi-patch-check fs-2 mb-2" style="color:#0d9488;"></i>
+    <h6 class="fw-bold">Verifikasi Prestasi</h6>
+    <p class="text-muted small mb-3">
+        {% if total_pending %}
+            Ada {{ total_pending }} prestasi menunggu tinjauan kamu.
+        {% else %}
+            Tidak ada antrean verifikasi saat ini.
+        {% endif %}
+    </p>
+    <a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-primary">Buka Antrean Verifikasi</a>
+</div>
+
+{% endblock %}

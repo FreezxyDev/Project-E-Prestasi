@@ -1,0 +1,46 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}{% if mode == 'edit' %}Edit Tahun Ajaran{% else %}Tambah Tahun Ajaran{% endif %}{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>{% if mode == 'edit' %}Edit Tahun Ajaran{% else %}Tambah Tahun Ajaran{% endif %}</h4>
+</div>
+
+<div class="card p-4" style="max-width: 480px;">
+
+    {% if mode != 'edit' %}
+        <div class="alert alert-warning small">
+            <i class="bi bi-exclamation-triangle"></i>
+            Jika status diatur ke <strong>Aktif</strong>, seluruh siswa aktif akan otomatis naik 1 tingkat
+            begitu tahun ajaran ini disimpan (siswa tingkat 12 akan menjadi alumni).
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">Tahun Ajaran</label>
+            {{ form.tahun_ajaran }}
+            {{ form.tahun_ajaran.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+            {{ form.status.errors }}
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">
+                {% if mode == 'edit' %}Simpan Perubahan{% else %}Simpan{% endif %}
+            </button>
+            <a href="{% url 'tahun_ajaran_list' %}" class="btn btn-outline-secondary">Batal</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

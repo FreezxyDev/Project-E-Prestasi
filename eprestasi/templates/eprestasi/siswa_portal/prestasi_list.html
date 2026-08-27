@@ -1,0 +1,46 @@
+{% extends 'eprestasi/siswa_portal/base.html' %}
+{% block title %}Prestasi Saya{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Prestasi Saya</h4>
+    {% if siswa.bisa_edit %}
+        <a href="{% url 'siswa_upload_prestasi' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Upload Prestasi
+        </a>
+    {% endif %}
+</div>
+
+{% if not prestasi_list %}
+    <div class="card p-4 text-center">
+        <i class="bi bi-inbox fs-2 text-muted mb-2"></i>
+        <p class="text-muted mb-0">Kamu belum mengunggah prestasi apa pun.</p>
+    </div>
+{% else %}
+    <div class="row g-3">
+        {% for prestasi in prestasi_list %}
+        <div class="col-md-6">
+            <a href="{% url 'siswa_prestasi_detail' prestasi.id %}" class="text-decoration-none text-dark">
+                <div class="card p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span>
+                        {% if prestasi.status == 'diterima' %}
+                            <span class="badge bg-success">Diterima</span>
+                        {% elif prestasi.status == 'ditolak' %}
+                            <span class="badge bg-danger">Ditolak</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="fw-bold mb-1">{{ prestasi.nama_prestasi }}</h6>
+                    <div class="text-muted small">{{ prestasi.penyelenggara }} &middot; {{ prestasi.tingkat_prestasi }}</div>
+                    <div class="text-muted small">{{ prestasi.tanggal_prestasi|date:"d M Y" }}</div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Kelola Admin{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Kelola Admin</h4>
+    <a href="{% url 'tambah_admin' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg"></i> Tambah Admin
+    </a>
+</div>
+
+<div class="alert alert-info small">
+    <i class="bi bi-info-circle"></i>
+    Menu ini hanya bisa membuat akun <strong>admin biasa</strong>. Akun <strong>super admin</strong>
+    hanya bisa dibuat lewat terminal (<code>python manage.py buat_admin ... --super</code>) demi keamanan.
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Dibuat</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for admin_user in admin_list %}
+                <tr>
+                    <td class="fw-semibold">
+                        {{ admin_user.username }}
+                        {% if admin_user.id == request.session.user_id %}
+                            <span class="badge bg-light text-dark border">Anda</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if admin_user.role == 'super_admin' %}
+                            <span class="badge" style="background:#7c3aed;">Super Admin</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Admin</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ admin_user.created_at|date:"d M Y" }}</td>
+                    <td class="text-end">
+                        {% if admin_user.role != 'super_admin' %}
+                            <a href="{% url 'update_admin' admin_user.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if admin_user.id != request.session.user_id %}
+                                <form method="POST" action="{% url 'delete_admin' admin_user.id %}" class="d-inline"
+                                      onsubmit="return confirm('Yakin ingin menghapus akun {{ admin_user.username }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted small">Tidak dapat diubah di sini</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Belum ada akun admin.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

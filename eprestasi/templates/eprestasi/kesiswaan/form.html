@@ -1,0 +1,60 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}{% if mode == 'edit' %}Edit Kesiswaan{% else %}Tambah Kesiswaan{% endif %}{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>{% if mode == 'edit' %}Edit Akun Kesiswaan{% else %}Tambah Akun Kesiswaan{% endif %}</h4>
+</div>
+
+<div class="card p-4" style="max-width: 520px;">
+
+    {% if mode != 'edit' %}
+        <p class="text-muted small mb-3">
+            Admin hanya perlu memasukkan <strong>NIP</strong> dan <strong>password awal</strong>.
+            Username login dibuat otomatis dari NIP. Nama dan jabatan akan dilengkapi
+            oleh user kesiswaan sendiri setelah login pertama.
+        </p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">NIP</label>
+            {{ form.nip }}
+            {{ form.nip.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password{% if mode == 'edit' %} Baru{% endif %}</label>
+            {{ form.password }}
+            <div class="form-text">{{ form.password.help_text }}</div>
+            {{ form.password.errors }}
+        </div>
+
+        {% if mode == 'edit' %}
+            <hr>
+            <p class="text-muted small">Data di bawah ini diisi user kesiswaan sendiri.</p>
+            <div class="mb-3">
+                <label class="form-label">Nama</label>
+                <input type="text" class="form-control" value="{{ kesiswaan.nama|default:'(belum diisi)' }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Jabatan</label>
+                <input type="text" class="form-control" value="{{ kesiswaan.jabatan|default:'(belum diisi)' }}" disabled>
+            </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">
+                {% if mode == 'edit' %}Simpan Perubahan{% else %}Buat Akun{% endif %}
+            </button>
+            <a href="{% url 'kesiswaan_list' %}" class="btn btn-outline-secondary">Batal</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

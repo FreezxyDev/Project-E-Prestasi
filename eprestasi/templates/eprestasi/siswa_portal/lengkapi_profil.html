@@ -1,0 +1,64 @@
+{% extends 'eprestasi/siswa_portal/base.html' %}
+{% block title %}Lengkapi Profil{% endblock %}
+
+{% block content %}
+
+{% if wajib_diisi %}
+    <div class="alert alert-warning d-flex gap-2">
+        <i class="bi bi-exclamation-triangle fs-5"></i>
+        <div>
+            <strong>Lengkapi profil kamu dulu.</strong>
+            <div class="small">Sebelum bisa mengakses dashboard dan mengunggah prestasi, isi data di bawah ini terlebih dahulu.</div>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card p-4" style="max-width: 560px; margin: 0 auto;">
+    <h5 class="fw-bold mb-1">{% if wajib_diisi %}Lengkapi Profil{% else %}Edit Profil{% endif %}</h5>
+    <p class="text-muted small mb-4">NIS: <strong>{{ siswa.nis }}</strong> &middot; Tingkat {{ siswa.tingkat }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            {{ form.nama }}
+            {{ form.nama.errors }}
+        </div>
+
+        <div class="row">
+            <div class="col-6 mb-3">
+                <label class="form-label">Kelas</label>
+                {{ form.kelas }}
+                {{ form.kelas.errors }}
+            </div>
+            <div class="col-6 mb-3">
+                <label class="form-label">Jurusan</label>
+                {{ form.jurusan }}
+                {{ form.jurusan.errors }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email <span class="text-muted small">(opsional)</span></label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">No. HP <span class="text-muted small">(opsional)</span></label>
+            {{ form.no_hp }}
+            {{ form.no_hp.errors }}
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Simpan Profil</button>
+            {% if not wajib_diisi %}
+                <a href="{% url 'siswa_dashboard' %}" class="btn btn-outline-secondary">Batal</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+{% endblock %}

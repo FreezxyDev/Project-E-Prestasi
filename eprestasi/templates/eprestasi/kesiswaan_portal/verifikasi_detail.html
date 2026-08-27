@@ -1,0 +1,94 @@
+{% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block title %}{{ prestasi.nama_prestasi }}{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Kembali ke Antrean
+</a>
+
+<div class="card p-4 mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold mb-0">{{ prestasi.nama_prestasi }}</h4>
+        {% if prestasi.status == 'diterima' %}
+            <span class="badge bg-success fs-6">Diterima</span>
+        {% elif prestasi.status == 'ditolak' %}
+            <span class="badge bg-danger fs-6">Ditolak</span>
+        {% else %}
+            <span class="badge bg-warning text-dark fs-6">Pending</span>
+        {% endif %}
+    </div>
+
+    <table class="table table-sm table-borderless mb-0 small mt-3">
+        <tr><td class="text-muted" style="width:180px;">Siswa</td><td>{{ prestasi.siswa.nama|default:"-" }} ({{ prestasi.siswa.nis }})</td></tr>
+        <tr><td class="text-muted">Kelas</td><td>{{ prestasi.siswa.kelas|default:"-" }} &middot; {{ prestasi.siswa.jurusan|default:"-" }}</td></tr>
+        <tr><td class="text-muted">Kategori</td><td>{{ prestasi.kategori_prestasi }}</td></tr>
+        <tr><td class="text-muted">Tingkat</td><td>{{ prestasi.tingkat_prestasi }}</td></tr>
+        <tr><td class="text-muted">Penyelenggara</td><td>{{ prestasi.penyelenggara }}</td></tr>
+        <tr><td class="text-muted">Tanggal</td><td>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</td></tr>
+        <tr><td class="text-muted">Tahun Ajaran</td><td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td></tr>
+        <tr><td class="text-muted align-top">Deskripsi</td><td>{{ prestasi.deskripsi|linebreaksbr }}</td></tr>
+        {% if prestasi.status == 'ditolak' %}
+            <tr><td class="text-muted align-top">Alasan Ditolak</td><td class="text-danger">{{ prestasi.alasan_penolakan|linebreaksbr }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="card p-4 mb-3">
+    <h6 class="fw-bold mb-3"><i class="bi bi-paperclip"></i> Bukti Sertifikat ({{ sertifikat_list|length }})</h6>
+    {% for s in sertifikat_list %}
+        <div class="border-bottom py-2">
+            <a href="{{ s.file.url }}" target="_blank">
+                <i class="bi bi-file-earmark-text"></i> Sertifikat #{{ s.pk }}
+            </a>
+            <div class="text-muted small">{{ s.deskripsi }}</div>
+        </div>
+    {% empty %}
+        <p class="text-muted small mb-0">Tidak ada file sertifikat.</p>
+    {% endfor %}
+</div>
+
+<div class="card p-4 mb-3">
+    <h6 class="fw-bold mb-3"><i class="bi bi-images"></i> Dokumentasi ({{ dokumentasi_list|length }})</h6>
+    <div class="row g-2">
+        {% for d in dokumentasi_list %}
+            <div class="col-4">
+                <a href="{{ d.foto.url }}" target="_blank">
+                    <img src="{{ d.foto.url }}" class="img-fluid rounded" alt="{{ d.caption }}">
+                </a>
+                {% if d.caption %}<div class="text-muted small mt-1">{{ d.caption }}</div>{% endif %}
+            </div>
+        {% empty %}
+            <p class="text-muted small mb-0 ps-2">Tidak ada foto dokumentasi.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% if prestasi.status == 'pending' %}
+<div class="card p-4">
+    <h6 class="fw-bold mb-3">Keputusan Verifikasi</h6>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="d-flex gap-3 mb-3">
+            {% for radio in form.keputusan %}
+                <label class="border rounded px-3 py-2 d-flex align-items-center gap-2" style="cursor:pointer;">
+                    {{ radio.tag }} {{ radio.choice_label }}
+                </label>
+            {% endfor %}
+        </div>
+        {{ form.keputusan.errors }}
+
+        <div class="mb-3">
+            <label class="form-label small">Alasan Penolakan <span class="text-muted">(wajib diisi kalau memilih Tolak)</span></label>
+            {{ form.alasan_penolakan }}
+            {{ form.alasan_penolakan.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Kirim Keputusan</button>
+    </form>
+</div>
+{% endif %}
+
+{% endblock %}

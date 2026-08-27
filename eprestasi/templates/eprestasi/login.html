@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - E-Prestasi</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --cream: #fffbde;
+        --sky: #91c8e4;
+        --slate: #749bc2;
+        --deep: #4682a9;
+        --deep-dark: #35657f;
+        --ink: #1f3b4d;
+    }
+    * { font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { margin: 0; }
+    .split-wrap { min-height: 100vh; }
+
+    /* ===================== PANEL KIRI ===================== */
+    .panel-kiri {
+        background: linear-gradient(160deg, #1e3f52 0%, var(--deep) 55%, var(--slate) 100%);
+        color: #fff;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .panel-kiri .brand {
+        font-weight: 800;
+        font-size: 2.1rem;
+        letter-spacing: .3px;
+        margin-bottom: .15rem;
+    }
+    .panel-kiri .brand-tagline {
+        display: inline-block;
+        color: var(--cream);
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        opacity: .85;
+    }
+    .panel-kiri .tagline {
+        color: #dfeefc;
+        margin-bottom: 2.2rem;
+        font-size: .95rem;
+    }
+
+    /* Auto-scrolling feature list */
+    .fitur-viewport {
+        height: 330px;
+        overflow: hidden;
+        position: relative;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+        mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+    }
+    .fitur-track {
+        display: flex;
+        flex-direction: column;
+        animation: scrollFitur 16s linear infinite;
+    }
+    .fitur-viewport:hover .fitur-track { animation-play-state: paused; }
+    @keyframes scrollFitur {
+        0%   { transform: translateY(0); }
+        100% { transform: translateY(-50%); }
+    }
+    .fitur-item { display: flex; gap: 1rem; margin-bottom: 1.6rem; align-items: flex-start; }
+    .fitur-icon {
+        width: 44px; height: 44px; border-radius: .8rem;
+        background: rgba(255,255,255,.14);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; font-size: 1.2rem; color: var(--cream);
+    }
+    .fitur-item h6 { margin: 0 0 .2rem 0; font-weight: 700; }
+    .fitur-item p { margin: 0; color: #dfeefc; font-size: .88rem; }
+
+    /* ===================== PANEL KANAN ===================== */
+    .panel-kanan {
+        background: var(--cream);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 1.1rem;
+        padding: 2.2rem;
+        box-shadow: 0 12px 34px rgba(31,59,77,.12);
+    }
+    .login-card h4 {
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: .3px;
+    }
+    .role-toggle {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: 1.5rem;
+        background: #eef4f8;
+        padding: .3rem;
+        border-radius: .7rem;
+    }
+    .role-toggle button {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: .55rem .4rem;
+        border-radius: .5rem;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--slate);
+        transition: all .15s;
+    }
+    .role-toggle button.active {
+        background: var(--deep);
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(70,130,169,.35);
+    }
+    .btn-primary { background-color: var(--deep); border-color: var(--deep); }
+    .btn-primary:hover { background-color: var(--deep-dark); border-color: var(--deep-dark); }
+    .form-control:focus { border-color: var(--slate); box-shadow: 0 0 0 .2rem rgba(116,155,194,.2); }
+</style>
+</head>
+<body>
+
+<div class="row g-0 split-wrap">
+
+    <!-- ===================== PANEL KIRI ===================== -->
+    <div class="col-lg-6 panel-kiri">
+        <div class="brand">E-Prestasi</div>
+        <span class="brand-tagline">Show Your Pride</span>
+        <div class="tagline">Simpan, kelola, dan tampilkan portofolio prestasimu secara digital.</div>
+
+        <div class="fitur-viewport">
+            <div class="fitur-track">
+
+                <div class="fitur-item">
+                    <div class="fitur-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                    <div>
+                        <h6>Upload Sertifikat Digital</h6>
+                        <p>Siswa dapat mengunggah sertifikat dan dokumentasi prestasi kapan saja.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item">
+                    <div class="fitur-icon"><i class="bi bi-patch-check"></i></div>
+                    <div>
+                        <h6>Verifikasi oleh Kesiswaan</h6>
+                        <p>Setiap prestasi yang diunggah akan diverifikasi oleh pihak kesiswaan sebelum diterima.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item">
+                    <div class="fitur-icon"><i class="bi bi-mortarboard"></i></div>
+                    <div>
+                        <h6>Naik Kelas Otomatis</h6>
+                        <p>Tingkat siswa naik otomatis mengikuti tahun ajaran, hingga status alumni.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item">
+                    <div class="fitur-icon"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <h6>Portofolio Siap Pakai</h6>
+                        <p>Rekap prestasi siswa selama sekolah, rapi dan mudah diakses.</p>
+                    </div>
+                </div>
+
+                <!-- duplikat untuk efek gulir tanpa putus -->
+                <div class="fitur-item" aria-hidden="true">
+                    <div class="fitur-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                    <div>
+                        <h6>Upload Sertifikat Digital</h6>
+                        <p>Siswa dapat mengunggah sertifikat dan dokumentasi prestasi kapan saja.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item" aria-hidden="true">
+                    <div class="fitur-icon"><i class="bi bi-patch-check"></i></div>
+                    <div>
+                        <h6>Verifikasi oleh Kesiswaan</h6>
+                        <p>Setiap prestasi yang diunggah akan diverifikasi oleh pihak kesiswaan sebelum diterima.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item" aria-hidden="true">
+                    <div class="fitur-icon"><i class="bi bi-mortarboard"></i></div>
+                    <div>
+                        <h6>Naik Kelas Otomatis</h6>
+                        <p>Tingkat siswa naik otomatis mengikuti tahun ajaran, hingga status alumni.</p>
+                    </div>
+                </div>
+
+                <div class="fitur-item" aria-hidden="true">
+                    <div class="fitur-icon"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <h6>Portofolio Siap Pakai</h6>
+                        <p>Rekap prestasi siswa selama sekolah, rapi dan mudah diakses.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PANEL KANAN ===================== -->
+    <div class="col-lg-6 panel-kanan">
+        <div class="login-card">
+
+            <h4 class="fw-bold mb-1">Masuk</h4>
+            <p class="text-muted small mb-4">Pilih peran kamu, lalu masukkan data login.</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} py-2 small">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- 3 tombol pilihan role: siswa, kesiswaan, admin -->
+            <div class="role-toggle">
+                <button type="button" data-role="siswa" class="role-btn {% if role_dipilih == 'siswa' or not role_dipilih %}active{% endif %}">
+                    <i class="bi bi-mortarboard d-block fs-5 mb-1"></i> Siswa
+                </button>
+                <button type="button" data-role="kesiswaan" class="role-btn {% if role_dipilih == 'kesiswaan' %}active{% endif %}">
+                    <i class="bi bi-person-badge d-block fs-5 mb-1"></i> Kesiswaan
+                </button>
+                <button type="button" data-role="admin" class="role-btn {% if role_dipilih == 'admin' %}active{% endif %}">
+                    <i class="bi bi-shield-lock d-block fs-5 mb-1"></i> Admin
+                </button>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="role" id="role-input" value="{{ role_dipilih|default:'siswa' }}">
+
+                <div class="mb-3">
+                    <label class="form-label" id="label-username">
+                        {% if role_dipilih == 'kesiswaan' %}NIP
+                        {% elif role_dipilih == 'admin' %}Username
+                        {% else %}NIS{% endif %}
+                    </label>
+                    <input type="text" name="username" class="form-control" required autofocus>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-2">Masuk</button>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Ganti role aktif + label input tanpa reload halaman
+    const labelMap = { siswa: 'NIS', kesiswaan: 'NIP', admin: 'Username' };
+    document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const role = btn.dataset.role;
+            document.getElementById('role-input').value = role;
+            document.getElementById('label-username').textContent = labelMap[role];
+        });
+    });
+</script>
+
+</body>
+</html>

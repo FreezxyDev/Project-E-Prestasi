@@ -1,0 +1,63 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Data Kesiswaan{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Kelola Kesiswaan</h4>
+    <a href="{% url 'tambah_kesiswaan' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg"></i> Tambah Akun Kesiswaan
+    </a>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>NIP</th>
+                    <th>Username</th>
+                    <th>Nama</th>
+                    <th>Jabatan</th>
+                    <th>Profil</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for kesiswaan in kesiswaan_list %}
+                <tr>
+                    <td class="fw-semibold">{{ kesiswaan.nip }}</td>
+                    <td><code>{{ kesiswaan.user.username }}</code></td>
+                    <td>{{ kesiswaan.nama|default:"-" }}</td>
+                    <td>{{ kesiswaan.jabatan|default:"-" }}</td>
+                    <td>
+                        {% if kesiswaan.nama and kesiswaan.jabatan %}
+                            <span class="badge bg-success-subtle text-success border border-success">Lengkap</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning">Belum diisi</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'update_kesiswaan' kesiswaan.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="POST" action="{% url 'delete_kesiswaan' kesiswaan.id %}" class="d-inline"
+                              onsubmit="return confirm('Yakin ingin menghapus akun {{ kesiswaan.nip }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Belum ada akun kesiswaan.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

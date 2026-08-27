@@ -1,0 +1,80 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}{% if mode == 'edit' %}Edit Siswa{% else %}Tambah Siswa{% endif %}{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>{% if mode == 'edit' %}Edit Akun Siswa{% else %}Tambah Akun Siswa{% endif %}</h4>
+</div>
+
+<div class="card p-4" style="max-width: 520px;">
+
+    {% if mode != 'edit' %}
+        <p class="text-muted small mb-3">
+            Admin hanya perlu memasukkan <strong>NIS</strong> dan <strong>password awal</strong>.
+            Username login dibuat otomatis dari NIS. Data lain (nama, kelas, jurusan, dll)
+            akan dilengkapi oleh siswa sendiri setelah login pertama.
+        </p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">NIS</label>
+            {{ form.nis }}
+            {{ form.nis.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password{% if mode == 'edit' %} Baru{% endif %}</label>
+            {{ form.password }}
+            <div class="form-text">{{ form.password.help_text }}</div>
+            {{ form.password.errors }}
+        </div>
+
+        {% if mode == 'edit' %}
+            <hr>
+            <p class="text-muted small">Data di bawah ini biasanya diisi siswa sendiri. Admin bisa mengoreksi bila perlu.</p>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Tingkat</label>
+                    {{ form.tingkat }}
+                    {{ form.tingkat.errors }}
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Status</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Nama</label>
+                <input type="text" class="form-control" value="{{ siswa.nama|default:'(belum diisi siswa)' }}" disabled>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Kelas</label>
+                    <input type="text" class="form-control" value="{{ siswa.kelas|default:'(belum diisi)' }}" disabled>
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Jurusan</label>
+                    <input type="text" class="form-control" value="{{ siswa.jurusan|default:'(belum diisi)' }}" disabled>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">
+                {% if mode == 'edit' %}Simpan Perubahan{% else %}Buat Akun{% endif %}
+            </button>
+            <a href="{% url 'siswa_list' %}" class="btn btn-outline-secondary">Batal</a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}
