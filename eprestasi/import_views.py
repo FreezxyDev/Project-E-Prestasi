@@ -174,8 +174,8 @@ def _proses_import_siswa(file_excel):
             'username': username,
             'password': password,
             'nama': nama_dari_file,
-            'kelas': kelas_value or '',
-            'jurusan': jurusan_value or '',
+            'kelas': kelas_value,
+            'jurusan': jurusan_value,
             'catatan': '; '.join(catatan),
         })
 
