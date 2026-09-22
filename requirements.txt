@@ -1,4 +1,14 @@
-asgiref==3.12.1
 Django==6.0.7
+django-cloudinary-storage==0.3.0
+et_xmlfile==2.0.0
+idna==3.18
+openpyxl==3.1.5
+pillow==12.3.0
+PyMySQL==1.2.0
+python-dotenv==1.2.3
+qrcode==8.2
+requests==2.34.2
+six==1.17.0
 sqlparse==0.5.5
 tzdata==2026.3
+urllib3==2.7.0
