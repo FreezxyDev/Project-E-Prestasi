@@ -33,10 +33,15 @@ DEBUG = True
 # Allow local development, your specific Vercel URL, and any Vercel preview URLs
 ALLOWED_HOSTS = [
     'localhost',
+    'eprestasi.freznx.my.id',
     '127.0.0.1',
     '.vercel.app',  # The leading dot allows all *.vercel.app subdomains
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://eprestasi.freznx.my.id',  # Ditambahkan agar form / POST request lancar
+]
 # Application definition
 
 INSTALLED_APPS = [
