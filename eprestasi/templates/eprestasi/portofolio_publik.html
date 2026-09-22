@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portofolio {{ siswa.nama|default:siswa.nis }} - E-Prestasi</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --ink: #10241d;
+        --muted: #64766e;
+        --accent: #00a86b;
+        --accent-soft: #e7f7f0;
+        --border: #e7ece9;
+        --bg: #f6f8f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+        background: var(--bg);
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        color: var(--ink);
+    }
+    .mono { font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 2rem 1.1rem 3rem; }
+
+    /* ---- top brand strip ---- */
+    .brand-strip { display: flex; align-items: center; gap: .5rem; margin-bottom: 1.1rem; color: var(--muted); font-size: .78rem; }
+    .brand-strip .mark { width: 22px; height: 22px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 800;}
+
+    /* ---- header card ---- */
+    .header-card {
+        background: #0b1f17;
+        background-image: radial-gradient(circle at 15% 20%, rgba(0,168,107,.35), transparent 45%);
+        color: #fff;
+        border-radius: 1.1rem;
+        padding: 2rem 1.75rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .header-card .foto {
+        width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+        border: 3px solid rgba(255,255,255,.18); flex-shrink: 0;
+    }
+    .header-card .foto-placeholder {
+        width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0;
+        background: rgba(255,255,255,.08); border: 3px solid rgba(255,255,255,.18);
+        display: flex; align-items: center; justify-content: center; font-size: 1.7rem;
+    }
+    .header-card h1 { font-size: 1.35rem; font-weight: 800; margin: 0 0 .15rem 0; }
+    .header-card .sub { color: #b7d9c9; font-size: .85rem; }
+    .status-pill {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: rgba(0,168,107,.18); border: 1px solid rgba(0,168,107,.4);
+        color: #6be8b0; font-size: .68rem; font-weight: 700; letter-spacing: .3px;
+        padding: .22rem .6rem; border-radius: 100px; margin-top: .5rem;
+    }
+    .status-pill.alumni { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #cfd8d3; }
+
+    /* ---- profile detail grid ---- */
+    .profile-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem 1.5rem;
+        margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .profile-grid .item .label { font-size: .64rem; text-transform: uppercase; letter-spacing: .6px; color: #8fb3a2; margin-bottom: .1rem; }
+    .profile-grid .item .value { font-size: .82rem; font-weight: 600; color: #fff; }
+
+    /* ---- stats row ---- */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; margin-bottom: 1.4rem; }
+    .stat-box { background: #fff; border: 1px solid var(--border); border-radius: .8rem; padding: .9rem .8rem; text-align: center; }
+    .stat-box .num { font-size: 1.35rem; font-weight: 800; color: var(--ink); line-height: 1; }
+    .stat-box .lbl { font-size: .65rem; color: var(--muted); margin-top: .3rem; letter-spacing: .2px; }
+
+    /* ---- section heading ---- */
+    .section-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin: 1.6rem 0 .8rem; display: flex; align-items: center; gap: .5rem; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ---- achievement card ---- */
+    .achv-card { background: #fff; border: 1px solid var(--border); border-radius: .9rem; padding: 1.1rem 1.2rem; margin-bottom: .75rem; }
+    .achv-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; }
+    .achv-badge {
+        display: inline-block; font-size: .64rem; font-weight: 700; letter-spacing: .3px;
+        padding: .2rem .55rem; border-radius: 5px; text-transform: uppercase;
+        background: var(--accent-soft); color: var(--accent); margin-bottom: .45rem;
+    }
+    .achv-badge.non-akademik { background: #eef2ff; color: #4338ca; }
+    .achv-badge.kejuaraan { background: #fff7ed; color: #c2410c; }
+    .achv-title { font-size: 1rem; font-weight: 700; margin: 0 0 .2rem; color: var(--ink); }
+    .achv-meta { font-size: .78rem; color: var(--muted); margin-bottom: .1rem; }
+    .achv-desc { font-size: .82rem; color: #3a463f; margin-top: .55rem; line-height: 1.5; }
+    .achv-footer {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .6rem;
+        margin-top: .85rem; padding-top: .75rem; border-top: 1px dashed var(--border);
+    }
+    .verified-tag { font-size: .72rem; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: .35rem; }
+    .cert-link {
+        display: inline-flex; align-items: center; gap: .35rem;
+        font-size: .74rem; font-weight: 600; color: var(--ink);
+        background: #f4f6f5; border: 1px solid var(--border); border-radius: 7px;
+        padding: .35rem .65rem;
+    }
+    .cert-link:hover { border-color: var(--accent); color: var(--accent); }
+    .cert-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+    .empty-card { background: #fff; border: 1px dashed var(--border); border-radius: .9rem; padding: 2rem; text-align: center; color: var(--muted); font-size: .85rem; }
+
+    .footer-note { text-align: center; color: var(--muted); font-size: .74rem; margin-top: 2rem; }
+    .print-btn-wrap { text-align: center; margin-top: 1.2rem; }
+    .btn-print {
+        display: inline-flex; align-items: center; gap: .4rem; background: #fff; border: 1px solid var(--border);
+        color: var(--ink); font-size: .8rem; font-weight: 600; padding: .5rem 1rem; border-radius: 8px;
+    }
+    .btn-print:hover { border-color: var(--accent); color: var(--accent); }
+
+    @media (max-width: 560px) {
+        .profile-grid { grid-template-columns: 1fr; }
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+        .header-card { padding: 1.5rem 1.15rem; }
+    }
+    @media print {
+        body { background: #fff; }
+        .print-btn-wrap, .brand-strip { display: none; }
+        .header-card { background: #0b1f17 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .achv-card, .stat-box { break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+    <div class="brand-strip">
+        <span class="mark">e</span> E-Prestasi &middot; Portofolio Digital
+    </div>
+
+    <!-- HEADER: profil siswa -->
+    <div class="header-card">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            {% if siswa.foto_profil %}
+                <img src="{{ siswa.foto_profil.url }}" class="foto" alt="{{ siswa.nama }}">
+            {% else %}
+                <div class="foto-placeholder"><i class="bi bi-person"></i></div>
+            {% endif %}
+            <div>
+                <h1>{{ siswa.nama|default:"Siswa" }}</h1>
+                <div class="sub">{{ siswa.kelas|default:"-" }} &middot; Jurusan {{ siswa.jurusan|default:"-" }}</div>
+                <div class="sub mono">NIS {{ siswa.nis }}</div>
+                {% if siswa.status == 'aktif' %}
+                    <span class="status-pill"><i class="bi bi-dot"></i> Siswa Aktif</span>
+                {% else %}
+                    <span class="status-pill alumni"><i class="bi bi-dot"></i> Alumni</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <div class="item">
+                <div class="label">Tingkat</div>
+                <div class="value">Kelas {{ siswa.tingkat }}</div>
+            </div>
+            <div class="item">
+                <div class="label">Jurusan</div>
+                <div class="value">{{ siswa.jurusan|default:"-" }}</div>
+            </div>
+            {% if siswa.email %}
+            <div class="item">
+                <div class="label">Email</div>
+                <div class="value">{{ siswa.email }}</div>
+            </div>
+            {% endif %}
+            {% if siswa.no_hp %}
+            <div class="item">
+                <div class="label">Kontak</div>
+                <div class="value">{{ siswa.no_hp }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="num">{{ total_prestasi }}</div>
+            <div class="lbl">Total Prestasi</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ total_akademik }}</div>
+            <div class="lbl">Akademik</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ total_non_akademik }}</div>
+            <div class="lbl">Non-Akademik</div>
+        </div>
+        <div class="stat-box">
+            <div class="num">{{ total_kejuaraan }}</div>
+            <div class="lbl">Kejuaraan</div>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="section-title">Prestasi Terverifikasi</div>
+
+    {% if not prestasi_list %}
+        <div class="empty-card">
+            <i class="bi bi-award fs-3 d-block mb-2"></i>
+            Belum ada prestasi terverifikasi untuk ditampilkan.
+        </div>
+    {% else %}
+        {% for prestasi in prestasi_list %}
+        <div class="achv-card">
+            <div class="achv-top">
+                <div>
+                    <span class="achv-badge {{ prestasi.kategori_prestasi }}">{{ prestasi.kategori_prestasi }}</span>
+                    <h3 class="achv-title">{{ prestasi.nama_prestasi }}</h3>
+                    <div class="achv-meta"><i class="bi bi-building"></i> {{ prestasi.penyelenggara }} &middot; Tingkat {{ prestasi.tingkat_prestasi }}</div>
+                    <div class="achv-meta"><i class="bi bi-calendar3"></i> {{ prestasi.tanggal_prestasi|date:"d M Y" }}</div>
+                </div>
+                <i class="bi bi-patch-check-fill text-success fs-4"></i>
+            </div>
+
+            {% if prestasi.deskripsi %}
+                <div class="achv-desc">{{ prestasi.deskripsi }}</div>
+            {% endif %}
+
+            <div class="achv-footer">
+                <div class="verified-tag">
+                    <i class="bi bi-shield-check"></i>
+                    Diverifikasi{% if prestasi.kesiswaan %} oleh {{ prestasi.kesiswaan.nama }}{% endif %}{% if prestasi.tanggal_verifikasi %} &middot; {{ prestasi.tanggal_verifikasi|date:"d M Y" }}{% endif %}
+                </div>
+
+                {% if prestasi.sertifikat_set.all %}
+                <div class="cert-links">
+                    {% for sertifikat in prestasi.sertifikat_set.all %}
+                        <a href="{{ sertifikat.file.url }}" target="_blank" rel="noopener" class="cert-link">
+                            <i class="bi bi-file-earmark-text"></i> Lihat Sertifikat
+                        </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="print-btn-wrap">
+        <button type="button" class="btn-print" onclick="window.print()">
+            <i class="bi bi-printer"></i> Cetak / Simpan sebagai PDF
+        </button>
+    </div>
+
+    <p class="footer-note">Portofolio ini dibuat otomatis oleh sistem E-Prestasi dan selalu menampilkan data terbaru.</p>
+
+</div>
+
+</body>
+</html>

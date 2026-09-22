@@ -3,40 +3,152 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-3">Antrean Verifikasi</h4>
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-left: 4px solid #0066cc;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
 
-{% if not antrean %}
-    <div class="card p-4 text-center">
-        <i class="bi bi-check2-circle fs-2 text-success mb-2"></i>
-        <p class="text-muted mb-0">Tidak ada prestasi yang menunggu verifikasi. Semua sudah diproses.</p>
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .result-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        border-left: 4px solid #0066cc;
+    }
+
+    .badge-kelas {
+        background: #e7f3ff;
+        color: #0066cc;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+</style>
+
+<!-- Header -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="card-title mb-0">📋 Antrean Verifikasi Prestasi</h4>
     </div>
-{% else %}
+</div>
+
+<!-- Filter Card -->
+<div class="filter-card">
+    <h6 class="mb-3">🔍 Filter Prestasi</h6>
+    
+    <form method="GET" class="form">
+        <div class="filter-row">
+            <!-- Filter Kelas -->
+            <div>
+                <label for="filter_kelas" class="form-label small mb-1">Kelas Siswa</label>
+                <select name="kelas" id="filter_kelas" class="form-select">
+                    <option value="">-- Semua Kelas --</option>
+                    {% for kelas_value, kelas_label in kelas_options %}
+                        <option value="{{ kelas_value }}" 
+                            {% if filter_kelas == kelas_value %}selected{% endif %}>
+                            {{ kelas_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter Nama Siswa -->
+            <div>
+                <label for="filter_nama" class="form-label small mb-1">Nama Siswa</label>
+                <input type="text" name="nama" id="filter_nama" class="form-control" 
+                    placeholder="Cari nama siswa..." value="{{ filter_nama }}">
+            </div>
+
+            <!-- Buttons -->
+            <div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+
+            <div>
+                <a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Result Info -->
+{% if filter_kelas or filter_nama %}
+    <div class="result-info">
+        <span class="result-count">
+            ✅ Ditemukan <strong>{{ total_prestasi }}</strong> prestasi
+            {% if filter_kelas %} dari kelas <strong>{{ filter_kelas }}</strong>{% endif %}
+            {% if filter_nama %} dari siswa bernama <strong>{{ filter_nama }}</strong>{% endif %}
+        </span>
+        <a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Hapus Filter
+        </a>
+    </div>
+{% endif %}
+
+<!-- Prestasi List -->
+{% if prestasi_list %}
     <div class="card p-3">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead>
+                <thead class="table-light">
                     <tr>
-                        <th>Siswa</th>
-                        <th>Nama Prestasi</th>
-                        <th>Kategori</th>
-                        <th>Tingkat</th>
-                        <th>Tahun Ajaran</th>
-                        <th class="text-end">Aksi</th>
+                        <th width="20%">Siswa</th>
+                        <th width="25%">Nama Prestasi</th>
+                        <th width="12%">Kategori</th>
+                        <th width="13%">Tingkat</th>
+                        <th width="15%">Kelas</th>
+                        <th width="10%">Tahun Ajaran</th>
+                        <th width="5%" class="text-end">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                {% for prestasi in antrean %}
+                {% for prestasi in prestasi_list %}
                     <tr>
                         <td>
-                            {{ prestasi.siswa.nama|default:"-" }}
+                            <strong>{{ prestasi.siswa.nama|default:"-" }}</strong>
                             <div class="text-muted small">{{ prestasi.siswa.nis }}</div>
                         </td>
-                        <td>{{ prestasi.nama_prestasi }}</td>
-                        <td><span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span></td>
+                        <td>
+                            {{ prestasi.nama_prestasi }}
+                            {% if not prestasi.siswa.profil_lengkap %}
+                                <br><span class="badge bg-warning text-dark small">⚠️ Profil belum lengkap</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span>
+                        </td>
                         <td>{{ prestasi.tingkat_prestasi }}</td>
+                        <td>
+                            <span class="badge-kelas">{{ prestasi.siswa.kelas }}</span>
+                        </td>
                         <td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td>
                         <td class="text-end">
-                            <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" class="btn btn-sm btn-primary">
+                            <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" 
+                                class="btn btn-sm btn-primary">
                                 Tinjau
                             </a>
                         </td>
@@ -46,6 +158,40 @@
             </table>
         </div>
     </div>
+
+    <!-- Count -->
+    <div class="mt-3 text-end">
+        <small class="text-muted">
+            Menampilkan {{ total_prestasi }} prestasi yang menunggu verifikasi
+        </small>
+    </div>
+
+{% else %}
+    <!-- No Results -->
+    <div class="card p-4 text-center">
+        <i class="bi bi-check2-circle fs-2 text-success mb-2"></i>
+        <h5>Tidak ada prestasi yang menunggu</h5>
+        <p class="text-muted mb-0">
+            {% if filter_kelas or filter_nama %}
+                Tidak ditemukan prestasi dengan filter yang dipilih.
+                <br>
+                <a href="{% url 'kesiswaan_verifikasi_list' %}">Lihat semua prestasi →</a>
+            {% else %}
+                Semua prestasi sudah diproses. Bagus!
+            {% endif %}
+        </p>
+    </div>
 {% endif %}
+
+<!-- Info Box -->
+<div class="alert alert-info mt-4" role="alert">
+    <h6 class="alert-heading">💡 Tips Filter</h6>
+    <ul class="mb-0">
+        <li>Gunakan filter <strong>Kelas Siswa</strong> untuk melihat prestasi siswa per kelas</li>
+        <li>Gunakan filter <strong>Nama Siswa</strong> untuk mencari prestasi dari siswa tertentu</li>
+        <li>Gunakan kedua filter sekaligus untuk pencarian yang lebih spesifik</li>
+        <li>⚠️ Badge menunjukkan siswa yang belum lengkapi profil - tanyakan untuk melengkapinya</li>
+    </ul>
+</div>
 
 {% endblock %}

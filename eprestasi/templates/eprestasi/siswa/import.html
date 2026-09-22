@@ -1,0 +1,42 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Import Siswa{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Import Siswa dari Excel</h4>
+    <a href="{% url 'siswa_list' %}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+</div>
+
+<div class="card p-4" style="max-width: 560px;">
+
+    <div class="alert alert-info small">
+        <i class="bi bi-info-circle"></i>
+        Belum punya file template? <a href="{% url 'siswa_import_template' %}">Download template Excel di sini</a>.
+        Kolom <strong>NIS</strong> wajib diisi. Kolom <strong>Password, Nama, Kelas, Jurusan</strong>
+        semuanya opsional -- boleh dikosongkan. Password kosong akan dibuatkan otomatis secara acak.
+        Kalau <strong>Nama/Kelas/Jurusan</strong> diisi, data itu langsung tersimpan ke akun siswa,
+        jadi nanti pas siswa pertama kali login dan buka halaman <em>Lengkapi Profil</em>, field itu
+        sudah otomatis terisi -- siswa tinggal melengkapi sisanya (email &amp; no HP).
+        Nilai Kelas/Jurusan harus persis sama dengan pilihan resmi (lihat sheet kedua di file
+        template, "Pilihan Kelas &amp; Jurusan") -- kalau tidak cocok, akun tetap dibuat tapi
+        kolom itu dikosongkan.
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.file_excel.label }}</label>
+            {{ form.file_excel }}
+            {{ form.file_excel.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Import Sekarang
+        </button>
+    </form>
+</div>
+
+{% endblock %}

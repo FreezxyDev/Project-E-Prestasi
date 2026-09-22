@@ -11,9 +11,8 @@
 
     {% if mode != 'edit' %}
         <p class="text-muted small mb-3">
-            Admin hanya perlu memasukkan <strong>NIS</strong> dan <strong>password awal</strong>.
-            Username login dibuat otomatis dari NIS. Data lain (nama, kelas, jurusan, dll)
-            akan dilengkapi oleh siswa sendiri setelah login pertama.
+            Admin memasukkan data NIS, Nama, Kelas, Jurusan, dan Password awal. 
+            Username login akan dibuat otomatis dari NIS.
         </p>
     {% endif %}
 
@@ -21,53 +20,66 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
 
+        <!-- Field NIS -->
         <div class="mb-3">
             <label class="form-label">NIS</label>
             {{ form.nis }}
             {{ form.nis.errors }}
         </div>
 
+        <!-- Field Nama -->
         <div class="mb-3">
-            <label class="form-label">Password{% if mode == 'edit' %} Baru{% endif %}</label>
-            {{ form.password }}
-            <div class="form-text">{{ form.password.help_text }}</div>
-            {{ form.password.errors }}
+            <label class="form-label">Nama Lengkap</label>
+            {{ form.nama }}
+            {{ form.nama.errors }}
         </div>
 
-        {% if mode == 'edit' %}
-            <hr>
-            <p class="text-muted small">Data di bawah ini biasanya diisi siswa sendiri. Admin bisa mengoreksi bila perlu.</p>
-
-            <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label">Tingkat</label>
-                    {{ form.tingkat }}
-                    {{ form.tingkat.errors }}
-                </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">Status</label>
-                    {{ form.status }}
-                    {{ form.status.errors }}
-                </div>
+        <!-- Row Kelas & Jurusan -->
+        <div class="row">
+            <div class="col-6 mb-3">
+                <label class="form-label">Kelas</label>
+                {{ form.kelas }}
+                {{ form.kelas.errors }}
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Nama</label>
-                <input type="text" class="form-control" value="{{ siswa.nama|default:'(belum diisi siswa)' }}" disabled>
+            <div class="col-6 mb-3">
+                <label class="form-label">Jurusan</label>
+                {{ form.jurusan }}
+                {{ form.jurusan.errors }}
             </div>
+        </div>
+
+        <!-- Row Tingkat & Status (Opsional/Muncul Jika Diatur di Form) -->
+        {% if form.tingkat or form.status %}
             <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label">Kelas</label>
-                    <input type="text" class="form-control" value="{{ siswa.kelas|default:'(belum diisi)' }}" disabled>
-                </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label">Jurusan</label>
-                    <input type="text" class="form-control" value="{{ siswa.jurusan|default:'(belum diisi)' }}" disabled>
-                </div>
+                {% if form.tingkat %}
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Tingkat</label>
+                        {{ form.tingkat }}
+                        {{ form.tingkat.errors }}
+                    </div>
+                {% endif %}
+                {% if form.status %}
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Status</label>
+                        {{ form.status }}
+                        {{ form.status.errors }}
+                    </div>
+                {% endif %}
             </div>
         {% endif %}
 
-        <div class="d-flex gap-2 mt-3">
+        <!-- Field Password -->
+        <div class="mb-3">
+            <label class="form-label">Password{% if mode == 'edit' %} Baru (Opsional){% endif %}</label>
+            {{ form.password }}
+            {% if form.password.help_text %}
+                <div class="form-text">{{ form.password.help_text }}</div>
+            {% endif %}
+            {{ form.password.errors }}
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="d-flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary">
                 {% if mode == 'edit' %}Simpan Perubahan{% else %}Buat Akun{% endif %}
             </button>

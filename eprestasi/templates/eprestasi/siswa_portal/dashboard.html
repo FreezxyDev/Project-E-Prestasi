@@ -3,8 +3,11 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-1">Halo, {{ siswa.nama }} 👋</h4>
-<p class="text-muted mb-4">Selamat datang kembali di ePrestasi.</p>
+<div class="topbar">
+    <h4>Dashboard</h4>
+</div>
+
+<p class="text-muted mb-4">Halo, {{ siswa.nama }} 👋 Selamat datang kembali di ePrestasi.</p>
 
 <div class="row g-3 mb-4">
     <div class="col-md-6">
@@ -58,7 +61,7 @@
         <h6 class="fw-bold">Upload Prestasi Ditutup</h6>
         <p class="text-muted small mb-0">Kamu sudah berstatus alumni, jadi tidak bisa mengunggah prestasi baru lagi.</p>
     {% else %}
-        <i class="bi bi-cloud-arrow-up fs-2 mb-2" style="color:#4338ca;"></i>
+        <i class="bi bi-cloud-arrow-up fs-2 mb-2" style="color:#4682a9;"></i>
         <h6 class="fw-bold">Upload Prestasi</h6>
         <p class="text-muted small mb-3">Unggah sertifikat prestasimu untuk diverifikasi kesiswaan.</p>
         <a href="{% url 'siswa_upload_prestasi' %}" class="btn btn-primary">Upload Prestasi</a>

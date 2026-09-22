@@ -4,6 +4,7 @@ from . import auth_views
 from . import siswa_views
 from . import siswa_prestasi_views
 from . import kesiswaan_views
+from . import import_views
 
 urlpatterns = [
     # Autentikasi
@@ -19,8 +20,13 @@ urlpatterns = [
     path('siswa/prestasi/upload/', siswa_prestasi_views.upload_prestasi, name='siswa_upload_prestasi'),
     path('siswa/prestasi/<int:prestasi_id>/', siswa_prestasi_views.prestasi_detail, name='siswa_prestasi_detail'),
     path('siswa/prestasi/<int:prestasi_id>/tambah-sertifikat/', siswa_prestasi_views.tambah_sertifikat, name='siswa_tambah_sertifikat'),
+    path('siswa/prestasi/<int:prestasi_id>/edit-data/', siswa_prestasi_views.edit_prestasi_data, name='siswa_edit_prestasi_data'),
     path('siswa/prestasi/<int:prestasi_id>/tambah-dokumentasi/', siswa_prestasi_views.tambah_dokumentasi, name='siswa_tambah_dokumentasi'),
     path('siswa/prestasi/<int:prestasi_id>/hapus/', siswa_prestasi_views.hapus_prestasi, name='siswa_hapus_prestasi'),
+
+    # QR Code & Portofolio Publik
+    path('siswa/qr-code/', siswa_views.qr_code_view, name='siswa_qr_code'),
+    path('portofolio/<str:nis>/', siswa_views.portofolio_publik, name='portofolio_publik'),
 
     # Portal Kesiswaan
     path('kesiswaan/dashboard/', kesiswaan_views.dashboard, name='kesiswaan_dashboard'),
@@ -37,6 +43,12 @@ urlpatterns = [
     path('siswa/tambah/', views.Create_siswa, name='tambah_siswa'),
     path('siswa/edit/<int:siswa_id>/', views.Update_siswa, name='update_siswa'),
     path('siswa/hapus/<int:siswa_id>/', views.delete_siswa, name='delete_siswa'),
+
+    # Import Excel siswa
+    path('siswa/import/', import_views.import_siswa, name='siswa_import'),
+    path('siswa/import/template/', import_views.download_template_siswa, name='siswa_import_template'),
+    path('siswa/import/hasil/', import_views.hasil_import_siswa, name='siswa_import_hasil'),
+    path('siswa/import/hasil/download/', import_views.download_hasil_import, name='siswa_import_download'),
 
     # Kesiswaan
     path('kesiswaan/', views.kesiswaan_list, name='kesiswaan_list'),

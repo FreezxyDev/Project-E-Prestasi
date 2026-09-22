@@ -5,9 +5,14 @@
 
 <div class="topbar">
     <h4>Kelola Siswa</h4>
-    <a href="{% url 'tambah_siswa' %}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg"></i> Tambah Siswa
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{% url 'siswa_import' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-earmark-excel"></i> Import Excel
+        </a>
+        <a href="{% url 'tambah_siswa' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Tambah Siswa
+        </a>
+    </div>
 </div>
 
 <div class="card p-3 mb-3">

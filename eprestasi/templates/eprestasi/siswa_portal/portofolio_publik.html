@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portofolio {{ siswa.nama|default:siswa.nis }} - ePrestasi</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+    body { background: #f4f5fa; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem; }
+    .card { border: none; border-radius: 1rem; box-shadow: 0 2px 10px rgba(30,27,58,.06); }
+    .header-card { background: linear-gradient(135deg, #4338ca, #6d28d9); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+    <div class="card header-card p-4 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            {% if siswa.foto_profil %}
+                <img src="{{ siswa.foto_profil.url }}" class="rounded-circle" style="width:72px;height:72px;object-fit:cover;">
+            {% else %}
+                <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center" style="width:72px;height:72px;">
+                    <i class="bi bi-person fs-2"></i>
+                </div>
+            {% endif %}
+            <div>
+                <h4 class="fw-bold mb-0">{{ siswa.nama|default:"Siswa" }}</h4>
+                <div class="small opacity-75">{{ siswa.kelas|default:"-" }} &middot; {{ siswa.jurusan|default:"-" }}</div>
+                <div class="small opacity-75">NIS: {{ siswa.nis }}</div>
+            </div>
+        </div>
+    </div>
+
+    <h6 class="fw-bold text-muted mb-3">PRESTASI ({{ prestasi_list|length }})</h6>
+
+    {% if not prestasi_list %}
+        <div class="card p-4 text-center text-muted">
+            Belum ada prestasi terverifikasi untuk ditampilkan.
+        </div>
+    {% else %}
+        {% for prestasi in prestasi_list %}
+        <div class="card p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="badge bg-light text-dark border mb-1">{{ prestasi.kategori_prestasi }}</span>
+                    <h6 class="fw-bold mb-1">{{ prestasi.nama_prestasi }}</h6>
+                    <div class="text-muted small">{{ prestasi.penyelenggara }} &middot; Tingkat {{ prestasi.tingkat_prestasi }}</div>
+                    <div class="text-muted small">{{ prestasi.tanggal_prestasi|date:"d M Y" }}</div>
+                </div>
+                <i class="bi bi-patch-check-fill text-success fs-5"></i>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <p class="text-center text-muted small mt-4">Portofolio digital ini dibuat lewat ePrestasi.</p>
+
+</div>
+
+</body>
+</html>

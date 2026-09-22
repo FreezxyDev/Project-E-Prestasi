@@ -3,8 +3,8 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold mb-0">Prestasi Saya</h4>
+<div class="topbar">
+    <h4>Prestasi Saya</h4>
     {% if siswa.bisa_edit %}
         <a href="{% url 'siswa_upload_prestasi' %}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg"></i> Upload Prestasi
@@ -26,9 +26,11 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span>
                         {% if prestasi.status == 'diterima' %}
-                            <span class="badge bg-success">Diterima</span>
+                            <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Diterima</span>
+                        {% elif prestasi.status == 'perbaikan' %}
+                            <span class="badge" style="background-color:#f97316;color:#fff;"><i class="bi bi-tools"></i> Perbaikan</span>
                         {% elif prestasi.status == 'ditolak' %}
-                            <span class="badge bg-danger">Ditolak</span>
+                            <span class="badge bg-danger"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
                         {% else %}
                             <span class="badge bg-warning text-dark">Pending</span>
                         {% endif %}

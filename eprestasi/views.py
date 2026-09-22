@@ -2,8 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
+import json
 
-from .models import Users, Siswa, Kesiswaan, Tahun_ajaran
+from .models import Users, Siswa, Kesiswaan, Tahun_ajaran, Prestasi, LogAktivitas
 from .forms import SiswaAkunForm, KesiswaanAkunForm, TahunAjaranForm, AdminAkunForm
 from .decorators import role_required
 
@@ -22,6 +25,19 @@ def _generate_username(identifier):
     return username
 
 
+def _log_aktivitas(request, aksi, judul, deskripsi=''):
+    """
+    Simpan satu baris jejak aktivitas (dipakai untuk Activity Log di dashboard).
+    aksi: 'akun_dibuat' atau 'akun_dihapus'.
+    """
+    LogAktivitas.objects.create(
+        aksi=aksi,
+        judul=judul,
+        deskripsi=deskripsi,
+        actor=request.session.get('username', ''),
+    )
+
+
 def _naikkan_kelas_siswa_aktif():
     """
     Dipanggil saat tahun ajaran BARU dibuat dan langsung diaktifkan.
@@ -31,6 +47,9 @@ def _naikkan_kelas_siswa_aktif():
     """
     naik, lulus = 0, 0
     for siswa in Siswa.objects.filter(status='aktif'):
+        if siswa.tingkat < 10:
+            siswa.tingkat = 10
+            
         if siswa.tingkat >= 12:
             siswa.status = 'alumni'
             lulus += 1
@@ -47,12 +66,102 @@ def _naikkan_kelas_siswa_aktif():
 
 @role_required('admin', 'super_admin')
 def dashboard(request):
+    total_siswa_aktif = Siswa.objects.filter(status='aktif').count()
+    total_siswa_alumni = Siswa.objects.filter(status='alumni').count()
+    total_kesiswaan = Kesiswaan.objects.count()
+    total_prestasi = Prestasi.objects.count()
+    pending_verifikasi = Prestasi.objects.filter(status='pending').count()
+
+    total_users = total_siswa_aktif + total_siswa_alumni + total_kesiswaan
+    active_users = total_siswa_aktif + total_kesiswaan
+
+    # ---- Aktivitas 7 hari terakhir (upload prestasi per hari) ----
+    hari_label = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+    today = timezone.localdate()
+    start = today - timedelta(days=6)
+    per_hari = {start + timedelta(days=i): 0 for i in range(7)}
+    for p in Prestasi.objects.filter(tanggal_upload__date__gte=start):
+        tgl = timezone.localtime(p.tanggal_upload).date()
+        if tgl in per_hari:
+            per_hari[tgl] += 1
+    aktivitas_labels = [hari_label[d.weekday()] for d in sorted(per_hari.keys())]
+    aktivitas_data = [per_hari[d] for d in sorted(per_hari.keys())]
+
+    # ---- Activity log gabungan (upload / verifikasi / akun baru) ----
+    activity_log = []
+
+    for p in Prestasi.objects.select_related('siswa').order_by('-tanggal_upload')[:6]:
+        activity_log.append({
+            'waktu': p.tanggal_upload,
+            'judul': 'Prestasi baru diunggah',
+            'deskripsi': f'"{p.nama_prestasi}" diunggah oleh {p.siswa.nama or p.siswa.nis}',
+            'icon': 'bi-cloud-arrow-up',
+            'status': 'pending',
+        })
+
+    for p in Prestasi.objects.select_related('siswa').exclude(tanggal_verifikasi=None).order_by('-tanggal_verifikasi')[:6]:
+        if p.status == 'diterima':
+            activity_log.append({
+                'waktu': p.tanggal_verifikasi,
+                'judul': 'Prestasi diverifikasi',
+                'deskripsi': f'"{p.nama_prestasi}" milik {p.siswa.nama or p.siswa.nis} disetujui',
+                'icon': 'bi-patch-check',
+                'status': 'success',
+            })
+        elif p.status == 'ditolak':
+            activity_log.append({
+                'waktu': p.tanggal_verifikasi,
+                'judul': 'Prestasi ditolak',
+                'deskripsi': f'"{p.nama_prestasi}" milik {p.siswa.nama or p.siswa.nis} ditolak',
+                'icon': 'bi-x-circle',
+                'status': 'danger',
+            })
+        elif p.status == 'perbaikan':
+            jenis_label = 'file' if p.jenis_perbaikan == 'file' else 'data'
+            activity_log.append({
+                'waktu': p.tanggal_verifikasi,
+                'judul': 'Prestasi dikembalikan untuk perbaikan',
+                'deskripsi': f'"{p.nama_prestasi}" milik {p.siswa.nama or p.siswa.nis} perlu perbaikan {jenis_label}',
+                'icon': 'bi-tools',
+                'status': 'pending',
+            })
+
+    for log in LogAktivitas.objects.order_by('-waktu')[:8]:
+        if log.aksi == 'akun_dihapus':
+            icon, status = 'bi-person-dash', 'danger'
+        else:
+            icon, status = 'bi-person-plus', 'success'
+        activity_log.append({
+            'waktu': log.waktu,
+            'judul': log.judul,
+            'deskripsi': log.deskripsi,
+            'icon': icon,
+            'status': status,
+        })
+
+    activity_log.sort(key=lambda x: x['waktu'], reverse=True)
+    activity_log = activity_log[:8]
+
+    # ---- Recent users (siswa terbaru) ----
+    recent_users = (
+        Siswa.objects.select_related('users')
+        .order_by('-users__created_at')[:6]
+    )
+
     context = {
         'active_menu': 'dashboard',
-        'total_siswa_aktif': Siswa.objects.filter(status='aktif').count(),
-        'total_siswa_alumni': Siswa.objects.filter(status='alumni').count(),
-        'total_kesiswaan': Kesiswaan.objects.count(),
+        'total_siswa_aktif': total_siswa_aktif,
+        'total_siswa_alumni': total_siswa_alumni,
+        'total_kesiswaan': total_kesiswaan,
+        'total_users': total_users,
+        'active_users': active_users,
+        'pending_verifikasi': pending_verifikasi,
+        'total_prestasi': total_prestasi,
         'tahun_ajaran_aktif': Tahun_ajaran.objects.filter(status='aktif').first(),
+        'aktivitas_labels': json.dumps(aktivitas_labels),
+        'aktivitas_data': json.dumps(aktivitas_data),
+        'activity_log': activity_log,
+        'recent_users': recent_users,
     }
     return render(request, 'eprestasi/dashboard.html', context)
 
@@ -86,7 +195,7 @@ def siswa_list(request):
         'total_aktif': Siswa.objects.filter(status='aktif').count(),
         'total_alumni': Siswa.objects.filter(status='alumni').count(),
     }
-    return render(request, 'eprestasi/siswa/list.html', context)
+    return render(request, 'eprestasi/kelola_user/list.html', context)
 
 
 @role_required('admin', 'super_admin')
@@ -97,20 +206,36 @@ def Create_siswa(request):
             data = form.cleaned_data
             username = _generate_username(data['nis'])
 
+            # 1. Simpan Kredensial Login ke Tabel Users
             user_account = Users.objects.create(
                 username=username,
                 password=make_password(data['password']),
                 role='siswa'
             )
+
+            tingkat_input = data.get('tingkat')
+            tingkat_final = max(10, int(tingkat_input)) if tingkat_input else 10
+
+            # 2. Simpan Data Diri ke Tabel Siswa (Terhubung via Foreign Key 'users')
             Siswa.objects.create(
                 users=user_account,
                 nis=data['nis'],
-                status='aktif',
-                # nama, kelas, jurusan, tingkat(default 10) diisi siswa sendiri setelah login
+                nama=data['nama'],          # <--- Disimpan ke tabel Siswa
+                kelas=data.get('kelas', ''),# <--- Disimpan ke tabel Siswa
+                jurusan=data.get('jurusan', ''), # <--- Disimpan ke tabel Siswa
+                tingkat=tingkat_final,
+                status=data.get('status') or 'aktif',
             )
+
+            _log_aktivitas(
+                request, 'akun_dibuat',
+                'Akun siswa baru dibuat',
+                f'Akun siswa "{data["nama"]}" (NIS {data["nis"]}, username {username}) berhasil dibuat'
+            )
+
             messages.success(
                 request,
-                f'Akun siswa berhasil dibuat. Username login: {username} (siswa dapat melengkapi profilnya setelah login).'
+                f'Akun siswa atas nama {data["nama"]} berhasil dibuat. Username login: {username}'
             )
             return redirect('siswa_list')
     else:
@@ -118,7 +243,6 @@ def Create_siswa(request):
 
     context = {'active_menu': 'siswa', 'form': form, 'mode': 'tambah'}
     return render(request, 'eprestasi/siswa/form.html', context)
-
 
 @role_required('admin', 'super_admin')
 def Update_siswa(request, siswa_id):
@@ -130,11 +254,17 @@ def Update_siswa(request, siswa_id):
         if form.is_valid():
             data = form.cleaned_data
 
+            # 1. Update Password di Tabel Users (jika diisi)
             if data.get('password'):
                 user_account.password = make_password(data['password'])
                 user_account.save()
 
+            # 2. Update Data Profil di Tabel Siswa
             siswa.nis = data['nis']
+            siswa.nama = data['nama']
+            siswa.kelas = data.get('kelas', '')
+            siswa.jurusan = data.get('jurusan', '')
+
             if data.get('tingkat'):
                 siswa.tingkat = data['tingkat']
             if data.get('status'):
@@ -144,8 +274,12 @@ def Update_siswa(request, siswa_id):
             messages.success(request, f'Data akun siswa (NIS {siswa.nis}) berhasil diperbarui.')
             return redirect('siswa_list')
     else:
+        # Pre-fill data form dari instance Siswa saat ini
         form = SiswaAkunForm(siswa_id=siswa.id, initial={
             'nis': siswa.nis,
+            'nama': siswa.nama,
+            'kelas': siswa.kelas,
+            'jurusan': siswa.jurusan,
             'tingkat': siswa.tingkat,
             'status': siswa.status,
         })
@@ -153,13 +287,20 @@ def Update_siswa(request, siswa_id):
     context = {'active_menu': 'siswa', 'form': form, 'mode': 'edit', 'siswa': siswa}
     return render(request, 'eprestasi/siswa/form.html', context)
 
-
 @role_required('admin', 'super_admin')
 def delete_siswa(request, siswa_id):
     siswa = get_object_or_404(Siswa, id=siswa_id)
     if request.method == 'POST':
         nis = siswa.nis
+        nama = siswa.nama
         siswa.users.delete()  # cascade menghapus Siswa juga
+
+        _log_aktivitas(
+            request, 'akun_dihapus',
+            'Akun siswa dihapus',
+            f'Akun siswa "{nama}" (NIS {nis}) telah dihapus'
+        )
+
         messages.success(request, f'Akun siswa dengan NIS {nis} telah berhasil dihapus!')
     return redirect('siswa_list')
 
@@ -174,7 +315,7 @@ def kesiswaan_list(request):
         'active_menu': 'kesiswaan',
         'kesiswaan_list': Kesiswaan.objects.select_related('user').all().order_by('-id'),
     }
-    return render(request, 'eprestasi/kesiswaan/list.html', context)
+    return render(request, 'eprestasi/kelola_user/list.html', context)
 
 
 @role_required('admin', 'super_admin')
@@ -195,6 +336,12 @@ def Create_kesiswaan(request):
                 nip=data['nip'],
                 # nama & jabatan diisi user kesiswaan sendiri setelah login
             )
+            _log_aktivitas(
+                request, 'akun_dibuat',
+                'Akun kesiswaan baru dibuat',
+                f'Akun kesiswaan (NIP {data["nip"]}, username {username}) berhasil dibuat'
+            )
+
             messages.success(
                 request,
                 f'Akun kesiswaan berhasil dibuat. Username login: {username} (dapat melengkapi profil setelah login).'
@@ -238,7 +385,15 @@ def delete_kesiswaan(request, kesiswaan_id):
     kesiswaan = get_object_or_404(Kesiswaan, id=kesiswaan_id)
     if request.method == 'POST':
         nip = kesiswaan.nip
+        nama = kesiswaan.nama
         kesiswaan.user.delete()  # cascade menghapus Kesiswaan juga
+
+        _log_aktivitas(
+            request, 'akun_dihapus',
+            'Akun kesiswaan dihapus',
+            f'Akun kesiswaan "{nama or nip}" (NIP {nip}) telah dihapus'
+        )
+
         messages.success(request, f'Akun kesiswaan dengan NIP {nip} telah berhasil dihapus!')
     return redirect('kesiswaan_list')
 
@@ -383,6 +538,12 @@ def Create_admin(request):
                 password=make_password(data['password']),
                 role='admin',  # dibuat lewat web selalu 'admin' biasa, bukan super_admin
             )
+            _log_aktivitas(
+                request, 'akun_dibuat',
+                'Akun admin baru dibuat',
+                f'Akun admin "{data["username"]}" berhasil dibuat'
+            )
+
             messages.success(request, f'Akun admin "{data["username"]}" berhasil dibuat.')
             return redirect('admin_list')
     else:
@@ -431,6 +592,13 @@ def delete_admin(request, admin_id):
 
         username = admin_user.username
         admin_user.delete()
+
+        _log_aktivitas(
+            request, 'akun_dihapus',
+            'Akun admin dihapus',
+            f'Akun admin "{username}" telah dihapus'
+        )
+
         messages.success(request, f'Akun admin "{username}" telah dihapus.')
 
     return redirect('admin_list')

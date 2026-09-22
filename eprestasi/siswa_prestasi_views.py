@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.utils import timezone
 
 from .models import Siswa, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi
-from .forms import PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm
+from .forms import PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm, PrestasiEditForm
 from .decorators import role_required
 
 
@@ -60,11 +61,23 @@ def upload_prestasi(request):
                 deskripsi=data['deskripsi'],
                 kategori_prestasi=data['kategori_prestasi'],
                 status='pending',
+                # Dokumen Puspresnas -- opsional, cuma keisi kalau siswa
+                # benar-benar upload (biasanya prestasi tingkat nasional).
+                dokumen_puspresnas=data.get('dokumen_puspresnas') or None,
+                jenis_wilayah_puspresnas=data.get('jenis_wilayah_puspresnas') or None,
+                jenis_penyelenggara_puspresnas=data.get('jenis_penyelenggara_puspresnas') or None,
             )
+
+            # 2 bukti WAJIB, dibuat sekaligus bareng prestasinya.
             Sertifikat.objects.create(
                 prestasi=prestasi,
                 file=data['file_sertifikat'],
                 deskripsi=data.get('deskripsi_sertifikat') or '-',
+            )
+            Dokumentasi.objects.create(
+                prestasi=prestasi,
+                foto=data['foto_dokumentasi'],
+                caption=data.get('caption_dokumentasi') or None,
             )
 
             messages.success(request, 'Prestasi berhasil diunggah dan menunggu verifikasi kesiswaan.')
@@ -120,12 +133,19 @@ def tambah_sertifikat(request, prestasi_id):
 
     prestasi = get_object_or_404(Prestasi, id=prestasi_id, siswa=siswa)
 
-    # Hanya boleh menambah bukti selama masih 'pending'. Begitu sudah diverifikasi
-    # (diterima/ditolak), data dikunci -- supaya tidak ada yang menambah bukti
-    # SETELAH tahu hasil verifikasinya (jaga integritas proses verifikasi).
-    if prestasi.status != 'pending':
-        messages.error(request, 'Prestasi ini sudah diverifikasi, tidak bisa menambah bukti lagi.')
+    # Boleh menambah bukti kalau masih 'pending' ATAU sedang dikembalikan untuk
+    # perbaikan FILE. Begitu status lain (diterima/ditolak, atau perbaikan DATA
+    # yang tidak butuh file baru), data dikunci -- supaya tidak ada yang
+    # menambah bukti setelah hasil verifikasi keluar (jaga integritas proses).
+    boleh_upload = (
+        prestasi.status == 'pending'
+        or (prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file')
+    )
+    if not boleh_upload:
+        messages.error(request, 'Prestasi ini tidak sedang dalam status yang bisa ditambah bukti.')
         return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
+
+    sedang_perbaikan_file = prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file'
 
     if request.method == 'POST':
         form = SertifikatTambahanForm(request.POST, request.FILES)
@@ -135,7 +155,19 @@ def tambah_sertifikat(request, prestasi_id):
                 file=form.cleaned_data['file'],
                 deskripsi=form.cleaned_data.get('deskripsi') or '-',
             )
-            messages.success(request, 'Bukti sertifikat berhasil ditambahkan.')
+
+            if sedang_perbaikan_file:
+                # File baru sudah masuk -- kembalikan ke antrean verifikasi kesiswaan.
+                prestasi.status = 'pending'
+                prestasi.jenis_perbaikan = None
+                prestasi.catatan_perbaikan = None
+                prestasi.save()
+                messages.success(
+                    request,
+                    'Sertifikat baru berhasil diunggah. Prestasi ini sudah dikirim ulang untuk diverifikasi kesiswaan.'
+                )
+            else:
+                messages.success(request, 'Bukti sertifikat berhasil ditambahkan.')
         else:
             messages.error(request, 'Gagal menambah sertifikat, periksa kembali file yang diunggah.')
 
@@ -167,6 +199,62 @@ def tambah_dokumentasi(request, prestasi_id):
             messages.error(request, 'Gagal menambah dokumentasi, periksa kembali file yang diunggah.')
 
     return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
+
+
+@role_required('siswa')
+def edit_prestasi_data(request, prestasi_id):
+    """
+    Dipakai siswa memperbaiki DATA prestasi yang dikembalikan kesiswaan dengan
+    jenis_perbaikan='data' (nama, kategori, tingkat, penyelenggara, tanggal,
+    deskripsi -- TIDAK termasuk file, file sertifikat lama tetap dipakai).
+    Begitu disimpan, status otomatis balik ke 'pending' untuk diverifikasi ulang.
+    """
+    siswa, redirect_response = _guard_siswa(request)
+    if redirect_response:
+        return redirect_response
+
+    prestasi = get_object_or_404(Prestasi, id=prestasi_id, siswa=siswa)
+
+    if not (prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'data'):
+        messages.error(request, 'Prestasi ini tidak sedang dalam status perbaikan data.')
+        return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
+
+    if request.method == 'POST':
+        form = PrestasiEditForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            prestasi.nama_prestasi = data['nama_prestasi']
+            prestasi.kategori_prestasi = data['kategori_prestasi']
+            prestasi.tingkat_prestasi = data['tingkat_prestasi']
+            prestasi.penyelenggara = data['penyelenggara']
+            prestasi.tanggal_prestasi = data['tanggal_prestasi']
+            prestasi.deskripsi = data['deskripsi']
+
+            # Data sudah diperbaiki -- kembalikan ke antrean verifikasi kesiswaan.
+            prestasi.status = 'pending'
+            prestasi.jenis_perbaikan = None
+            prestasi.catatan_perbaikan = None
+            prestasi.save()
+
+            messages.success(request, 'Data prestasi berhasil diperbarui dan dikirim ulang untuk diverifikasi.')
+            return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
+    else:
+        form = PrestasiEditForm(initial={
+            'nama_prestasi': prestasi.nama_prestasi,
+            'kategori_prestasi': prestasi.kategori_prestasi,
+            'tingkat_prestasi': prestasi.tingkat_prestasi,
+            'penyelenggara': prestasi.penyelenggara,
+            'tanggal_prestasi': prestasi.tanggal_prestasi,
+            'deskripsi': prestasi.deskripsi,
+        })
+
+    context = {
+        'active_menu': 'prestasi',
+        'siswa': siswa,
+        'prestasi': prestasi,
+        'form': form,
+    }
+    return render(request, 'eprestasi/siswa_portal/edit_prestasi.html', context)
 
 
 @role_required('siswa')

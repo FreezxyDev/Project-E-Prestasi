@@ -1,0 +1,154 @@
+{% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block title %}Data Prestasi{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-3">Data Prestasi</h4>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Tingkat Siswa</label>
+            <select name="tingkat_siswa" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                <option value="10" {% if filter.tingkat_siswa == '10' %}selected{% endif %}>10</option>
+                <option value="11" {% if filter.tingkat_siswa == '11' %}selected{% endif %}>11</option>
+                <option value="12" {% if filter.tingkat_siswa == '12' %}selected{% endif %}>12</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Tingkat Prestasi</label>
+            <select name="tingkat_prestasi" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                {% for value, label in tingkat_prestasi_pilihan %}
+                    <option value="{{ value }}" {% if filter.tingkat_prestasi == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Tahun Ajaran</label>
+            <select name="tahun_ajaran" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                {% for tahun in tahun_ajaran_semua %}
+                    <option value="{{ tahun.id }}" {% if filter.tahun_ajaran == tahun.id|stringformat:"s" %}selected{% endif %}>
+                        {{ tahun.tahun_ajaran }}{% if tahun.status == 'aktif' %} (Aktif){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Kategori</label>
+            <select name="kategori" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                {% for value, label in kategori_pilihan %}
+                    <option value="{{ value }}" {% if filter.kategori == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Puspresnas</label>
+            <select name="puspresnas" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                <option value="sudah" {% if filter.puspresnas == 'sudah' %}selected{% endif %}>Sudah</option>
+                <option value="belum" {% if filter.puspresnas == 'belum' %}selected{% endif %}>Belum</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 col-sm-4">
+            <label class="form-label small mb-1">Status Verifikasi</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Semua</option>
+                {% for value, label in status_pilihan %}
+                    <option value="{{ value }}" {% if filter.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small mb-1">Tanggal Prestasi Dari</label>
+            <input type="date" name="tanggal_dari" class="form-control form-control-sm" value="{{ filter.tanggal_dari }}">
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small mb-1">Tanggal Prestasi Sampai</label>
+            <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ filter.tanggal_sampai }}">
+        </div>
+
+        <div class="col-md-3 col-sm-6 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-funnel"></i> Terapkan Filter
+            </button>
+            <a href="{% url 'kesiswaan_data_prestasi' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+
+    </form>
+</div>
+
+<div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Menampilkan {{ total_hasil }} prestasi</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Siswa</th>
+                    <th>Tingkat</th>
+                    <th>Nama Prestasi</th>
+                    <th>Kategori</th>
+                    <th>Tingkat Prestasi</th>
+                    <th>Tahun Ajaran</th>
+                    <th>Tanggal</th>
+                    <th>Puspresnas</th>
+                    <th>Status</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for prestasi in prestasi_list %}
+                <tr>
+                    <td>{{ prestasi.siswa.nama|default:"-" }}</td>
+                    <td>{{ prestasi.siswa.tingkat }}</td>
+                    <td>{{ prestasi.nama_prestasi }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span></td>
+                    <td>{{ prestasi.tingkat_prestasi }}</td>
+                    <td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td>
+                    <td>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</td>
+                    <td>
+                        {% if prestasi.dokumen_puspresnas %}
+                            <span class="badge bg-info-subtle text-info border border-info">Sudah</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">Belum</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if prestasi.status == 'diterima' %}
+                            <span class="badge bg-success">Diterima</span>
+                        {% elif prestasi.status == 'ditolak' %}
+                            <span class="badge bg-danger">Ditolak</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" class="btn btn-sm btn-outline-secondary">
+                            Lihat
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">Tidak ada data yang cocok dengan filter ini.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

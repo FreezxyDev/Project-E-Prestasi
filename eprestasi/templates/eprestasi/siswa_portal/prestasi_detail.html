@@ -11,13 +11,27 @@
     <div class="d-flex justify-content-between align-items-start mb-2">
         <h4 class="fw-bold mb-0">{{ prestasi.nama_prestasi }}</h4>
         {% if prestasi.status == 'diterima' %}
-            <span class="badge bg-success fs-6">Diterima</span>
+            <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill"></i> Diterima</span>
+        {% elif prestasi.status == 'perbaikan' %}
+            <span class="badge fs-6" style="background-color:#f97316;color:#fff;"><i class="bi bi-tools"></i> Perbaikan</span>
         {% elif prestasi.status == 'ditolak' %}
-            <span class="badge bg-danger fs-6">Ditolak</span>
+            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
         {% else %}
             <span class="badge bg-warning text-dark fs-6">Pending</span>
         {% endif %}
     </div>
+
+    {% if prestasi.status == 'perbaikan' %}
+        <div class="alert alert-warning d-flex gap-2 align-items-start mt-2 mb-0" style="background-color:#fff7ed;border-color:#fed7aa;color:#9a3412;">
+            <i class="bi bi-tools mt-1"></i>
+            <div>
+                <div class="fw-bold small">
+                    Perlu perbaikan {% if prestasi.jenis_perbaikan == 'file' %}file sertifikat{% else %}data{% endif %}
+                </div>
+                <div class="small">{{ prestasi.catatan_perbaikan|linebreaksbr }}</div>
+            </div>
+        </div>
+    {% endif %}
 
     <table class="table table-sm table-borderless mb-0 small mt-3">
         <tr><td class="text-muted" style="width:180px;">Kategori</td><td>{{ prestasi.kategori_prestasi }}</td></tr>
@@ -30,6 +44,22 @@
             <tr><td class="text-muted align-top">Alasan Ditolak</td><td class="text-danger">{{ prestasi.alasan_penolakan|linebreaksbr }}</td></tr>
         {% endif %}
     </table>
+
+    {% if prestasi.dokumen_puspresnas %}
+        <hr>
+        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Dokumen Puspresnas</h6>
+        <table class="table table-sm table-borderless mb-0 small">
+            <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
+            <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
+            <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
+        </table>
+    {% endif %}
+
+    {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'data' %}
+        <a href="{% url 'siswa_edit_prestasi_data' prestasi.id %}" class="btn btn-sm mt-3" style="background-color:#f97316;color:#fff;">
+            <i class="bi bi-pencil-square"></i> Perbaiki Data Sekarang
+        </a>
+    {% endif %}
 
     {% if prestasi.status == 'pending' %}
         <form method="POST" action="{% url 'siswa_hapus_prestasi' prestasi.id %}" class="mt-3"
@@ -53,17 +83,25 @@
             </div>
         </div>
     {% empty %}
-        <p class="text-muted small mb-0">Belum ada file sertifikat.</p>
+        <p class="text-muted small mb-0">
+            {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
+                File sertifikat lama sudah dihapus. Unggah file baru di bawah ini.
+            {% else %}
+                Belum ada file sertifikat.
+            {% endif %}
+        </p>
     {% endfor %}
 
-    {% if prestasi.status == 'pending' %}
+    {% if prestasi.status == 'pending' or prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
         <form method="POST" action="{% url 'siswa_tambah_sertifikat' prestasi.id %}" enctype="multipart/form-data" class="mt-3 border-top pt-3">
             {% csrf_token %}
-            <label class="form-label small">Tambah bukti sertifikat lain</label>
+            <label class="form-label small">
+                {% if prestasi.status == 'perbaikan' %}Unggah sertifikat pengganti{% else %}Tambah bukti sertifikat lain{% endif %}
+            </label>
             {{ sertifikat_form.file }}
             <input type="text" name="deskripsi" class="form-control form-control-sm mt-2" placeholder="Keterangan (opsional)">
-            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">
-                <i class="bi bi-plus-lg"></i> Tambah
+            <button type="submit" class="btn btn-sm mt-2 {% if prestasi.status == 'perbaikan' %}btn-warning{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-plus-lg"></i> {% if prestasi.status == 'perbaikan' %}Kirim Ulang{% else %}Tambah{% endif %}
             </button>
         </form>
     {% endif %}

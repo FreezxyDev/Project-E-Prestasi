@@ -8,139 +8,244 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
     :root {
-        --cream: #fffbde;
-        --sky: #91c8e4;
-        --slate: #749bc2;
-        --deep: #4682a9;
-        --deep-dark: #35657f;
+        /* dark chrome (sidebar + topnav) — konsisten dengan Admin Dashboard */
+        --chrome-bg: #020705;
+        --chrome-sidebar: #020907;
+        --chrome-hover: #0d2119;
+        --chrome-border: rgba(0, 208, 132, .14);
+        --chrome-border-soft: rgba(0, 208, 132, .08);
+        --accent: #00d084;
+        --accent-dim: rgba(0, 208, 132, .12);
+        --chrome-text-muted: #6f8f80;
+        --chrome-text-dim: #4a6357;
+
+        /* content (putih) — variabel dipakai oleh halaman-halaman portal */
         --ink: #1f3b4d;
-        --nav-bg: #1e3f52;
+        --deep: #0d9488;
+        --deep-dark: #0f766e;
+        --sidebar-bg: #020907;
+        --sky: #0d9488;
     }
+
+    * { box-sizing: border-box; }
+
     body {
-        background-color: #fbf9ec;
-        font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background-color: #ffffff;
+        font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
         color: var(--ink);
+        font-size: .875rem;
     }
-    
-    /* Navbar Menggunakan Warna Deep Sidebar Admin */
-    .navbar-eprestasi {
-        background: linear-gradient(135deg, var(--nav-bg) 0%, #2c5871 100%);
-        padding: .8rem 1.5rem;
-        box-shadow: 0 4px 12px rgba(31,59,77,.15);
-    }
-    .navbar-eprestasi .brand {
-        font-weight: 800;
-        color: #fff;
-        font-size: 1.25rem;
-        letter-spacing: .3px;
+    a { text-decoration: none; }
+
+    /* ---------- Sidebar (dark) ---------- */
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: 248px;
+        background: var(--chrome-sidebar);
+        border-right: 1px solid var(--chrome-border-soft);
+        padding: 1.1rem .9rem;
         display: flex;
-        align-items: center;
-        gap: .5rem;
-    }
-    .navbar-eprestasi .brand i { color: var(--sky); }
-    
-    .navbar-eprestasi .nav-link {
+        flex-direction: column;
+        z-index: 1030;
+        overflow-y: auto;
         color: #cfe3ee;
-        font-weight: 500;
-        font-size: .9rem;
-        padding: .5rem .9rem !important;
-        border-radius: .55rem;
-        transition: all .2s;
-        display: flex;
-        align-items: center;
-        gap: .4rem;
     }
-    .navbar-eprestasi .nav-link:hover {
-        color: #fff;
-        background: rgba(255,255,255,.08);
+    .sidebar-brand { display: flex; align-items: center; gap: .65rem; padding: .35rem .3rem 1.4rem .3rem; }
+    .brand-mark {
+        width: 34px; height: 34px; background: var(--accent-dim); border: 1px solid var(--chrome-border);
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        color: var(--accent); font-weight: 700; font-size: .85rem; flex-shrink: 0;
     }
-    .navbar-eprestasi .nav-link.active {
-        background: var(--deep);
-        color: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    .brand-name { color: #fff; font-weight: 700; font-size: .95rem; line-height: 1.2; }
+    .brand-tag { color: var(--chrome-text-muted); font-size: .62rem; letter-spacing: 1.6px; font-weight: 600; }
+
+    .sidebar-nav { flex: 1; }
+    .nav-label { color: var(--chrome-text-dim); font-size: .64rem; font-weight: 700; letter-spacing: 1.6px; padding: 0 .6rem .5rem .6rem; }
+    .sidebar .nav-link {
+        display: flex; align-items: center; gap: .65rem; color: #a9c2b7;
+        padding: .55rem .65rem; border-radius: 7px; margin-bottom: .15rem;
+        font-size: .82rem; font-weight: 500; border: 1px solid transparent;
+        transition: background .15s, color .15s, border-color .15s;
     }
-    
-    /* Tombol Keluar / User Tag */
-    .btn-logout {
-        color: #ffd8d8;
-        background: rgba(255,255,255,.08);
-        border: 1px solid rgba(255,255,255,.15);
-        font-weight: 600;
-        font-size: .85rem;
-        border-radius: .55rem;
-        padding: .4rem .8rem;
-        transition: all .2s;
+    .sidebar .nav-link i { font-size: .95rem; width: 18px; text-align: center; color: var(--chrome-text-muted); }
+    .sidebar .nav-link:hover { background: var(--chrome-hover); color: #fff; }
+    .sidebar .nav-link.active { background: var(--accent-dim); color: var(--accent); border-color: var(--chrome-border); }
+    .sidebar .nav-link.active i { color: var(--accent); }
+
+    .sidebar-footer { border-top: 1px solid var(--chrome-border-soft); padding-top: .9rem; margin-top: .5rem; }
+    .sidebar-user { display: flex; align-items: center; gap: .6rem; padding: 0 .2rem .8rem .2rem; }
+    .user-avatar {
+        width: 32px; height: 32px; border-radius: 50%; background: var(--accent-dim);
+        border: 1px solid var(--chrome-border); color: var(--accent); font-weight: 700; font-size: .68rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .btn-logout:hover {
-        background: rgba(220,53,69,.25);
-        color: #fff;
-        border-color: rgba(220,53,69,.3);
+    .user-meta { line-height: 1.25; overflow: hidden; }
+    .user-name { color: #fff; font-size: .78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { color: var(--chrome-text-muted); font-size: .66rem; }
+    .logout-link {
+        display: flex; align-items: center; gap: .55rem; color: #f3a9a9;
+        background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.15);
+        border-radius: 7px; padding: .5rem .65rem; font-size: .78rem; font-weight: 600;
+        transition: background .15s;
     }
-    
-    /* Content Layout */
-    .content-wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem; }
-    .card { border: none; border-radius: .9rem; box-shadow: 0 2px 14px rgba(31,59,77,.08); }
-    
-    /* Buttons & Badges Tema E-Prestasi */
-    .btn-primary { background-color: var(--deep); border-color: var(--deep); }
+    .logout-link:hover { background: rgba(239,68,68,.18); color: #fff; }
+
+    /* ---------- Main / Topnav (putih) ---------- */
+    .main-wrap { margin-left: 248px; min-height: 100vh; display: flex; flex-direction: column; background: #fff; }
+
+    .topnav {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .8rem 1.75rem; border-bottom: 1px solid #e7ece9;
+        background: #fff; position: sticky; top: 0; z-index: 1020;
+    }
+    .sidebar-toggle {
+        display: none; background: #f4f7f5; border: 1px solid #e7ece9; color: var(--ink);
+        border-radius: 7px; width: 34px; height: 34px; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .topnav-title { font-weight: 700; color: var(--ink); font-size: .85rem; }
+    .topnav-actions { display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
+    .btn-new {
+        display: flex; align-items: center; gap: .4rem; background: var(--deep); color: #fff;
+        font-weight: 700; font-size: .78rem; padding: .5rem .85rem; border-radius: 7px;
+        transition: opacity .15s; white-space: nowrap;
+    }
+    .btn-new:hover { opacity: .88; color: #fff; }
+    .icon-btn {
+        position: relative; width: 34px; height: 34px; background: #f4f7f5; border: 1px solid #e7ece9;
+        color: #5c6b64; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .icon-btn:hover { color: var(--ink); border-color: #d7ded9; }
+    .icon-btn .dot { position: absolute; top: 6px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
+    .topnav-avatar {
+        width: 32px; height: 32px; border-radius: 50%; background: var(--accent-dim);
+        border: 1px solid var(--chrome-border); color: var(--deep); font-weight: 700; font-size: .66rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    .main-content { padding: 1.75rem; flex: 1; background: #fff; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: .75rem; }
+    .topbar h4 { margin: 0; font-weight: 700; color: var(--ink); }
+
+    .card { border: 1px solid #edf1ee; border-radius: .9rem; box-shadow: 0 2px 14px rgba(31,59,77,.06); }
+    .btn-primary { background-color: var(--deep); border-color: var(--deep); font-weight: 600; }
     .btn-primary:hover { background-color: var(--deep-dark); border-color: var(--deep-dark); }
     .btn-outline-primary { color: var(--deep); border-color: var(--deep); }
-    .btn-outline-primary:hover { background-color: var(--deep); border-color: var(--deep); }
-    
+    .btn-outline-primary:hover { background-color: var(--deep); border-color: var(--deep); color: #fff; }
     .badge-aktif { background-color: #16a34a; }
     .badge-alumni { background-color: #6b7280; }
-    .badge-nonaktif { background-color: #9ca3af; }
+    .table thead th { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: #7a8a83; }
+
+    @media (max-width: 992px) {
+        .sidebar { transform: translateX(-100%); transition: transform .2s ease; width: 240px; }
+        .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.25); }
+        .main-wrap { margin-left: 0; }
+        .sidebar-toggle { display: flex; }
+    }
+    @media (max-width: 576px) {
+        .btn-new span { display: none; }
+        .main-content { padding: 1.1rem; }
+    }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-<nav class="navbar navbar-eprestasi navbar-expand-lg sticky-top">
-    <div class="container-fluid px-2">
-        <span class="brand">
-            <i class="bi bi-award-fill"></i> E-Prestasi
-        </span>
-
-        {% if not wajib_diisi %}
-        <div class="d-flex gap-1 ms-auto me-3">
-            <a href="{% url 'siswa_dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
-                <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-            <a href="{% url 'siswa_prestasi_list' %}" class="nav-link {% if active_menu == 'prestasi' %}active{% endif %}">
-                <i class="bi bi-trophy"></i> Prestasi Saya
-            </a>
-            <a href="{% url 'siswa_lengkapi_profil' %}" class="nav-link {% if active_menu == 'profil' %}active{% endif %}">
-                <i class="bi bi-person-circle"></i> Profil Saya
-            </a>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-mark">&gt;_</div>
+        <div>
+            <div class="brand-name">E-Prestasi</div>
+            <span class="brand-tag">PORTAL SISWA</span>
         </div>
-        {% endif %}
-
-        <a href="{% url 'logout' %}" class="btn btn-logout text-decoration-none ms-auto ms-lg-0">
-            <i class="bi bi-box-arrow-right"></i> Keluar
-        </a>
     </div>
-</nav>
 
-<div class="content-wrap">
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
+    {% if not wajib_diisi %}
+    <nav class="sidebar-nav">
+        <div class="nav-label">MENU</div>
+        <a href="{% url 'siswa_dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+        </a>
+        <a href="{% url 'siswa_prestasi_list' %}" class="nav-link {% if active_menu == 'prestasi' %}active{% endif %}">
+            <i class="bi bi-trophy"></i><span>Prestasi Saya</span>
+        </a>
+        <a href="{% url 'siswa_qr_code' %}" class="nav-link {% if active_menu == 'qr' %}active{% endif %}">
+            <i class="bi bi-qr-code"></i><span>QR Code</span>
+        </a>
+        <a href="{% url 'siswa_lengkapi_profil' %}" class="nav-link {% if active_menu == 'profil' %}active{% endif %}">
+            <i class="bi bi-person-circle"></i><span>Profil Saya</span>
+        </a>
+    </nav>
+    {% else %}
+    <div class="sidebar-nav"></div>
     {% endif %}
 
-    {% block content %}{% endblock %}
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="user-avatar">{{ request.session.nama|default:request.session.username|slice:":2"|upper }}</div>
+            <div class="user-meta">
+                <div class="user-name">{{ request.session.nama|default:request.session.username }}</div>
+                <div class="user-role">Siswa</div>
+            </div>
+        </div>
+        <a href="{% url 'logout' %}" class="logout-link">
+            <i class="bi bi-box-arrow-right"></i><span>Keluar</span>
+        </a>
+    </div>
+</div>
 
+<div class="main-wrap">
+
+    <div class="topnav">
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+            <span class="topnav-title">Portal Siswa</span>
+        </div>
+        <div class="topnav-actions">
+            {% if not wajib_diisi %}
+            <a href="{% url 'siswa_upload_prestasi' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>Upload Prestasi</span></a>
+            {% endif %}
+            <button class="icon-btn" type="button" title="Notifikasi"><i class="bi bi-bell"></i><span class="dot"></span></button>
+            <div class="topnav-avatar">{{ request.session.nama|default:request.session.username|slice:":2"|upper }}</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarEl = document.getElementById('sidebar');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => sidebarEl.classList.toggle('open'));
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 992 && sidebarEl.classList.contains('open')
+                && !sidebarEl.contains(e.target) && e.target !== sidebarToggle && !sidebarToggle.contains(e.target)) {
+                sidebarEl.classList.remove('open');
+            }
+        });
+    }
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

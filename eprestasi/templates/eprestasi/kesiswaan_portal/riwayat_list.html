@@ -3,49 +3,325 @@
 
 {% block content %}
 
-<h4 class="fw-bold mb-3">Riwayat Verifikasi</h4>
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
 
-{% if not riwayat %}
-    <div class="card p-4 text-center">
-        <p class="text-muted mb-0">Belum ada prestasi yang pernah diverifikasi.</p>
+    .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    @media (max-width: 1024px) {
+        .filter-row {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .result-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        border-left: 4px solid #28a745;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-diterima {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-ditolak {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-perbaikan {
+        background: #fed7aa;
+        color: #9a3412;
+    }
+
+    .badge-kelas {
+        background: #e7f3ff;
+        color: #0066cc;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+
+    .tanggal-group {
+        margin-bottom: 30px;
+    }
+
+    .tanggal-header {
+        background: #f0f0f0;
+        padding: 10px 15px;
+        border-left: 4px solid #28a745;
+        margin-bottom: 10px;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+</style>
+
+<!-- Header -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="card-title mb-0">📚 Riwayat Verifikasi Prestasi</h4>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="filter-card">
+    <h6 class="mb-3">🔍 Filter Riwayat</h6>
+    
+    <form method="GET" class="form">
+        <div class="filter-row">
+            <!-- Filter Kelas -->
+            <div>
+                <label for="filter_kelas" class="form-label small mb-1">Kelas</label>
+                <select name="kelas" id="filter_kelas" class="form-select">
+                    <option value="">-- Semua Kelas --</option>
+                    {% for kelas_value, kelas_label in kelas_options %}
+                        <option value="{{ kelas_value }}" 
+                            {% if filter_kelas == kelas_value %}selected{% endif %}>
+                            {{ kelas_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter Nama -->
+            <div>
+                <label for="filter_nama" class="form-label small mb-1">Nama Siswa</label>
+                <input type="text" name="nama" id="filter_nama" class="form-control" 
+                    placeholder="Cari nama..." value="{{ filter_nama }}">
+            </div>
+
+            <!-- Filter Status -->
+            <div>
+                <label for="filter_status" class="form-label small mb-1">Status</label>
+                <select name="status" id="filter_status" class="form-select">
+                    <option value="">-- Semua Status --</option>
+                    <option value="diterima" {% if filter_status == 'diterima' %}selected{% endif %}>✅ Diterima</option>
+                    <option value="perbaikan" {% if filter_status == 'perbaikan' %}selected{% endif %}>🔧 Perbaikan</option>
+                    <option value="ditolak" {% if filter_status == 'ditolak' %}selected{% endif %}>❌ Ditolak</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div>
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+
+            <div>
+                <a href="{% url 'kesiswaan_riwayat' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Result Info -->
+{% if filter_kelas or filter_nama or filter_status %}
+    <div class="result-info">
+        <span>
+            ✅ Ditemukan <strong>{{ total_prestasi }}</strong> prestasi
+            {% if filter_status %}dari status <strong>{{ filter_status }}</strong>{% endif %}
+            {% if filter_kelas %}di kelas <strong>{{ filter_kelas }}</strong>{% endif %}
+            {% if filter_nama %}dari siswa <strong>{{ filter_nama }}</strong>{% endif %}
+        </span>
+        <a href="{% url 'kesiswaan_riwayat' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Hapus Filter
+        </a>
     </div>
 {% else %}
-    <div class="card p-3">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Siswa</th>
-                        <th>Nama Prestasi</th>
-                        <th>Status</th>
-                        <th>Diverifikasi Oleh</th>
-                        <th class="text-end">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for prestasi in riwayat %}
-                    <tr>
-                        <td>{{ prestasi.siswa.nama|default:"-" }}</td>
-                        <td>{{ prestasi.nama_prestasi }}</td>
-                        <td>
-                            {% if prestasi.status == 'diterima' %}
-                                <span class="badge bg-success">Diterima</span>
-                            {% else %}
-                                <span class="badge bg-danger">Ditolak</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-muted small">{{ prestasi.kesiswaan.nama|default:"-" }}</td>
-                        <td class="text-end">
-                            <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" class="btn btn-sm btn-outline-secondary">
-                                Lihat
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="result-info">
+        <span>📊 Total <strong>{{ total_prestasi }}</strong> prestasi yang sudah diverifikasi</span>
     </div>
 {% endif %}
+
+<!-- Content -->
+{% if prestasi_list %}
+    
+    <!-- Grouped by Date (jika ada) -->
+    {% if kelompok_list %}
+        {% for tanggal, prestasi_kelompok in kelompok_list %}
+            <div class="tanggal-group">
+                <div class="tanggal-header">
+                    📅 {{ tanggal|date:"d F Y" }} ({{ prestasi_kelompok|length }} prestasi)
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="18%">Siswa</th>
+                                <th width="22%">Prestasi</th>
+                                <th width="12%">Kategori</th>
+                                <th width="12%">Kelas</th>
+                                <th width="12%">Status</th>
+                                <th width="12%">Verifikator</th>
+                                <th width="12%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for prestasi in prestasi_kelompok %}
+                            <tr>
+                                <td>
+                                    <strong>{{ prestasi.siswa.nama }}</strong>
+                                    <div class="text-muted small">{{ prestasi.siswa.nis }}</div>
+                                </td>
+                                <td>
+                                    <small>{{ prestasi.nama_prestasi }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border" style="font-size: 11px;">
+                                        {{ prestasi.kategori_prestasi }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge-kelas">{{ prestasi.siswa.kelas }}</span>
+                                </td>
+                                <td>
+                                    {% if prestasi.status == 'diterima' %}
+                                        <span class="status-badge status-diterima">✅ Diterima</span>
+                                    {% elif prestasi.status == 'perbaikan' %}
+                                        <span class="status-badge status-perbaikan">🔧 Perbaikan</span>
+                                    {% elif prestasi.status == 'ditolak' %}
+                                        <span class="status-badge status-ditolak">❌ Ditolak</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ prestasi.kesiswaan.nama|default:"(belum)" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" 
+                                        class="btn btn-xs btn-outline-info" style="font-size: 12px;">
+                                        Lihat
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+    <!-- Default list jika tidak ada grouping -->
+    {% else %}
+        <div class="card p-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="18%">Siswa</th>
+                            <th width="22%">Prestasi</th>
+                            <th width="12%">Kategori</th>
+                            <th width="12%">Kelas</th>
+                            <th width="12%">Status</th>
+                            <th width="12%">Verifikator</th>
+                            <th width="12%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for prestasi in prestasi_list %}
+                        <tr>
+                            <td>
+                                <strong>{{ prestasi.siswa.nama }}</strong>
+                                <div class="text-muted small">{{ prestasi.siswa.nis }}</div>
+                            </td>
+                            <td>
+                                <small>{{ prestasi.nama_prestasi }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" style="font-size: 11px;">
+                                    {{ prestasi.kategori_prestasi }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-kelas">{{ prestasi.siswa.kelas }}</span>
+                            </td>
+                            <td>
+                                {% if prestasi.status == 'diterima' %}
+                                    <span class="status-badge status-diterima">✅ Diterima</span>
+                                {% elif prestasi.status == 'perbaikan' %}
+                                    <span class="status-badge status-perbaikan">🔧 Perbaikan</span>
+                                {% elif prestasi.status == 'ditolak' %}
+                                    <span class="status-badge status-ditolak">❌ Ditolak</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>
+                                    {{ prestasi.kesiswaan.nama|default:"(belum)" }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" 
+                                    class="btn btn-xs btn-outline-info" style="font-size: 12px;">
+                                    Lihat
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+{% else %}
+    <!-- No Results -->
+    <div class="card p-4 text-center">
+        <i class="bi bi-inbox fs-2 text-secondary mb-2"></i>
+        <h5>Tidak ada riwayat</h5>
+        <p class="text-muted mb-0">
+            {% if filter_kelas or filter_nama or filter_status %}
+                Tidak ditemukan prestasi dengan filter yang dipilih.
+            {% else %}
+                Belum ada prestasi yang diverifikasi.
+            {% endif %}
+        </p>
+    </div>
+{% endif %}
+
+<!-- Info Box -->
+<div class="alert alert-info mt-4" role="alert">
+    <h6 class="alert-heading">💡 Tips</h6>
+    <ul class="mb-0">
+        <li>Gunakan filter untuk mencari riwayat verifikasi berdasarkan kelas, nama siswa, atau status</li>
+        <li>✅ <strong>Diterima</strong> = Prestasi telah disetujui dan tercatat</li>
+        <li>❌ <strong>Ditolak</strong> = Prestasi ditolak dengan alasan tertentu</li>
+    </ul>
+</div>
 
 {% endblock %}

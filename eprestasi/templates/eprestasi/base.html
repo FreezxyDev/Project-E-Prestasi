@@ -8,160 +8,361 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
     :root {
-        --cream: #fffbde;
-        --sky: #91c8e4;
-        --slate: #749bc2;
-        --deep: #4682a9;
-        --deep-dark: #35657f;
-        --ink: #1f3b4d;
-        --sidebar-bg: #1e3f52;
-        --sidebar-bg-2: #2c5871;
+        /* dark chrome -- sidebar & topnav tetap gelap ala terminal */
+        --chrome-bg: #020705;
+        --chrome-sidebar: #020907;
+        --chrome-hover: #0d2119;
+        --chrome-input-bg: rgba(255, 255, 255, .05);
+        --chrome-border: rgba(0, 208, 132, .14);
+        --chrome-border-soft: rgba(0, 208, 132, .08);
+        --chrome-text: #eaf5ef;
+        --chrome-text-muted: #6f8f80;
+        --chrome-text-dim: #4a6357;
+
+        --accent: #00d084;
+        --accent-dim: rgba(0, 208, 132, .12);
+        --accent-muted: #4f8f74;
+        --warning: #f5a623;
+        --danger: #ef4444;
+
+        /* konten -- putih lembut, tidak menyilaukan */
+        --bg: #f3f6f4;
+        --bg-card: #ffffff;
+        --bg-card-2: #f6f8f7;
+        --border: #dfe6e2;
+        --border-soft: #ebeeec;
+        --text: #16241d;
+        --text-muted: #64756c;
+        --text-dim: #94a39c;
+        --radius: 10px;
     }
+
+    * { box-sizing: border-box; }
+
     body {
-        background-color: #fbf9ec;
-        font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
-        color: var(--ink);
+        background-color: var(--bg);
+        font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+        color: var(--text);
+        font-size: .875rem;
     }
+
+    a { text-decoration: none; }
+
+    /* ---------- Sidebar ---------- */
     .sidebar {
         position: fixed;
         top: 0; left: 0; bottom: 0;
-        width: 250px;
-        background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-2) 100%);
-        color: #cfe3ee;
-        padding: 1.75rem 1.1rem;
+        width: 248px;
+        background: var(--chrome-sidebar);
+        border-right: 1px solid var(--chrome-border-soft);
+        padding: 1.1rem .9rem;
+        display: flex;
+        flex-direction: column;
+        z-index: 1030;
         overflow-y: auto;
     }
-    .sidebar .brand {
-        color: #fff;
-        font-weight: 800;
-        font-size: 1.3rem;
-        letter-spacing: .3px;
-        margin-bottom: .1rem;
-        line-height: 1.1;
-    }
-    .sidebar .brand-tagline {
-        display: block;
-        color: var(--sky);
-        font-size: .62rem;
-        font-weight: 600;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: 2rem;
-    }
-    .sidebar a {
+    .sidebar-brand {
         display: flex;
         align-items: center;
         gap: .65rem;
-        color: #cfe3ee;
-        text-decoration: none;
-        padding: .6rem .8rem;
-        border-radius: .55rem;
-        margin-bottom: .25rem;
-        font-size: .92rem;
+        padding: .35rem .3rem 1.4rem .3rem;
+    }
+    .brand-mark {
+        width: 34px; height: 34px;
+        background: var(--accent-dim);
+        border: 1px solid var(--chrome-border);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--accent);
+        font-weight: 700;
+        font-size: .85rem;
+        flex-shrink: 0;
+    }
+    .brand-name { color: #fff; font-weight: 700; font-size: .95rem; line-height: 1.2; letter-spacing: .2px; }
+    .brand-tag { color: var(--chrome-text-muted); font-size: .62rem; letter-spacing: 1.6px; font-weight: 600; }
+
+    .sidebar-nav { flex: 1; }
+    .nav-section { margin-bottom: 1.35rem; }
+    .nav-label {
+        color: var(--chrome-text-dim);
+        font-size: .64rem;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        padding: 0 .6rem .5rem .6rem;
+    }
+    .sidebar .nav-link {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        color: #a9c2b7;
+        padding: .55rem .65rem;
+        border-radius: 7px;
+        margin-bottom: .15rem;
+        font-size: .82rem;
         font-weight: 500;
+        border: 1px solid transparent;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+    .sidebar .nav-link i { font-size: .95rem; width: 18px; text-align: center; color: var(--chrome-text-muted); }
+    .sidebar .nav-link:hover { background: var(--chrome-hover); color: #fff; }
+    .sidebar .nav-link.active {
+        background: var(--accent-dim);
+        color: var(--accent);
+        border-color: var(--chrome-border);
+    }
+    .sidebar .nav-link.active i { color: var(--accent); }
+
+    .sidebar-footer {
+        border-top: 1px solid var(--chrome-border-soft);
+        padding-top: .9rem;
+        margin-top: .5rem;
+    }
+    .sidebar-user { display: flex; align-items: center; gap: .6rem; padding: 0 .2rem .8rem .2rem; }
+    .user-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--accent-dim); border: 1px solid var(--chrome-border);
+        color: var(--accent); font-weight: 700; font-size: .68rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .user-meta { line-height: 1.25; overflow: hidden; }
+    .user-name { color: #fff; font-size: .78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { color: var(--chrome-text-muted); font-size: .66rem; }
+    .logout-link {
+        display: flex; align-items: center; gap: .55rem;
+        color: #f3a9a9; background: rgba(239,68,68,.08);
+        border: 1px solid rgba(239,68,68,.15);
+        border-radius: 7px; padding: .5rem .65rem;
+        font-size: .78rem; font-weight: 600;
         transition: background .15s;
     }
-    .sidebar a:hover { background: rgba(255,255,255,.08); color: #fff; }
-    .sidebar a.active { background: var(--deep); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
-    .sidebar-footer {
-        position: absolute;
-        bottom: 1.5rem;
-        left: 1.1rem;
-        right: 1.1rem;
-        border-top: 1px solid rgba(255,255,255,.14);
-        padding-top: 1rem;
-    }
-    .sidebar-footer .user-info { color: #fff; font-size: .85rem; margin-bottom: .6rem; }
-    .sidebar-footer .user-info small { display: block; color: var(--sky); font-weight: 500; }
-    .sidebar-footer a.logout-btn {
-        display: flex; align-items: center; gap: .5rem;
-        color: #ffd8d8; background: rgba(255,255,255,.06);
-        font-weight: 600;
-    }
-    .sidebar-footer a.logout-btn:hover { background: rgba(220,53,69,.25); color: #fff; }
-    .main-content { margin-left: 250px; padding: 2rem; }
-    .topbar {
+    .logout-link:hover { background: rgba(239,68,68,.18); color: #fff; }
+
+    /* ---------- Main / Topnav ---------- */
+    .main-wrap { margin-left: 248px; min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topnav {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: .75rem;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .8rem 1.75rem;
+        border-bottom: 1px solid var(--chrome-border-soft);
+        background: var(--chrome-bg);
+        position: sticky;
+        top: 0;
+        z-index: 1020;
     }
-    .topbar h4 { margin: 0; font-weight: 700; color: var(--ink); }
-    .card { border: none; border-radius: .9rem; box-shadow: 0 2px 14px rgba(31,59,77,.08); }
-    .btn-primary { background-color: var(--deep); border-color: var(--deep); }
-    .btn-primary:hover { background-color: var(--deep-dark); border-color: var(--deep-dark); }
-    .btn-outline-primary { color: var(--deep); border-color: var(--deep); }
-    .btn-outline-primary:hover { background-color: var(--deep); border-color: var(--deep); }
-    .nav-pills .nav-link.active { background-color: var(--deep); }
-    .table thead th { font-size: .78rem; text-transform: uppercase; color: var(--slate); border-bottom-width: 1px; }
-    .badge-aktif { background-color: #16a34a; }
-    .badge-alumni { background-color: #6b7280; }
-    .badge-nonaktif { background-color: #9ca3af; }
-    @media (max-width: 768px) {
-        .sidebar { width: 100%; height: auto; position: relative; }
-        .main-content { margin-left: 0; }
+    .sidebar-toggle {
+        display: none;
+        background: var(--chrome-hover);
+        border: 1px solid var(--chrome-border-soft);
+        color: var(--chrome-text);
+        border-radius: 7px;
+        width: 34px; height: 34px;
+        align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .topnav-search {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        background: var(--chrome-input-bg);
+        border: 1px solid var(--chrome-border-soft);
+        border-radius: 8px;
+        padding: .5rem .8rem;
+        width: 100%;
+        max-width: 360px;
+        color: var(--chrome-text-muted);
+    }
+    .topnav-search i { font-size: .85rem; }
+    .topnav-search input {
+        background: transparent; border: none; outline: none; color: var(--chrome-text);
+        font-family: inherit; font-size: .78rem; width: 100%;
+    }
+    .topnav-search input::placeholder { color: var(--chrome-text-dim); }
+    .topnav-search .kbd {
+        font-size: .64rem; color: var(--chrome-text-dim);
+        border: 1px solid var(--chrome-border-soft); border-radius: 5px;
+        padding: .1rem .35rem; flex-shrink: 0;
+    }
+    .topnav-actions { display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
+    .btn-new {
+        display: flex; align-items: center; gap: .4rem;
+        background: var(--accent); color: #01120b;
+        font-weight: 700; font-size: .78rem;
+        padding: .5rem .85rem; border-radius: 7px;
+        transition: opacity .15s;
+        white-space: nowrap;
+    }
+    .btn-new:hover { opacity: .88; color: #01120b; }
+    .topnav-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--accent-dim); border: 1px solid var(--chrome-border);
+        color: var(--accent); font-weight: 700; font-size: .66rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .main-content { padding: 1.75rem; flex: 1; }
+
+    /* ---------- Shared component restyle ---------- */
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius);
+        box-shadow: none;
+        color: var(--text);
+    }
+    .text-muted { color: var(--text-muted) !important; }
+    .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #01120b; font-weight: 700; }
+    .btn-primary:hover { background-color: #00b873; border-color: #00b873; color: #01120b; }
+    .btn-outline-primary { color: var(--accent); border-color: var(--border); }
+    .btn-outline-primary:hover { background-color: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .nav-pills .nav-link.active { background-color: var(--accent); color: #01120b; }
+    .table { color: var(--text); }
+    .table thead th { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); border-bottom: 1px solid var(--border-soft); background: transparent; }
+    .table td, .table th { border-color: var(--border-soft); vertical-align: middle; }
+    .table-hover tbody tr:hover { background: var(--bg-card-2); color: var(--text); }
+    .badge-aktif { background-color: var(--accent); color: #01120b; }
+    .badge-alumni { background-color: #4b5a52; }
+    .badge-nonaktif { background-color: #3a4842; }
+    .form-control, .form-select {
+        background-color: var(--bg-card-2); border: 1px solid var(--border-soft); color: var(--text);
+        font-family: inherit;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: var(--bg-card-2); color: var(--text);
+        border-color: var(--accent); box-shadow: 0 0 0 .2rem var(--accent-dim);
+    }
+    .form-control::placeholder { color: var(--text-dim); }
+    .modal-content { background-color: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+    .alert { border-radius: var(--radius); border: 1px solid var(--border-soft); }
+
+    @media (max-width: 992px) {
+        .sidebar { transform: translateX(-100%); transition: transform .2s ease; width: 240px; }
+        .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.6); }
+        .main-wrap { margin-left: 0; }
+        .sidebar-toggle { display: flex; }
+        .topnav-search { max-width: 100%; }
+    }
+    @media (max-width: 576px) {
+        .topnav-search .kbd { display: none; }
+        .btn-new span { display: none; }
+        .main-content { padding: 1.1rem; }
     }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-<div class="sidebar">
-    <div class="brand">E-Prestasi</div>
-    <span class="brand-tagline">Show Your Pride</span>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-mark">&gt;_</div>
+        <div>
+            <div class="brand-name">E-Prestasi</div>
+            <span class="brand-tag">ADMIN PANEL</span>
+        </div>
+    </div>
 
-    <a href="{% url 'dashboard' %}" class="{% if active_menu == 'dashboard' %}active{% endif %}">
-        <i class="bi bi-speedometer2"></i> Dashboard
-    </a>
-    <a href="{% url 'siswa_list' %}" class="{% if active_menu == 'siswa' %}active{% endif %}">
-        <i class="bi bi-mortarboard"></i> Data Siswa
-    </a>
-    <a href="{% url 'kesiswaan_list' %}" class="{% if active_menu == 'kesiswaan' %}active{% endif %}">
-        <i class="bi bi-person-badge"></i> Data Kesiswaan
-    </a>
-    <a href="{% url 'tahun_ajaran_list' %}" class="{% if active_menu == 'tahun_ajaran' %}active{% endif %}">
-        <i class="bi bi-calendar3"></i> Tahun Ajaran
-    </a>
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-label">OVERVIEW</div>
+            <a href="{% url 'dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+            </a>
+        </div>
 
-    {% if request.session.role == 'super_admin' %}
-        <a href="{% url 'admin_list' %}" class="{% if active_menu == 'admin' %}active{% endif %}">
-            <i class="bi bi-shield-lock"></i> Kelola Admin
-        </a>
-    {% endif %}
+        <div class="nav-section">
+            <div class="nav-label">MANAGEMENT</div>
+            <a href="{% url 'siswa_list' %}" class="nav-link {% if active_menu == 'siswa' or active_menu == 'kesiswaan' %}active{% endif %}">
+                <i class="bi bi-people"></i><span>Kelola User</span>
+            </a>
+            <a href="{% url 'tahun_ajaran_list' %}" class="nav-link {% if active_menu == 'tahun_ajaran' %}active{% endif %}">
+                <i class="bi bi-calendar3"></i><span>Tahun Ajaran</span>
+            </a>
+        </div>
+
+        {% if request.session.role == 'super_admin' %}
+        <div class="nav-section">
+            <div class="nav-label">SYSTEM</div>
+            <a href="{% url 'admin_list' %}" class="nav-link {% if active_menu == 'admin' %}active{% endif %}">
+                <i class="bi bi-shield-lock"></i><span>Kelola Admin</span>
+            </a>
+        </div>
+        {% endif %}
+    </nav>
 
     <div class="sidebar-footer">
-        <div class="user-info">
-            <i class="bi bi-person-circle"></i> {{ request.session.username }}
-            <small>{% if request.session.role == 'super_admin' %}Super Admin{% else %}Admin{% endif %}</small>
+        <div class="sidebar-user">
+            <div class="user-avatar">{{ request.session.username|slice:":2"|upper }}</div>
+            <div class="user-meta">
+                <div class="user-name">{{ request.session.username }}</div>
+                <div class="user-role">{% if request.session.role == 'super_admin' %}Super Admin{% else %}Administrator{% endif %}</div>
+            </div>
         </div>
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <i class="bi bi-box-arrow-right"></i> Keluar
+        <a href="{% url 'logout' %}" class="logout-link">
+            <i class="bi bi-box-arrow-right"></i><span>Keluar</span>
         </a>
     </div>
 </div>
 
-<div class="main-content">
+<div class="main-wrap">
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+    <div class="topnav">
+        <div class="d-flex align-items-center gap-2" style="min-width:0; flex:1;">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+            <form class="topnav-search" action="{% url 'siswa_list' %}" method="get">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" placeholder="Search anything...">
+                <span class="kbd">&#8984;K</span>
+            </form>
+        </div>
+        <div class="topnav-actions">
+            {% if active_menu == 'kesiswaan' %}
+                <a href="{% url 'tambah_kesiswaan' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
+            {% else %}
+                <a href="{% url 'tambah_siswa' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
+            {% endif %}
+            <div class="topnav-avatar">{{ request.session.username|slice:":2"|upper }}</div>
+        </div>
+    </div>
 
-    {% block content %}{% endblock %}
+    <div class="main-content">
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarEl = document.getElementById('sidebar');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => sidebarEl.classList.toggle('open'));
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 992 && sidebarEl.classList.contains('open')
+                && !sidebarEl.contains(e.target) && e.target !== sidebarToggle && !sidebarToggle.contains(e.target)) {
+                sidebarEl.classList.remove('open');
+            }
+        });
+    }
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -11,9 +11,11 @@
     <div class="d-flex justify-content-between align-items-start mb-2">
         <h4 class="fw-bold mb-0">{{ prestasi.nama_prestasi }}</h4>
         {% if prestasi.status == 'diterima' %}
-            <span class="badge bg-success fs-6">Diterima</span>
+            <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill"></i> Diterima</span>
+        {% elif prestasi.status == 'perbaikan' %}
+            <span class="badge fs-6" style="background-color:#f97316;color:#fff;"><i class="bi bi-tools"></i> Perbaikan</span>
         {% elif prestasi.status == 'ditolak' %}
-            <span class="badge bg-danger fs-6">Ditolak</span>
+            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
         {% else %}
             <span class="badge bg-warning text-dark fs-6">Pending</span>
         {% endif %}
@@ -30,8 +32,20 @@
         <tr><td class="text-muted align-top">Deskripsi</td><td>{{ prestasi.deskripsi|linebreaksbr }}</td></tr>
         {% if prestasi.status == 'ditolak' %}
             <tr><td class="text-muted align-top">Alasan Ditolak</td><td class="text-danger">{{ prestasi.alasan_penolakan|linebreaksbr }}</td></tr>
+        {% elif prestasi.status == 'perbaikan' %}
+            <tr><td class="text-muted align-top">Catatan Perbaikan</td><td style="color:#c2410c;">({{ prestasi.get_jenis_perbaikan_display }}) {{ prestasi.catatan_perbaikan|linebreaksbr }}</td></tr>
         {% endif %}
     </table>
+
+    {% if prestasi.dokumen_puspresnas %}
+        <hr>
+        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Dokumen Puspresnas</h6>
+        <table class="table table-sm table-borderless mb-0 small">
+            <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
+            <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
+            <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
+        </table>
+    {% endif %}
 </div>
 
 <div class="card p-4 mb-3">
@@ -67,21 +81,46 @@
 {% if prestasi.status == 'pending' %}
 <div class="card p-4">
     <h6 class="fw-bold mb-3">Keputusan Verifikasi</h6>
-    <form method="POST">
+    <form method="POST" id="form-verifikasi">
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <div class="d-flex gap-3 mb-3">
-            {% for radio in form.keputusan %}
-                <label class="border rounded px-3 py-2 d-flex align-items-center gap-2" style="cursor:pointer;">
-                    {{ radio.tag }} {{ radio.choice_label }}
-                </label>
-            {% endfor %}
+        <div class="d-flex gap-3 mb-3 flex-wrap" id="pilihan-keputusan">
+            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="diterima" style="cursor:pointer;">
+                <input type="radio" name="keputusan" value="diterima" required>
+                <i class="bi bi-check-circle-fill text-success"></i> Terima
+            </label>
+            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="perbaikan" style="cursor:pointer;">
+                <input type="radio" name="keputusan" value="perbaikan" required>
+                <i class="bi bi-tools" style="color:#f97316;"></i> Perbaiki
+            </label>
+            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="ditolak" style="cursor:pointer;">
+                <input type="radio" name="keputusan" value="ditolak" required>
+                <i class="bi bi-x-circle-fill text-danger"></i> Tolak
+            </label>
         </div>
         {{ form.keputusan.errors }}
 
-        <div class="mb-3">
-            <label class="form-label small">Alasan Penolakan <span class="text-muted">(wajib diisi kalau memilih Tolak)</span></label>
+        <div class="mb-3 blok-perbaikan" style="display:none;">
+            <label class="form-label small">Jenis Perbaikan</label>
+            <div class="d-flex gap-3 mb-2">
+                <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                    <input type="radio" name="jenis_perbaikan" value="data"> Perbaikan Data
+                </label>
+                <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                    <input type="radio" name="jenis_perbaikan" value="file"> Perbaikan File
+                    <span class="text-muted small">(file sertifikat lama akan dihapus)</span>
+                </label>
+            </div>
+            {{ form.jenis_perbaikan.errors }}
+
+            <label class="form-label small">Catatan Perbaikan <span class="text-muted">(wajib diisi)</span></label>
+            {{ form.catatan_perbaikan }}
+            {{ form.catatan_perbaikan.errors }}
+        </div>
+
+        <div class="mb-3 blok-tolak" style="display:none;">
+            <label class="form-label small">Alasan Penolakan <span class="text-muted">(wajib diisi, file sertifikat akan dihapus)</span></label>
             {{ form.alasan_penolakan }}
             {{ form.alasan_penolakan.errors }}
         </div>
@@ -89,6 +128,36 @@
         <button type="submit" class="btn btn-primary">Kirim Keputusan</button>
     </form>
 </div>
+
+<script>
+    (function () {
+        var labels = document.querySelectorAll('.opsi-keputusan');
+        var blokPerbaikan = document.querySelector('.blok-perbaikan');
+        var blokTolak = document.querySelector('.blok-tolak');
+
+        function update() {
+            var dipilih = document.querySelector('input[name="keputusan"]:checked');
+            var nilai = dipilih ? dipilih.value : null;
+
+            blokPerbaikan.style.display = (nilai === 'perbaikan') ? 'block' : 'none';
+            blokTolak.style.display = (nilai === 'ditolak') ? 'block' : 'none';
+
+            labels.forEach(function (label) {
+                label.classList.toggle('border-primary', label.dataset.opsi === nilai);
+            });
+        }
+
+        labels.forEach(function (label) {
+            label.addEventListener('click', function () {
+                var radio = label.querySelector('input[type="radio"]');
+                radio.checked = true;
+                update();
+            });
+        });
+
+        update();
+    })();
+</script>
 {% endif %}
 
 {% endblock %}
