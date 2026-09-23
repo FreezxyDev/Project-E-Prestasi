@@ -3,6 +3,55 @@ from django.core.exceptions import ValidationError
 from .models import Siswa, Kesiswaan, Users, Prestasi, Sertifikat, Dokumentasi
 
 
+# ── Pemetaan Kelas berdasarkan Jurusan ──────────────────────────────────────
+# Dipakai supaya dropdown "Kelas" di form Tambah/Edit Siswa cuma menampilkan
+# kelas yang relevan dengan Jurusan yang dipilih admin (filter di JS, lihat
+# templates/eprestasi/siswa/form.html), dan divalidasi ulang di server lewat
+# SiswaAkunForm.clean() di bawah.
+KELAS_PER_JURUSAN = {
+    'RPL': ['X PPLG 1', 'X PPLG 2', 'XI RPL 1', 'XI RPL 2', 'XII RPL 1', 'XII RPL 2'],
+    'DKV': ['X DKV 1', 'X DKV 2', 'XI DKV 1', 'XI DKV 2', 'XII DKV 1', 'XII DKV 2'],
+    'TJKT': ['X TJKT 1', 'XI TJKT 1', 'XII TJKT 1'],
+    'PM': [
+        'X PM 1', 'X PM 2', 'X PM 3',
+        'XI PM 1', 'XI PM 2', 'XI PM 3',
+        'XII PM 1', 'XII PM 2', 'XII PM 3',
+    ],
+    'MPLB': [
+        'X MP 1', 'X MP 2', 'X MP 3', 'X MP 4', 'X MP 5',
+        'XI MP 1', 'XI MP 2', 'XI MP 3', 'XI MP 4', 'XI MP 5',
+        'XII MP 1', 'XII MP 2', 'XII MP 3', 'XII MP 4', 'XII MP 5',
+    ],
+    'AKL': [
+        'X AKL 1', 'X AKL 2', 'X AKL 3', 'X AKL 4',
+        'XI AKL 1', 'XI AKL 2', 'XI AKL 3', 'XI AKL 4',
+        'XII AKL 1', 'XII AKL 2', 'XII AKL 3', 'XII AKL 4',
+    ],
+}
+
+# Reverse map: nama kelas -> jurusan. Dipakai buat kasih atribut data-jurusan
+# ke tiap <option> Kelas (lihat KelasSelectWidget di bawah).
+_JURUSAN_PER_KELAS = {
+    kelas: jurusan
+    for jurusan, daftar_kelas in KELAS_PER_JURUSAN.items()
+    for kelas in daftar_kelas
+}
+
+
+class KelasSelectWidget(forms.Select):
+    """
+    Select HTML biasa, tapi tiap <option> dikasih atribut data-jurusan="RPL"
+    dst, supaya JavaScript di form Tambah/Edit Siswa bisa menyembunyikan opsi
+    kelas yang tidak sesuai dengan Jurusan yang lagi dipilih.
+    """
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        jurusan = _JURUSAN_PER_KELAS.get(value)
+        if jurusan:
+            option['attrs']['data-jurusan'] = jurusan
+        return option
+
+
 MAKS_UKURAN_FILE_MB = 5
 MAKS_UKURAN_FILE_BYTES = MAKS_UKURAN_FILE_MB * 1024 * 1024
 
@@ -33,15 +82,13 @@ class SiswaAkunForm(forms.Form):
         max_length=100,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Masukkan Nama Lengkap'})
     )
-    kelas = forms.CharField(
-        max_length=20,
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: XII-RPL 1'})
+    kelas = forms.ChoiceField(
+        choices=[('', '-- Pilih Jurusan dulu --')] + list(Siswa.KELAS_CHOICES),
+        widget=KelasSelectWidget(attrs={'class': 'form-select'})
     )
     jurusan = forms.ChoiceField(
-        choices=Siswa.JURUSAN_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select', 'placeholder': 'Contoh: Rekayasa Perangkat Lunak'})
+        choices=[('', '-- Pilih Jurusan --')] + list(Siswa.JURUSAN_CHOICES),
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
     tingkat = forms.IntegerField(
         required=False,
@@ -53,13 +100,19 @@ class SiswaAkunForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     password = forms.CharField(
-        required=False, # Dibuat False agar saat Edit tidak wajib diisi
+        required=False,  # default False; jadi wajib khusus mode tambah (lihat __init__)
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Masukkan Password'})
     )
 
     def __init__(self, *args, **kwargs):
         self.siswa_id = kwargs.pop('siswa_id', None)
         super().__init__(*args, **kwargs)
+        if self.siswa_id is None:
+            # Mode tambah akun baru -> password wajib diisi.
+            self.fields['password'].required = True
+        else:
+            # Mode edit -> password opsional, cuma diganti kalau diisi.
+            self.fields['password'].help_text = 'Kosongkan jika tidak ingin mengubah password.'
 
     def clean_nis(self):
         nis = self.cleaned_data.get('nis')
@@ -70,6 +123,19 @@ class SiswaAkunForm(forms.Form):
         if qs.exists():
             raise forms.ValidationError('NIS sudah terdaftar.')
         return nis
+
+    def clean(self):
+        cleaned_data = super().clean()
+        jurusan = cleaned_data.get('jurusan')
+        kelas = cleaned_data.get('kelas')
+
+        # Validasi ulang di server, jaga-jaga kalau filter JS di browser
+        # di-nonaktifkan atau di-bypass -- kelas yang dipilih harus benar-benar
+        # milik jurusan yang dipilih.
+        if jurusan and kelas and kelas not in KELAS_PER_JURUSAN.get(jurusan, []):
+            self.add_error('kelas', 'Kelas yang dipilih tidak sesuai dengan Jurusan.')
+
+        return cleaned_data
 
 class KesiswaanAkunForm(forms.Form):
     """
@@ -154,38 +220,17 @@ class AdminAkunForm(forms.Form):
 class SiswaProfilForm(forms.Form):
     """
     Form yang diisi SISWA SENDIRI (bukan admin) untuk melengkapi profilnya
-    setelah login pertama kali. Sekarang admin sudah mengisi nama/kelas/jurusan
-    saat bikin akun, tapi field itu tetap ada di sini (kalau-kalau admin
-    melewatkannya). email & no_hp WAJIB diisi siswa sendiri.
-    
-    FIELD READONLY (tidak bisa diedit):
-    - nama (data sekolah)
-    - kelas (data sekolah)
-    - jurusan (data sekolah)
+    setelah login pertama kali. Nama, kelas, dan jurusan SEPENUHNYA diisi
+    admin saat akun dibuat -- makanya field itu SENGAJA TIDAK ADA di form ini
+    (cuma ditampilkan sebagai teks biasa di template dari data `siswa`
+    langsung, lihat siswa_portal/lengkapi_profil.html).
+
+    PENTING: jangan tambahkan field nama/kelas/jurusan ke sini lagi. Kalau
+    ditambah sebagai field wajib tapi template tidak merender inputnya,
+    form ini akan SELALU gagal validasi (karena field itu tidak pernah ada
+    di request.POST) -- inilah yang dulu menyebabkan siswa terjebak
+    redirect loop terus-menerus ke halaman "Lengkapi Profil".
     """
-    nama = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Nama lengkap kamu',
-            'readonly': 'readonly'
-        })
-    )
-    kelas = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Contoh: XI RPL 2',
-            'readonly': 'readonly'
-        })
-    )
-    jurusan = forms.ChoiceField(
-        choices=Siswa.JURUSAN_CHOICES,
-        widget=forms.Select(attrs={
-            'class': 'form-select',
-            'disabled': 'disabled'
-        })
-    )
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'contoh@email.com'})
     )
@@ -193,13 +238,6 @@ class SiswaProfilForm(forms.Form):
         max_length=100,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 08123456789'})
     )
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Tambahkan CSS class untuk styling field yang readonly
-        self.fields['nama'].widget.attrs['class'] += ' is-readonly'
-        self.fields['kelas'].widget.attrs['class'] += ' is-readonly'
-        # Note: jurusan menggunakan disabled bukan readonly, jadi perlu handling khusus
 
 
 TINGKAT_PRESTASI_CHOICES = [

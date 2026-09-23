@@ -34,17 +34,18 @@
             {{ form.nama.errors }}
         </div>
 
-        <!-- Row Kelas & Jurusan -->
+        <!-- Row Jurusan & Kelas -->
         <div class="row">
-            <div class="col-6 mb-3">
-                <label class="form-label">Kelas</label>
-                {{ form.kelas }}
-                {{ form.kelas.errors }}
-            </div>
             <div class="col-6 mb-3">
                 <label class="form-label">Jurusan</label>
                 {{ form.jurusan }}
                 {{ form.jurusan.errors }}
+            </div>
+            <div class="col-6 mb-3">
+                <label class="form-label">Kelas</label>
+                {{ form.kelas }}
+                {{ form.kelas.errors }}
+                <div class="form-text">Pilih Jurusan dulu untuk memunculkan pilihan Kelas.</div>
             </div>
         </div>
 
@@ -89,4 +90,46 @@
 
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    var jurusanSelect = document.getElementById('id_jurusan');
+    var kelasSelect = document.getElementById('id_kelas');
+    if (!jurusanSelect || !kelasSelect) return;
+
+    // Simpan semua <option> Kelas asli sebelum difilter
+    var semuaOpsiKelas = Array.prototype.slice.call(kelasSelect.options);
+    var kelasTerpilihAwal = kelasSelect.value;
+
+    function filterKelas() {
+        var jurusanTerpilih = jurusanSelect.value;
+        var nilaiSaatIni = kelasSelect.value;
+
+        kelasSelect.innerHTML = '';
+        semuaOpsiKelas.forEach(function (opt) {
+            var jurusanOpsi = opt.getAttribute('data-jurusan');
+            // Opsi kosong ("-- Pilih Jurusan dulu --") selalu ditampilkan
+            if (!opt.value || !jurusanTerpilih || jurusanOpsi === jurusanTerpilih) {
+                kelasSelect.appendChild(opt.cloneNode(true));
+            }
+        });
+
+        // Pertahankan pilihan lama kalau masih valid untuk jurusan baru
+        var opsiMasihAda = Array.prototype.some.call(kelasSelect.options, function (o) {
+            return o.value === nilaiSaatIni;
+        });
+        kelasSelect.value = opsiMasihAda ? nilaiSaatIni : '';
+    }
+
+    jurusanSelect.addEventListener('change', filterKelas);
+
+    // Filter begitu halaman dibuka (mode edit -> jurusan sudah terisi)
+    filterKelas();
+    if (kelasTerpilihAwal) {
+        kelasSelect.value = kelasTerpilihAwal;
+    }
+})();
+</script>
 {% endblock %}

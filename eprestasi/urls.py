@@ -8,6 +8,7 @@ from . import import_views
 
 urlpatterns = [
     # Autentikasi
+    path('',views.landing_page, name='landing_page'),
     path('login/', auth_views.login_view, name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
 
@@ -36,7 +37,7 @@ urlpatterns = [
     path('kesiswaan/riwayat/', kesiswaan_views.riwayat_verifikasi, name='kesiswaan_riwayat'),
 
     # Dashboard admin
-    path('', views.dashboard, name='dashboard'),
+    path('admin/dashboard/', views.dashboard, name='dashboard'),
 
     # Siswa
     path('siswa/', views.siswa_list, name='siswa_list'),

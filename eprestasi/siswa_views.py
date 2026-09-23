@@ -48,11 +48,11 @@ def lengkapi_profil(request):
         form = SiswaProfilForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            siswa.nama = data['nama']
-            siswa.kelas = data['kelas']
-            siswa.jurusan = data['jurusan']
-            siswa.email = data.get('email') or None
-            siswa.no_hp = data.get('no_hp') or None
+            # Nama, kelas, jurusan TIDAK disentuh di sini -- itu sepenuhnya
+            # tanggung jawab admin (lihat SiswaAkunForm). Siswa cuma boleh
+            # mengubah data kontaknya sendiri.
+            siswa.email = data['email']
+            siswa.no_hp = data['no_hp']
             siswa.save()
             messages.success(request, 'Profil berhasil disimpan.')
             return redirect('siswa_dashboard')
@@ -60,9 +60,6 @@ def lengkapi_profil(request):
         # Mode edit (profil sudah lengkap, siswa buka halaman ini lagi buat koreksi)
         # -> form diisi otomatis dari data yang sudah ada.
         form = SiswaProfilForm(initial={
-            'nama': siswa.nama,
-            'kelas': siswa.kelas,
-            'jurusan': siswa.jurusan,
             'email': siswa.email,
             'no_hp': siswa.no_hp,
         })

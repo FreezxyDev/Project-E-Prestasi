@@ -11,6 +11,11 @@ from .forms import SiswaAkunForm, KesiswaanAkunForm, TahunAjaranForm, AdminAkunF
 from .decorators import role_required
 
 
+def landing_page(request):
+    """Halaman landing page (awal) aplikasi e-prestasi."""
+    return render(request, 'eprestasi/landing_page.html')
+
+
 def _generate_username(identifier):
     """
     Username akun dibuat otomatis dari NIS (siswa) / NIP (kesiswaan).
