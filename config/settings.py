@@ -240,7 +240,7 @@ STATIC_URL = '/static/'  # Slashes di depan wajib ada
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-    BASE_DIR / "eprestasi" / "static_img",
+    BASE_DIR / "eprestasi" / "static",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
