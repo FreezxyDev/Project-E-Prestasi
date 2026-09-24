@@ -245,7 +245,6 @@ TINGKAT_PRESTASI_CHOICES = [
     ('kabupaten/kota', 'Kabupaten/Kota'),
     ('provinsi', 'Provinsi'),
     ('nasional', 'Nasional'),
-    ('internasional', 'Internasional'),
 ]
 
 

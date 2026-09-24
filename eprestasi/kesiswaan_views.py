@@ -96,7 +96,6 @@ def dashboard(request):
         ('Kota', 'Kota'),
         ('Provinsi', 'Provinsi'),
         ('Nasional', 'Nasional'),
-        ('Internasional', 'Internasional'),
     ]
     kelas_options = Siswa.KELAS_CHOICES
 
