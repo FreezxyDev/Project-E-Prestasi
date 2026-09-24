@@ -123,10 +123,15 @@
     </div>
     <div class="col-6 col-lg-3">
         <div class="card stat-card">
-            <div class="stat-icon-badge amber"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-label">PENDING VERIFICATION</div>
-            <div class="stat-value">{{ pending_verifikasi }}</div>
-            <div class="stat-sub">{% if pending_verifikasi > 0 %}<span class="amber-txt">perlu ditinjau</span>{% else %}semua sudah diproses{% endif %}</div>
+            <div class="stat-icon-badge amber"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">TAHUN AJARAN AKTIF</div>
+            {% if tahun_ajaran_aktif %}
+                <div class="stat-value" style="font-size:1.35rem;">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
+                <div class="stat-sub"><span class="amber-txt">Sedang berjalan</span></div>
+            {% else %}
+                <div class="stat-value" style="font-size:1.1rem;">Belum diatur</div>
+                <div class="stat-sub">Atur di menu Tahun Ajaran</div>
+            {% endif %}
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -134,7 +139,7 @@
             <div class="stat-icon-badge"><i class="bi bi-trophy"></i></div>
             <div class="stat-label">TOTAL ACHIEVEMENTS</div>
             <div class="stat-value">{{ total_prestasi }}</div>
-            <div class="stat-sub">seluruh tahun ajaran</div>
+            <div class="stat-sub">seluruh tahun ajaran (aktif &amp; nonaktif)</div>
         </div>
     </div>
 </div>
