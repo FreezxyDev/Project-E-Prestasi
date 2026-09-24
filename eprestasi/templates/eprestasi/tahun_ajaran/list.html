@@ -21,6 +21,98 @@
     </div>
 </div>
 
+<!-- FILTER & SORT -->
+<div class="card p-3 mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-12 col-md-6">
+            <label class="form-label small text-muted mb-1">Cari Nama Tahun Ajaran</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control"
+                   placeholder="Contoh: 2024/2025">
+        </div>
+        <div class="col-8 col-md-4">
+            <label class="form-label small text-muted mb-1">Urutkan</label>
+            <select name="sort" class="form-select">
+                <option value="terbaru" {% if sort == 'terbaru' %}selected{% endif %}>Terbaru Ditambahkan</option>
+                <option value="terlama" {% if sort == 'terlama' %}selected{% endif %}>Terlama Ditambahkan</option>
+                <option value="nama_asc" {% if sort == 'nama_asc' %}selected{% endif %}>Nama (A-Z)</option>
+                <option value="nama_desc" {% if sort == 'nama_desc' %}selected{% endif %}>Nama (Z-A)</option>
+            </select>
+        </div>
+        <div class="col-4 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Terapkan
+            </button>
+        </div>
+        {% if q %}
+            <div class="col-12">
+                <a href="{% url 'tahun_ajaran_list' %}" class="small text-muted">
+                    <i class="bi bi-x-circle"></i> Hapus filter
+                </a>
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- RINGKASAN STATISTIK -->
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <h6 class="fw-bold mb-1"><i class="bi bi-people"></i> Statistik Akun</h6>
+            <p class="text-muted small mb-3">
+                Total akun di seluruh sistem (data akun tidak terikat ke tahun ajaran tertentu).
+            </p>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Siswa Aktif</span>
+                <span class="fw-semibold">{{ statistik_akun.siswa_aktif }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Siswa Alumni</span>
+                <span class="fw-semibold">{{ statistik_akun.siswa_alumni }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Kesiswaan</span>
+                <span class="fw-semibold">{{ statistik_akun.kesiswaan }}</span>
+            </div>
+            <div class="d-flex justify-content-between pt-2">
+                <span class="small fw-bold">Total Akun</span>
+                <span class="fw-bold">{{ statistik_akun.total }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <h6 class="fw-bold mb-1"><i class="bi bi-trophy"></i> Statistik Prestasi</h6>
+            <p class="text-muted small mb-3">
+                {% if sedang_difilter %}
+                    Prestasi pada tahun ajaran yang cocok dengan pencarian "<strong>{{ q }}</strong>".
+                {% else %}
+                    Prestasi dari <strong>seluruh tahun ajaran</strong> (aktif &amp; nonaktif).
+                {% endif %}
+            </p>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Diterima</span>
+                <span class="fw-semibold">{{ statistik_prestasi.diterima }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Pending</span>
+                <span class="fw-semibold">{{ statistik_prestasi.pending }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Perbaikan</span>
+                <span class="fw-semibold">{{ statistik_prestasi.perbaikan }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1">
+                <span class="small text-muted">Ditolak</span>
+                <span class="fw-semibold">{{ statistik_prestasi.ditolak }}</span>
+            </div>
+            <div class="d-flex justify-content-between pt-2">
+                <span class="small fw-bold">Total Prestasi</span>
+                <span class="fw-bold">{{ statistik_prestasi.total }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card p-3">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -69,7 +161,13 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="3" class="text-center text-muted py-4">Belum ada data tahun ajaran.</td>
+                    <td colspan="3" class="text-center text-muted py-4">
+                        {% if q %}
+                            Tidak ada tahun ajaran yang cocok dengan "{{ q }}".
+                        {% else %}
+                            Belum ada data tahun ajaran.
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

@@ -409,9 +409,58 @@ def delete_kesiswaan(request, kesiswaan_id):
 
 @role_required('admin', 'super_admin')
 def tahun_ajaran_list(request):
+    q = request.GET.get('q', '').strip()
+    sort = request.GET.get('sort', 'terbaru')
+
+    daftar = Tahun_ajaran.objects.all()
+    if q:
+        daftar = daftar.filter(tahun_ajaran__icontains=q)
+
+    sort_map = {
+        'nama_asc': 'tahun_ajaran',
+        'nama_desc': '-tahun_ajaran',
+        'terbaru': '-id',
+        'terlama': 'id',
+    }
+    daftar = daftar.order_by(sort_map.get(sort, '-id'))
+
+    # ---- Statistik Prestasi ----
+    # Kalau ada filter nama (q), statistik prestasi cuma menghitung punya
+    # tahun ajaran yang cocok dengan filter. Kalau filter kosong -> otomatis
+    # menghitung SEMUA tahun ajaran (aktif & nonaktif).
+    prestasi_qs = Prestasi.objects.all()
+    if q:
+        prestasi_qs = prestasi_qs.filter(tahun_ajaran__tahun_ajaran__icontains=q)
+
+    statistik_prestasi = {
+        'total': prestasi_qs.count(),
+        'diterima': prestasi_qs.filter(status='diterima').count(),
+        'pending': prestasi_qs.filter(status='pending').count(),
+        'perbaikan': prestasi_qs.filter(status='perbaikan').count(),
+        'ditolak': prestasi_qs.filter(status='ditolak').count(),
+    }
+
+    # ---- Statistik Akun ----
+    # CATATAN: tabel Siswa/Kesiswaan tidak punya relasi ke Tahun_ajaran, jadi
+    # jumlah akun selalu dihitung dari SELURUH sistem (tidak ikut terfilter
+    # oleh pencarian nama tahun ajaran).
+    statistik_akun = {
+        'siswa_aktif': Siswa.objects.filter(status='aktif').count(),
+        'siswa_alumni': Siswa.objects.filter(status='alumni').count(),
+        'kesiswaan': Kesiswaan.objects.count(),
+    }
+    statistik_akun['total'] = (
+        statistik_akun['siswa_aktif'] + statistik_akun['siswa_alumni'] + statistik_akun['kesiswaan']
+    )
+
     context = {
         'active_menu': 'tahun_ajaran',
-        'tahun_ajaran_list': Tahun_ajaran.objects.all().order_by('-id'),
+        'tahun_ajaran_list': daftar,
+        'q': q,
+        'sort': sort,
+        'statistik_prestasi': statistik_prestasi,
+        'statistik_akun': statistik_akun,
+        'sedang_difilter': bool(q),
     }
     return render(request, 'eprestasi/tahun_ajaran/list.html', context)
 
