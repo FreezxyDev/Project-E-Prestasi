@@ -1,16 +1,31 @@
 {% extends 'eprestasi/base.html' %}
 {% block title %}Tahun Ajaran{% endblock %}
 
+{% block extra_head %}
+<style>
+    .quick-add-card .form-control, .quick-add-card .form-select { font-size: .82rem; }
+    .chart-legend { display: flex; flex-direction: column; gap: .55rem; margin-top: .25rem; }
+    .chart-legend .leg-row { display: flex; align-items: center; gap: .55rem; font-size: .78rem; }
+    .chart-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+    .chart-legend .leg-label { color: var(--text-muted); flex: 1; }
+    .chart-legend .leg-val { font-weight: 700; color: var(--text); }
+    .donut-wrap { position: relative; max-width: 190px; margin: 0 auto; }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-center .n { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .donut-center .t { font-size: .62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-top: .2rem; }
+    .sortable-th a { color: inherit; display: inline-flex; align-items: center; gap: .3rem; }
+    .sortable-th a:hover { color: var(--accent); }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="topbar">
-    <h4>Kelola Tahun Ajaran</h4>
-    <a href="{% url 'tambah_tahun_ajaran' %}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg"></i> Tambah Tahun Ajaran
-    </a>
+<div class="page-header">
+    <h1>Kelola Tahun Ajaran</h1>
+    <p>Ringkasan akun dan prestasi berdasarkan tahun ajaran E-Prestasi</p>
 </div>
 
-<div class="alert alert-info d-flex gap-2">
+<div class="alert alert-info d-flex gap-2 mb-3">
     <i class="bi bi-info-circle fs-5"></i>
     <div class="small">
         Saat kamu <strong>menambahkan tahun ajaran baru dan langsung mengaktifkannya</strong>,
@@ -21,104 +36,141 @@
     </div>
 </div>
 
-<!-- FILTER & SORT -->
-<div class="card p-3 mb-3">
-    <form method="GET" class="row g-2 align-items-end">
-        <div class="col-12 col-md-6">
-            <label class="form-label small text-muted mb-1">Cari Nama Tahun Ajaran</label>
-            <input type="text" name="q" value="{{ q }}" class="form-control"
-                   placeholder="Contoh: 2024/2025">
-        </div>
-        <div class="col-8 col-md-4">
-            <label class="form-label small text-muted mb-1">Urutkan</label>
-            <select name="sort" class="form-select">
-                <option value="terbaru" {% if sort == 'terbaru' %}selected{% endif %}>Terbaru Ditambahkan</option>
-                <option value="terlama" {% if sort == 'terlama' %}selected{% endif %}>Terlama Ditambahkan</option>
-                <option value="nama_asc" {% if sort == 'nama_asc' %}selected{% endif %}>Nama (A-Z)</option>
-                <option value="nama_desc" {% if sort == 'nama_desc' %}selected{% endif %}>Nama (Z-A)</option>
-            </select>
-        </div>
-        <div class="col-4 col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-funnel"></i> Terapkan
-            </button>
-        </div>
-        {% if q %}
-            <div class="col-12">
-                <a href="{% url 'tahun_ajaran_list' %}" class="small text-muted">
-                    <i class="bi bi-x-circle"></i> Hapus filter
-                </a>
-            </div>
-        {% endif %}
-    </form>
-</div>
-
-<!-- RINGKASAN STATISTIK -->
+<!-- STAT CARDS -->
 <div class="row g-3 mb-3">
-    <div class="col-md-6">
-        <div class="card p-3 h-100">
-            <h6 class="fw-bold mb-1"><i class="bi bi-people"></i> Statistik Akun</h6>
-            <p class="text-muted small mb-3">
-                Total akun di seluruh sistem (data akun tidak terikat ke tahun ajaran tertentu).
-            </p>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Siswa Aktif</span>
-                <span class="fw-semibold">{{ statistik_akun.siswa_aktif }}</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Siswa Alumni</span>
-                <span class="fw-semibold">{{ statistik_akun.siswa_alumni }}</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Kesiswaan</span>
-                <span class="fw-semibold">{{ statistik_akun.kesiswaan }}</span>
-            </div>
-            <div class="d-flex justify-content-between pt-2">
-                <span class="small fw-bold">Total Akun</span>
-                <span class="fw-bold">{{ statistik_akun.total }}</span>
-            </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge"><i class="bi bi-calendar-range"></i></div>
+            <div class="stat-label">TOTAL TAHUN AJARAN</div>
+            <div class="stat-value">{{ total_tahun_ajaran }}</div>
+            <div class="stat-sub">terdaftar di sistem</div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card p-3 h-100">
-            <h6 class="fw-bold mb-1"><i class="bi bi-trophy"></i> Statistik Prestasi</h6>
-            <p class="text-muted small mb-3">
-                {% if sedang_difilter %}
-                    Prestasi pada tahun ajaran yang cocok dengan pencarian "<strong>{{ q }}</strong>".
-                {% else %}
-                    Prestasi dari <strong>seluruh tahun ajaran</strong> (aktif &amp; nonaktif).
-                {% endif %}
-            </p>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Diterima</span>
-                <span class="fw-semibold">{{ statistik_prestasi.diterima }}</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Pending</span>
-                <span class="fw-semibold">{{ statistik_prestasi.pending }}</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Perbaikan</span>
-                <span class="fw-semibold">{{ statistik_prestasi.perbaikan }}</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom py-1">
-                <span class="small text-muted">Ditolak</span>
-                <span class="fw-semibold">{{ statistik_prestasi.ditolak }}</span>
-            </div>
-            <div class="d-flex justify-content-between pt-2">
-                <span class="small fw-bold">Total Prestasi</span>
-                <span class="fw-bold">{{ statistik_prestasi.total }}</span>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">TAHUN AJARAN AKTIF</div>
+            {% if tahun_ajaran_aktif %}
+                <div class="stat-value" style="font-size:1.35rem;">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
+                <div class="stat-sub"><span class="amber-txt">Sedang berjalan</span></div>
+            {% else %}
+                <div class="stat-value" style="font-size:1.1rem;">Belum diatur</div>
+                <div class="stat-sub">Aktifkan salah satu di tabel bawah</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">TOTAL AKUN</div>
+            <div class="stat-value">{{ statistik_akun.total }}</div>
+            <div class="stat-sub">{{ statistik_akun.siswa_aktif }} siswa &middot; {{ statistik_akun.kesiswaan }} kesiswaan</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-trophy"></i></div>
+            <div class="stat-label">TOTAL PRESTASI</div>
+            <div class="stat-value">{{ statistik_prestasi.total }}</div>
+            <div class="stat-sub">
+                {% if sedang_difilter %}sesuai pencarian "{{ q }}"{% else %}seluruh tahun ajaran{% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div class="card p-3">
+<!-- DIAGRAM PRESTASI + TAMBAH CEPAT -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-5">
+        <div class="card p-3 h-100">
+            <div class="panel-title">Diagram Status Prestasi</div>
+            <div class="panel-sub">
+                {% if sedang_difilter %}Cocok dengan pencarian "{{ q }}"{% else %}Seluruh tahun ajaran (aktif &amp; nonaktif){% endif %}
+            </div>
+            {% if statistik_prestasi.total > 0 %}
+                <div class="donut-wrap">
+                    <canvas id="chartStatusPrestasi"></canvas>
+                    <div class="donut-center">
+                        <div class="n">{{ statistik_prestasi.total }}</div>
+                        <div class="t">Prestasi</div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="leg-row"><span class="dot" style="background:#00d084;"></span><span class="leg-label">Diterima</span><span class="leg-val">{{ statistik_prestasi.diterima }}</span></div>
+                    <div class="leg-row"><span class="dot" style="background:#f5a623;"></span><span class="leg-label">Pending</span><span class="leg-val">{{ statistik_prestasi.pending }}</span></div>
+                    <div class="leg-row"><span class="dot" style="background:#4f8fd4;"></span><span class="leg-label">Perbaikan</span><span class="leg-val">{{ statistik_prestasi.perbaikan }}</span></div>
+                    <div class="leg-row"><span class="dot" style="background:#ef4444;"></span><span class="leg-label">Ditolak</span><span class="leg-val">{{ statistik_prestasi.ditolak }}</span></div>
+                </div>
+            {% else %}
+                <div class="text-muted small text-center py-4">Belum ada data prestasi untuk ditampilkan.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card p-3 h-100 quick-add-card">
+            <div class="panel-title"><i class="bi bi-plus-circle"></i> Tambah Tahun Ajaran</div>
+            <div class="panel-sub">Langsung dari halaman ini, tidak perlu pindah halaman.</div>
+            <form method="POST" action="{% url 'tambah_tahun_ajaran' %}" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <div class="col-12 col-md-6">
+                    <label class="form-label small text-muted mb-1">{{ form_tambah.tahun_ajaran.label }}</label>
+                    {{ form_tambah.tahun_ajaran }}
+                    {{ form_tambah.tahun_ajaran.errors }}
+                </div>
+                <div class="col-7 col-md-4">
+                    <label class="form-label small text-muted mb-1">Status</label>
+                    {{ form_tambah.status }}
+                </div>
+                <div class="col-5 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-lg"></i> Tambah
+                    </button>
+                </div>
+            </form>
+            <div class="small text-muted mt-2">
+                <i class="bi bi-info-circle"></i> Kalau status dipilih <strong>Aktif</strong>, tahun ajaran yang sedang aktif otomatis dinonaktifkan dan seluruh siswa naik tingkat.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL + TOOLBAR SEARCH/SORT DI DALAM CARD YANG SAMA -->
+<div class="card">
+    <form method="GET" class="table-toolbar">
+        <div class="table-toolbar-search">
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+                   placeholder="Cari nama tahun ajaran... contoh 2024/2025">
+        </div>
+        <select name="sort" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+            <option value="terbaru" {% if sort == 'terbaru' %}selected{% endif %}>Terbaru Ditambahkan</option>
+            <option value="terlama" {% if sort == 'terlama' %}selected{% endif %}>Terlama Ditambahkan</option>
+            <option value="nama_asc" {% if sort == 'nama_asc' %}selected{% endif %}>Nama (A-Z)</option>
+            <option value="nama_desc" {% if sort == 'nama_desc' %}selected{% endif %}>Nama (Z-A)</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-search"></i> Cari
+        </button>
+        {% if q %}
+            <a href="{% url 'tahun_ajaran_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle"></i> Reset
+            </a>
+        {% endif %}
+        <span class="ms-auto small text-muted">{{ tahun_ajaran_list|length }} tahun ajaran ditampilkan</span>
+    </form>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Tahun Ajaran</th>
+                    <th class="sortable-th">
+                        <a href="?q={{ q|urlencode }}&sort={% if sort == 'nama_asc' %}nama_desc{% else %}nama_asc{% endif %}">
+                            Tahun Ajaran
+                            {% if sort == 'nama_asc' %}<i class="bi bi-sort-alpha-down"></i>
+                            {% elif sort == 'nama_desc' %}<i class="bi bi-sort-alpha-up"></i>
+                            {% else %}<i class="bi bi-arrow-down-up text-muted"></i>{% endif %}
+                        </a>
+                    </th>
                     <th>Status</th>
                     <th class="text-end">Aksi</th>
                 </tr>
@@ -175,4 +227,32 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_scripts %}
+{% if statistik_prestasi.total > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    new Chart(document.getElementById('chartStatusPrestasi'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Diterima', 'Pending', 'Perbaikan', 'Ditolak'],
+            datasets: [{
+                data: [
+                    {{ statistik_prestasi.diterima }},
+                    {{ statistik_prestasi.pending }},
+                    {{ statistik_prestasi.perbaikan }},
+                    {{ statistik_prestasi.ditolak }}
+                ],
+                backgroundColor: ['#00d084', '#f5a623', '#4f8fd4', '#ef4444'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: { legend: { display: false }, tooltip: { enabled: true } }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

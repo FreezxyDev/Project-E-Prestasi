@@ -461,6 +461,9 @@ def tahun_ajaran_list(request):
         'statistik_prestasi': statistik_prestasi,
         'statistik_akun': statistik_akun,
         'sedang_difilter': bool(q),
+        'total_tahun_ajaran': Tahun_ajaran.objects.count(),
+        'tahun_ajaran_aktif': Tahun_ajaran.objects.filter(status='aktif').first(),
+        'form_tambah': TahunAjaranForm(initial={'status': 'nonaktif'}),
     }
     return render(request, 'eprestasi/tahun_ajaran/list.html', context)
 
