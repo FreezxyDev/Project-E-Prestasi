@@ -113,6 +113,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "eprestasi" / "templates" / "static_img",
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ==============================================================================
 # KONFIGURASI CLOUDINARY (PERBAIKAN ERROR "Must supply api_key")
