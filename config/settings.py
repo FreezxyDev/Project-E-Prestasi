@@ -110,7 +110,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-    BASE_DIR / "eprestasi" / "templates" / "static_img",
+    BASE_DIR / "eprestasi" / "static_img",
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
