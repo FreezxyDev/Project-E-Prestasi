@@ -174,7 +174,6 @@ class Prestasi(models.Model):
     kategori_prestasi = models.CharField(max_length=100, choices=[
         ('akademik','akademik'),
         ('non-akademik','non-akademik'),
-        ('kejuaraan','kejuaraan'),
     ])
     tanggal_upload = models.DateTimeField(auto_now_add=True)
     tanggal_verifikasi = models.DateTimeField(null=True, blank=True)

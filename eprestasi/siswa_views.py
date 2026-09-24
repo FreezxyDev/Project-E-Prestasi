@@ -145,6 +145,5 @@ def portofolio_publik(request, nis):
         'total_prestasi': prestasi_list.count(),
         'total_akademik': prestasi_list.filter(kategori_prestasi='akademik').count(),
         'total_non_akademik': prestasi_list.filter(kategori_prestasi='non-akademik').count(),
-        'total_kejuaraan': prestasi_list.filter(kategori_prestasi='kejuaraan').count(),
     }
     return render(request, 'eprestasi/portofolio_publik.html', context)

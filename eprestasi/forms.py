@@ -264,7 +264,7 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Juara 1 LKS Web Design'})
     )
     kategori_prestasi = forms.ChoiceField(
-        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ('kejuaraan', 'Kejuaraan')],
+        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik')],
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     tingkat_prestasi = forms.ChoiceField(
@@ -449,7 +449,7 @@ class PrestasiEditForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     kategori_prestasi = forms.ChoiceField(
-        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ('kejuaraan', 'Kejuaraan')],
+        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik')],
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     tingkat_prestasi = forms.ChoiceField(
