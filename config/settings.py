@@ -84,17 +84,7 @@ CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-# ==========================================
-# KONFIGURASI DJANGO REST FRAMEWORK (DRF)
-# ==========================================
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'eprestasi.authentication.JWTAuthentication',  # Mengarahkan DRF ke JWT kustom
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-}
+
 
 ROOT_URLCONF = 'config.urls'
 
