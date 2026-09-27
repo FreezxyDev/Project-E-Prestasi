@@ -41,9 +41,9 @@
     .status-row:last-child { border-bottom: none; }
     .status-row .status-name { display: flex; align-items: center; gap: .55rem; color: var(--text); }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .status-dot.ok { background: var(--accent); box-shadow: 0 0 6px rgba(0,208,132,.6); }
-    .status-dot.warn { background: var(--warning); box-shadow: 0 0 6px rgba(245,166,35,.6); }
-    .status-dot.down { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,.6); }
+    .status-dot.ok { background: var(--accent); }
+    .status-dot.warn { background: var(--warning); }
+    .status-dot.down { background: var(--danger); }
     .status-val { font-size: .68rem; font-weight: 600; letter-spacing: .2px; }
     .status-val.ok { color: var(--accent); }
     .status-val.warn { color: var(--warning); }
@@ -60,7 +60,7 @@
     }
     .activity-icon.danger { background: rgba(239,68,68,.1); color: var(--danger); border-color: rgba(239,68,68,.2); }
     .activity-icon.pending { background: rgba(245,166,35,.1); color: var(--warning); border-color: rgba(245,166,35,.2); }
-    .activity-icon.info { background: rgba(111,143,128,.15); color: #a9c2b7; border-color: var(--border-soft); }
+    .activity-icon.info { background: var(--bg-card-2); color: var(--text-muted); border-color: var(--border-soft); }
     .activity-title { color: var(--text); font-size: .8rem; font-weight: 600; margin-bottom: .1rem; }
     .activity-desc { color: var(--text-muted); font-size: .74rem; }
     .empty-note { color: var(--text-dim); font-size: .78rem; padding: 1rem 0; }
@@ -85,7 +85,7 @@
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .view-all-link { color: var(--accent); font-size: .76rem; font-weight: 600; }
-    .view-all-link:hover { color: #049161; }
+    .view-all-link:hover { color: #000000; }
 
     @media (max-width: 576px) {
         .table-responsive-stack thead { display: none; }
@@ -280,8 +280,8 @@
 <script>
     const ctxAktivitas = document.getElementById('chartAktivitas');
     const gradient = ctxAktivitas.getContext('2d').createLinearGradient(0, 0, 0, 230);
-    gradient.addColorStop(0, 'rgba(0, 208, 132, .28)');
-    gradient.addColorStop(1, 'rgba(0, 208, 132, 0)');
+    gradient.addColorStop(0, 'rgba(20, 20, 20, .18)');
+    gradient.addColorStop(1, 'rgba(20, 20, 20, 0)');
 
     new Chart(ctxAktivitas, {
         type: 'line',
@@ -289,12 +289,12 @@
             labels: {{ aktivitas_labels|safe }},
             datasets: [{
                 data: {{ aktivitas_data|safe }},
-                borderColor: '#00d084',
+                borderColor: '#141414',
                 backgroundColor: gradient,
                 fill: true,
                 tension: .35,
                 pointRadius: 3,
-                pointBackgroundColor: '#00d084',
+                pointBackgroundColor: '#141414',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 borderWidth: 2
@@ -305,11 +305,11 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { precision: 0, color: '#64756c', font: { family: 'JetBrains Mono', size: 10 } },
-                    grid: { color: 'rgba(0,208,132,.1)' }
+                    ticks: { precision: 0, color: '#707070', font: { family: 'Inter', size: 10 } },
+                    grid: { color: 'rgba(20,20,20,.06)' }
                 },
                 x: {
-                    ticks: { color: '#64756c', font: { family: 'JetBrains Mono', size: 10 } },
+                    ticks: { color: '#707070', font: { family: 'Inter', size: 10 } },
                     grid: { display: false }
                 }
             }

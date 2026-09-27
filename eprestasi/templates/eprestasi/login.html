@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
         rel="stylesheet"
     />
     <link
@@ -18,41 +18,24 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     />
 
-    <!-- Script Cek Tema (Mencegah Flashing Saat Halaman Dimuat) -->
-    <script>
-        if (
-        localStorage.getItem("theme") === "dark" ||
-        (!("theme" in localStorage) &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches)
-        ) {
-        document.documentElement.classList.add("dark");
-        } else {
-        document.documentElement.classList.remove("dark");
-        }
-    </script>
-
-    <!-- Tailwind CSS CDN dengan Konfigurasi Warna Landing Page -->
+    <!-- Tailwind CSS CDN — palet achromatic ala Mobbin -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-        darkMode: "class",
         theme: {
             extend: {
             fontFamily: {
-            sans: ["Poppins", "Segoe UI", "sans-serif"],
+            sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
             },
             colors: {
-            cream: "#fffbde",
-            sky: "#91c8e4",
-            slateCustom: "#749bc2",
-            deep: {
-                DEFAULT: "#4682a9",
-                dark: "#35657f",
-            },
+            canvas: "#ffffff",
+            mist: "#f2f2f2",
+            fog: "#ededed",
+            graphite: "#707070",
+            ash: "#adadad",
             ink: {
-                DEFAULT: "#1f3b4d",
-                dark: "#122532",
-                card: "#1a3243",
+                DEFAULT: "#141414",
+                card: "#ffffff",
             },
             },
         },
@@ -62,10 +45,10 @@
 
     <style>
     .glass-slider {
-        background: rgba(9, 23, 31, 0.68);
+        background: rgba(20, 20, 20, 0.55);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
       }
       .fitur-track {
         transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
@@ -73,7 +56,7 @@
     </style>
   </head>
   <body
-    class="h-full bg-cream dark:bg-ink-dark text-ink dark:text-slate-100 font-sans antialiased transition-colors duration-300"
+    class="h-full bg-canvas text-ink font-sans antialiased"
   >
     <div class="min-h-screen flex flex-col lg:flex-row">
       <!-- ==================== PANEL KIRI (SPLIT VISUAL) ==================== -->
@@ -101,12 +84,12 @@
               E-Prestasi
             </h1>
             <span
-              class="text-xs font-semibold tracking-[3px] uppercase text-cream opacity-90 drop-shadow"
+              class="text-xs font-semibold tracking-[3px] uppercase text-white opacity-90 drop-shadow"
               >Show Your Pride</span
             >
           </div>
           <span
-            class="px-3 py-1 text-xs font-semibold rounded-full bg-white/10 backdrop-blur border border-white/20 text-cream"
+            class="px-3 py-1 text-xs font-semibold rounded-full bg-white/10 backdrop-blur border border-white/20 text-white"
           >
             SMKN 11 Bandung
           </span>
@@ -126,7 +109,7 @@
                   class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
                 >
                   <div
-                    class="w-11 h-11 rounded-xl bg-white/15 text-cream flex items-center justify-center text-xl shrink-0"
+                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
                   >
                     <i class="bi bi-cloud-arrow-up"></i>
                   </div>
@@ -146,7 +129,7 @@
                   class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
                 >
                   <div
-                    class="w-11 h-11 rounded-xl bg-white/15 text-cream flex items-center justify-center text-xl shrink-0"
+                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
                   >
                     <i class="bi bi-patch-check"></i>
                   </div>
@@ -166,7 +149,7 @@
                   class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
                 >
                   <div
-                    class="w-11 h-11 rounded-xl bg-white/15 text-cream flex items-center justify-center text-xl shrink-0"
+                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
                   >
                     <i class="bi bi-mortarboard"></i>
                   </div>
@@ -190,7 +173,7 @@
             >
               <button
                 type="button"
-                class="fitur-dot w-5 h-2 rounded-full bg-cream transition-all duration-300"
+                class="fitur-dot w-5 h-2 rounded-full bg-white transition-all duration-300"
                 data-index="0"
                 aria-label="Slide 1"
               ></button>
@@ -218,49 +201,34 @@
 
       <!-- ==================== PANEL KANAN (FORM LOGIN) ==================== -->
       <div
-        class="w-full lg:w-5/12 xl:w-1/3 flex flex-col justify-between p-6 sm:p-12 bg-cream dark:bg-ink-dark transition-colors duration-300 relative"
+        class="w-full lg:w-5/12 xl:w-1/3 flex flex-col justify-between p-6 sm:p-12 bg-white transition-colors duration-300 relative"
       >
-        <!-- Top Navigation: Switch Mode Terang / Gelap -->
+        <!-- Branding (mobile only) -->
         <div class="flex justify-between items-center w-full">
           <div class="lg:hidden">
-            <h1 class="text-2xl font-extrabold text-ink dark:text-white">
+            <h1 class="text-2xl font-extrabold text-ink">
               E-Prestasi
             </h1>
             <span
-              class="text-[10px] font-semibold tracking-wider uppercase text-deep dark:text-sky"
+              class="text-[10px] font-semibold tracking-wider uppercase text-ink"
               >SMKN 11 Bandung</span
             >
           </div>
-
-          <!-- Tombol Switch Tema -->
-          <button
-            id="theme-toggle"
-            type="button"
-            class="ml-auto p-2.5 rounded-xl bg-white dark:bg-ink-card border border-slate-200 dark:border-slate-700/60 text-ink dark:text-sky shadow-sm hover:scale-105 active:scale-95 transition-all"
-            title="Ganti Mode Terang/Gelap"
-          >
-            <i
-              class="bi bi-sun-fill hidden dark:block text-amber-400 text-lg"
-            ></i>
-            <i
-              class="bi bi-moon-stars-fill block dark:hidden text-ink text-lg"
-            ></i>
-          </button>
         </div>
 
         <!-- Card Login Container -->
         <div class="w-full max-w-md mx-auto my-auto py-8">
           <div
-            class="bg-white dark:bg-ink-card p-8 rounded-2xl shadow-xl border border-slate-200/60 dark:border-slate-700/50 space-y-6 transition-all"
+            class="bg-white p-8 rounded-2xl border border-fog space-y-6 transition-all"
           >
             <!-- Heading -->
             <div>
               <h4
-                class="text-2xl font-extrabold text-ink dark:text-white tracking-tight"
+                class="text-2xl font-extrabold text-ink tracking-tight"
               >
                 Masuk
               </h4>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <p class="text-xs text-slate-500 mt-1">
                 Masukkan username / NIS / NIP dan password kamu.
               </p>
             </div>
@@ -270,7 +238,7 @@
             <div class="space-y-2">
               {% for message in messages %}
               <div
-                class="p-3.5 rounded-xl text-xs flex items-center gap-2.5 border {% if message.tags == 'error' %} bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-300 {% else %} bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/50 text-deep dark:text-sky {% endif %}"
+                class="p-3.5 rounded-2xl text-xs flex items-center gap-2.5 border {% if message.tags == 'error' %} bg-red-50 border-red-200 text-red-600 {% else %} bg-blue-50 border-blue-200 text-ink {% endif %}"
               >
                 <i class="bi bi-exclamation-circle-fill text-base shrink-0"></i>
                 <span>{{ message }}</span>
@@ -286,7 +254,7 @@
               <!-- Input Username -->
               <div class="space-y-1.5">
                 <label
-                  class="block text-xs font-semibold text-ink dark:text-slate-300"
+                  class="block text-xs font-semibold text-ink"
                 >
                   Username / NIS / NIP
                 </label>
@@ -296,14 +264,14 @@
                   placeholder="Masukkan ID pengguna"
                   required
                   autofocus
-                  class="w-full px-4 py-2.5 bg-white dark:bg-ink-dark border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-ink dark:text-white placeholder-slate-400 focus:outline-none focus:border-slateCustom focus:ring-2 focus:ring-slateCustom/20 transition-all"
+                  class="w-full px-4 py-2.5 bg-mist border border-transparent rounded-full text-sm text-ink placeholder-ash focus:outline-none focus:border-ink focus:bg-white focus:ring-1 focus:ring-ink transition-all"
                 />
               </div>
 
               <!-- Input Password -->
               <div class="space-y-1.5">
                 <label
-                  class="block text-xs font-semibold text-ink dark:text-slate-300"
+                  class="block text-xs font-semibold text-ink"
                 >
                   Password
                 </label>
@@ -314,14 +282,14 @@
                     id="password-input"
                     placeholder="Masukkan password"
                     required
-                    class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-ink-dark border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-ink dark:text-white placeholder-slate-400 focus:outline-none focus:border-slateCustom focus:ring-2 focus:ring-slateCustom/20 transition-all"
+                    class="w-full pl-4 pr-10 py-2.5 bg-mist border border-transparent rounded-full text-sm text-ink placeholder-ash focus:outline-none focus:border-ink focus:bg-white focus:ring-1 focus:ring-ink transition-all"
                   />
                   <button
                     type="button"
                     id="toggle-password"
                     aria-label="Tampilkan password"
                     tabindex="-1"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slateCustom hover:text-deep dark:hover:text-sky transition-colors"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-graphite hover:text-ink:text-sky transition-colors"
                   >
                     <i class="bi bi-eye text-lg" id="toggle-password-icon"></i>
                   </button>
@@ -331,7 +299,7 @@
               <!-- Submit Button -->
               <button
                 type="submit"
-                class="w-full py-3 px-4 bg-deep hover:bg-deep-dark text-white font-semibold rounded-lg shadow-md transition-all duration-200 active:scale-[0.99] text-sm mt-2"
+                class="w-full py-3 px-4 bg-ink hover:bg-black text-white font-semibold rounded-full transition-all duration-200 active:scale-[0.99] text-sm mt-2"
               >
                 Masuk
               </button>
@@ -340,7 +308,7 @@
         </div>
 
         <!-- Footer Info Kanan -->
-        <div class="text-center text-xs text-slate-500 dark:text-slate-400">
+        <div class="text-center text-xs text-slate-500">
           Butuh bantuan? Kontak Tim Kesiswaan / Administrator.
         </div>
       </div>
@@ -348,19 +316,7 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-      // 1. Toggle Mode Terang & Gelap (Dengan LocalStorage Sync)
-      const themeToggleBtn = document.getElementById("theme-toggle");
-      themeToggleBtn.addEventListener("click", () => {
-        if (document.documentElement.classList.contains("dark")) {
-          document.documentElement.classList.remove("dark");
-          localStorage.setItem("theme", "light");
-        } else {
-          document.documentElement.classList.add("dark");
-          localStorage.setItem("theme", "dark");
-        }
-      });
-
-      // 2. Toggle Visibility Password
+      // 1. Toggle Visibility Password
       document
         .getElementById("toggle-password")
         .addEventListener("click", () => {
@@ -388,7 +344,7 @@
           dots.forEach((dot, idx) => {
             if (idx === current) {
               dot.className =
-                "fitur-dot w-5 h-2 rounded-full bg-cream transition-all duration-300";
+                "fitur-dot w-5 h-2 rounded-full bg-white transition-all duration-300";
             } else {
               dot.className =
                 "fitur-dot w-2 h-2 rounded-full bg-white/30 transition-all duration-300 hover:bg-white/50";
