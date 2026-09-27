@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'cloudinary_storage',  # Harus diletakkan sebelum staticfiles
     'django.contrib.staticfiles',
-    'corsheaders',
     'cloudinary',
     'eprestasi',
 ]
@@ -45,7 +44,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Harus berada paling atas untuk CORS
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Posisi tepat di bawah SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -60,15 +58,8 @@ MIDDLEWARE = [
 # ==========================================
 
 # 1. Izinkan frontend mengirim cookie/session
-CORS_ALLOW_CREDENTIALS = True
 
 # 2. Daftarkan URL/Port tempat Frontend kamu berjalan
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://eprestasi.freznx.my.id",
-]
-
 # 3. Gabungan domain trusted origin untuk CSRF
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
