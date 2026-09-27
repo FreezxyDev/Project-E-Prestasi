@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'cloudinary_storage',  # Harus diletakkan sebelum staticfiles
     'django.contrib.staticfiles',
-    'rest_framework',
     'corsheaders',
     'cloudinary',
     'eprestasi',
