@@ -306,7 +306,13 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Foto saat penyerahan piala'})
     )
 
-    # ── Dokumen Puspresnas, OPSIONAL, cuma relevan untuk tingkat 'nasional' ──
+    # ── Kode Puspresnas, OPSIONAL. Kalau diisi, field dokumen_puspresnas di
+    #    bawah jadi lampiran TAMBAHAN yang juga opsional (lihat JS di template). ──
+    kode_puspresnas = forms.CharField(
+        max_length=100, required=False,
+        label='Kode Puspresnas (opsional)',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_kode_puspresnas', 'placeholder': 'Contoh: PPN-2026-000123'})
+    )
     dokumen_puspresnas = forms.FileField(
         required=False,
         label='Dokumen Puspresnas (opsional)',

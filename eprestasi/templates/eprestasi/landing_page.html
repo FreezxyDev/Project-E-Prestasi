@@ -3,266 +3,524 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>E-Prestasi — Portofolio Prestasi Digital Siswa</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>e-Prestasi — Show Your Pride</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-    --accent:#00d084; --accent-dark:#00b873; --accent-dim:rgba(0,208,132,.12);
-    --bg:#f3f6f4; --card:#ffffff; --border:#e3e9e6;
-    --text:#16241d; --muted:#5b6b62; --dim:#8a9990;
-    --dark:#0b1f16; --dark-soft:#123326;
-    font-family:'Poppins',system-ui,-apple-system,sans-serif;
+  --bg:#020705; --bg2:#071510; --card:#091A14; --accent:#00D084; --accent2:#3A6B55;
+  --text:#F1F5F2; --text2:#91A49A; --muted:#6C8277; --border:rgba(0,208,132,.15);
+  --warn:#F59E0B; --err:#EF4444;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
 }
-@media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){ --bg:#f3f6f4; --card:#ffffff; --text:#16241d; }
+
+/* ===== LIGHT MODE ENHANCEMENTS ===== */
+:root[data-theme="light"]{
+  --bg:#F5F8F6; --bg2:#EAF1ED; --card:#FFFFFF; --accent:#008F55; --accent2:#2E5C47;
+  --text:#0C1F17; --text2:#3A4E44; --muted:#5B6F65; --border:rgba(0,143,85,.22);
 }
-*{box-sizing:border-box;} html,body{margin:0;}
-body{background:var(--bg); color:var(--text); padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
-a{text-decoration:none;}
-.container-nav{max-width:1140px; margin:0 auto; padding:0 1.25rem;}
+:root[data-theme="light"] #nav.on{background:rgba(245,248,246,.94);border-color:var(--border);}
+:root[data-theme="light"] #mobile-nav{background:rgba(245,248,246,.98);border-color:var(--border);}
+:root[data-theme="light"] .hero-bg{background:radial-gradient(ellipse 60% 50% at 78% 30%,rgba(0,143,85,.12),transparent 60%),linear-gradient(180deg,#F5F8F6 0%,#eef4f0 55%,#F5F8F6 100%);}
+:root[data-theme="light"] .hero-grid{background-image:linear-gradient(rgba(0,143,85,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,143,85,.08) 1px,transparent 1px);}
+:root[data-theme="light"] .avatar{background:var(--accent);color:#fff;}
+:root[data-theme="light"] .btn-primary{color:#fff;background:var(--accent);border-color:var(--accent);}
+:root[data-theme="light"] .btn-primary:hover{background:#007A48;}
+:root[data-theme="light"] .search-box button{color:#fff;background:var(--accent);}
+:root[data-theme="light"] .badge{background:rgba(0,143,85,.12);color:#007A48;border-color:rgba(0,143,85,.3);font-weight:600;}
+:root[data-theme="light"] .theme-toggle{color:var(--text);border-color:var(--border);}
 
-/* NAVBAR FIXED & PERBAIKAN TATA LETAK */
-.navbar{
-    position:sticky; 
-    top:0; 
-    z-index:20; 
-    background:rgba(255,255,255,.98); 
-    backdrop-filter:blur(8px); 
-    border-bottom:1px solid #d0dad5; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Memberi batas tegas dengan Hero */
-    padding:1rem 0;
+.theme-toggle{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:3px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s,color .2s;}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.theme-toggle svg{width:17px;height:17px;}
+.theme-toggle .i-sun{display:none;}
+:root[data-theme="light"] .theme-toggle .i-moon{display:none;}
+:root[data-theme="light"] .theme-toggle .i-sun{display:block;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:70px;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6;overflow-x:hidden;}
+img,svg{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+::selection{background:var(--accent);color:#02110b;}
+
+/* ===== NAV ===== */
+#nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid transparent;transition:background .3s,border-color .3s;padding-top:env(safe-area-inset-top,0px);}
+#nav.on{background:rgba(2,7,5,.92);backdrop-filter:blur(10px);border-color:var(--border);}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:76px;}
+.brand{display:flex;flex-direction:column;line-height:1.1;}
+.brand b{font-size:1.15rem;font-weight:700;letter-spacing:.02em;}
+.brand span{font-size:.65rem;color:var(--text2);letter-spacing:.14em;margin-top:3px;}
+.nav-links{display:flex;gap:34px;list-style:none;}
+.nav-links a{font-size:.88rem;color:var(--text2);position:relative;padding-bottom:8px;transition:color .2s;font-weight:500;}
+.nav-links a:hover,.nav-links a.active{color:var(--text);}
+.nav-links a.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);}
+.btn{font-family:var(--mono);font-size:.88rem;font-weight:600;border-radius:3px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#02110b;border:1px solid var(--accent);padding:12px 22px;}
+.btn-primary:hover{background:#00e893;}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);padding:12px 22px;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:6px;}
+.hamburger span{width:22px;height:2px;background:var(--text);}
+
+/* ===== HERO ===== */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;padding-top:76px;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 78% 30%,rgba(0,208,132,.14),transparent 60%),
+    linear-gradient(180deg,#020705 0%,#050f0b 55%,#020705 100%);
 }
-.navbar-inner{
-    display:flex !important; 
-    align-items:center !important; 
-    justify-content:space-between !important;
-    width: 100%;
+.hero-grid{position:absolute;inset:0;z-index:0;opacity:.5;
+  background-image:linear-gradient(rgba(0,208,132,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,208,132,.06) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 70% 60% at 65% 40%,#000 20%,transparent 75%);
 }
-.brand-mark{
-    display:flex !important; 
-    align-items:center !important; 
-    gap:.85rem !important;
-    flex-shrink: 0;
+.hero-lines{position:absolute;right:-5%;top:0;bottom:0;width:60%;z-index:0;opacity:.55;}
+.hero-in{position:relative;z-index:1;max-width:680px;}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.82rem;font-weight:600;letter-spacing:.16em;color:var(--accent);margin-bottom:22px;}
+.eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);}
+
+/* H1: Desktop 64px, Mobile 40px, weight 700, line-height 1.05 */
+h1.headline{font-size:clamp(40px, 5.2vw, 64px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-bottom:24px;}
+.headline em{font-style:normal;color:var(--accent);}
+
+/* Hero Subtitle: Desktop 20px, Mobile 16-18px */
+.hero-sub{font-size:clamp(16px, 1.8vw, 20px);line-height:1.55;color:var(--text2);max-width:540px;margin-bottom:38px;}
+.hero-cta{display:flex;gap:14px;margin-bottom:64px;flex-wrap:wrap;}
+.stat-row{display:flex;gap:48px;flex-wrap:wrap;}
+.stat-row .n{font-size:1.8rem;font-weight:700;color:var(--text);}
+.stat-row .l{font-size:.78rem;color:var(--text2);letter-spacing:.04em;margin-top:2px;}
+.stat-row div{border-left:1px solid var(--border);padding-left:16px;}
+
+/* ===== SECTION GENERIC ===== */
+section{padding:100px 0;position:relative;}
+.s-head{margin-bottom:52px;max-width:680px;}
+.s-tag{font-size:.82rem;font-weight:600;color:var(--accent);letter-spacing:.14em;margin-bottom:14px;}
+
+/* H2: Desktop 40px, Mobile 28-34px, weight 700 */
+.s-title{font-size:clamp(28px, 3.5vw, 40px);font-weight:700;line-height:1.2;letter-spacing:-.01em;}
+
+/* Supporting Subtitle: Desktop 20px, Mobile 16-18px */
+.s-sub{color:var(--text2);margin-top:16px;font-size:clamp(16px, 1.8vw, 20px);line-height:1.55;max-width:620px;}
+
+/* ===== SEARCH ===== */
+#cari{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.search-box{display:flex;gap:0;max-width:640px;border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--card);}
+.search-box input{flex:1;background:transparent;border:0;color:var(--text);font-family:var(--mono);font-size:1rem;padding:16px 18px;outline:0;}
+.search-box input::placeholder{color:var(--muted);}
+.search-box button{background:var(--accent);color:#02110b;border:0;padding:0 26px;font-family:var(--mono);font-weight:600;cursor:pointer;font-size:.9rem;}
+#results{margin-top:32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.s-card{border:1px solid var(--border);background:var(--card);border-radius:4px;padding:22px;transition:border-color .2s,transform .2s;}
+.s-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.avatar{width:46px;height:46px;border-radius:4px;background:var(--accent2);color:var(--text);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;margin-bottom:16px;}
+
+/* Card Title (H3 Equivalent): Desktop 24px, Mobile 20px, weight 600 */
+.s-card h4, .feat-card h4, .ach-card h4, .flow-step h4{
+  font-size:clamp(20px, 2vw, 24px);font-weight:600;line-height:1.3;margin-bottom:10px;
 }
-.brand-text{
-    line-height:1.1;
-    white-space: nowrap;
+.s-card .meta{font-size:.84rem;color:var(--text2);margin-bottom:3px;}
+.s-card .count{font-size:.88rem;color:var(--accent);font-weight:600;margin:12px 0;}
+.s-card .go{font-size:.84rem;color:var(--text2);display:inline-flex;gap:6px;}
+.empty{color:var(--muted);font-size:.95rem;padding:20px 0;}
+
+/* ===== ABOUT ===== */
+.about-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:start;}
+.about-big{font-size:clamp(22px, 2.8vw, 32px);font-weight:700;line-height:1.35;}
+.about-big .g{color:var(--accent);}
+.about-right p{color:var(--text2);font-size:16px;line-height:1.6;margin-bottom:28px;}
+.about-stats{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.about-stats div{border-top:1px solid var(--border);padding-top:12px;}
+.about-stats .n{font-size:1.6rem;font-weight:700;}
+.about-stats .l{font-size:.78rem;color:var(--text2);margin-top:4px;}
+
+/* ===== WORKFLOW ===== */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
+.flow-step{padding:0 20px 0 0;position:relative;}
+.flow-step:not(:last-child)::after{content:"";position:absolute;top:20px;right:0;width:100%;height:1px;background:var(--border);}
+.flow-num{font-size:.88rem;font-weight:600;color:var(--accent);margin-bottom:18px;}
+.flow-step p{font-size:15px;color:var(--text2);line-height:1.55;}
+
+/* ===== FEATURES ===== */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.feat-card{border:1px solid var(--border);background:var(--card);border-radius:4px;padding:28px;transition:border-color .2s,box-shadow .2s;}
+.feat-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
+.feat-card .ic{width:32px;height:32px;margin-bottom:18px;color:var(--accent);}
+.feat-card p{font-size:15px;color:var(--text2);line-height:1.55;}
+
+/* ===== ACHIEVEMENT ===== */
+#showcase{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.ach-card{border:1px solid var(--border);background:var(--card);border-radius:4px;padding:28px;}
+.badge{display:inline-block;font-size:.72rem;color:var(--accent);border:1px solid var(--border);padding:4px 10px;border-radius:3px;letter-spacing:.06em;margin-bottom:18px;}
+.ach-card .comp{font-size:.95rem;color:var(--text2);margin-bottom:20px;}
+.ach-foot{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:14px;}
+
+/* ===== STATS WIDE ===== */
+#stats-wide{background:var(--bg);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:left;}
+.stats-grid .n{font-size:clamp(36px, 4.5vw, 52px);font-weight:700;color:var(--accent);}
+.stats-grid .l{font-size:.84rem;color:var(--text2);margin-top:8px;letter-spacing:.04em;}
+
+/* ===== CONTACT ===== */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;}
+.c-info p{color:var(--text2);font-size:16px;line-height:1.6;margin-bottom:28px;max-width:420px;}
+.c-row{border-top:1px solid var(--border);padding:16px 0;}
+.c-row .l{font-size:.75rem;color:var(--muted);letter-spacing:.08em;margin-bottom:6px;font-weight:600;}
+.c-row .v{font-size:.95rem;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:8px;}
+.field input,.field textarea{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.92rem;padding:12px 14px;border-radius:3px;outline:0;}
+.field input:focus,.field textarea:focus{border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:100px;}
+.map-box{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--card);margin-bottom:28px;position:relative;}
+.map-box svg{width:100%;height:220px;display:block;}
+.map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;}
+.map-pin .dot{width:16px;height:16px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);box-shadow:0 0 0 4px rgba(0,208,132,.2);}
+.map-link{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);font-size:.82rem;color:var(--text2);}
+.map-link a{color:var(--accent);font-weight:600;}
+
+/* ===== FOOTER ===== */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 28px;}
+.f-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:28px;margin-bottom:40px;}
+.f-nav{display:flex;gap:26px;flex-wrap:wrap;list-style:none;}
+.f-nav a{font-size:.88rem;color:var(--text2);}
+.f-nav a:hover{color:var(--accent);}
+.f-bottom{border-top:1px solid var(--border);padding-top:22px;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;}
+.f-contact{margin-bottom:34px;padding-bottom:34px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:28px;justify-content:space-between;}
+.f-addr{font-size:.88rem;color:var(--text2);max-width:360px;line-height:1.6;}
+.f-addr .l{font-size:.72rem;color:var(--muted);letter-spacing:.08em;margin-bottom:8px;font-weight:600;}
+.f-addr a{color:var(--text2);}
+.f-social{display:flex;gap:12px;align-items:flex-start;}
+.f-social a{width:38px;height:38px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:border-color .2s,color .2s;}
+.f-social a:hover{border-color:var(--accent);color:var(--accent);}
+.f-social svg{width:18px;height:18px;}
+
+/* ===== ANIM ===== */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s;}
+.reveal.show{opacity:1;transform:none;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  body{font-size:15px;}
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  .about-grid,.contact-grid{grid-template-columns:1fr;}
+  .flow{grid-template-columns:1fr;gap:36px;}
+  .flow-step:not(:last-child)::after{display:none;}
+  .feat-grid{grid-template-columns:1fr;}
+  .ach-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  section{padding:64px 0;}
 }
-.brand-text strong{display:block; font-size:1rem; color:var(--text);}
-.brand-text span{display:block; font-size:.62rem; letter-spacing:1.6px; text-transform:uppercase; color:var(--dim); font-weight:600;}
-
-.nav-links{
-    display:flex !important; 
-    align-items:center !important; 
-    gap:2rem !important;
-    flex-shrink: 0;
-}
-.nav-links a.nav-item{
-    color:var(--muted); 
-    font-size:.9rem; 
-    font-weight:500;
-    white-space: nowrap;
-}
-.nav-links a.nav-item:hover{color:var(--text);}
-.btn-masuk{
-    background:var(--dark); 
-    color:#fff; 
-    padding:.65rem 1.5rem; 
-    border-radius:8px; 
-    font-size:.88rem; 
-    font-weight:600; 
-    margin-left:.4rem;
-    white-space: nowrap;
-}
-.btn-masuk:hover{background:var(--dark-soft); color:#fff;}
-
-/* HERO */
-.hero{background:radial-gradient(1200px 600px at 15% 0%, var(--dark-soft), var(--dark) 65%); color:#eaf5ef; padding:4rem 0 6rem; position:relative; overflow:hidden;}
-.hero::after{content:"";position:absolute; inset:0; background:radial-gradient(600px 300px at 90% 20%, rgba(0,208,132,.16), transparent 70%);}
-.hero-inner{max-width:1140px; margin:0 auto; padding:0 1.25rem; position:relative; display:grid; grid-template-columns:1.1fr .9fr; gap:2.5rem; align-items:center;}
-.eyebrow{display:inline-flex; align-items:center; gap:.45rem; background:var(--accent-dim); border:1px solid rgba(0,208,132,.35); color:var(--accent); font-size:.72rem; font-weight:700; letter-spacing:.8px; padding:.35rem .85rem; border-radius:99px; margin-bottom:1.1rem;}
-.hero h1{font-size:2.6rem; font-weight:800; line-height:1.15; margin-bottom:1rem;}
-.hero h1 span{color:var(--accent);}
-.hero p{color:#b9cbc1; font-size:1.02rem; line-height:1.7; margin-bottom:2rem; max-width:520px;}
-.hero-actions{display:flex; gap:.8rem; flex-wrap:wrap;}
-.btn-primary-lg{background:var(--accent); color:#01180f; padding:.85rem 1.6rem; border-radius:10px; font-weight:700; font-size:.95rem;}
-.btn-primary-lg:hover{background:var(--accent-dark); color:#01180f;}
-.btn-ghost-lg{border:1px solid rgba(255,255,255,.22); color:#eaf5ef; padding:.85rem 1.6rem; border-radius:10px; font-weight:600; font-size:.95rem;}
-.btn-ghost-lg:hover{background:rgba(255,255,255,.08); color:#fff;}
-
-/* HERO PREVIEW CARD */
-.hero-card{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:1.4rem;}
-.hero-card .row-item{display:flex; align-items:center; gap:.8rem; padding:.75rem 0; border-bottom:1px solid rgba(255,255,255,.08);}
-.hero-card .row-item:last-child{border-bottom:none;}
-.row-icon{width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex:none;}
-.ic-a{background:var(--accent-dim); color:var(--accent);}
-.ic-b{background:rgba(245,166,35,.14); color:#f5a623;}
-.row-item .rt strong{display:block; font-size:.86rem; color:#eaf5ef;}
-.row-item .rt small{color:#8fa89b; font-size:.74rem;}
-.status-pill{margin-left:auto; font-size:.68rem; font-weight:700; padding:.2rem .55rem; border-radius:99px;}
-.status-diterima{background:var(--accent-dim); color:var(--accent);}
-.status-pending{background:rgba(245,166,35,.14); color:#f5a623;}
-
-/* SECTION UMUM */
-.section{padding:4.5rem 0;}
-.section-head{max-width:620px; margin:0 auto 3rem; text-align:center;}
-.section-head .kicker{color:var(--accent-dark); font-size:.72rem; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;}
-.section-head h2{font-size:1.9rem; font-weight:800; margin:.5rem 0 .7rem;}
-.section-head p{color:var(--muted); font-size:.98rem; line-height:1.7;}
-
-/* ALUR / FITUR CARDS */
-.grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem;}
-.feat-card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.7rem; transition:transform .15s, box-shadow .15s;}
-.feat-card:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(11,31,22,.08);}
-.feat-num{font-size:.72rem; font-weight:700; color:var(--dim); letter-spacing:1px;}
-.feat-icon{width:46px; height:46px; border-radius:11px; background:var(--accent-dim); color:var(--accent-dark); display:flex; align-items:center; justify-content:center; font-size:1.25rem; margin:.8rem 0 1rem;}
-.feat-card h5{font-weight:700; font-size:1.02rem; margin-bottom:.5rem;}
-.feat-card p{color:var(--muted); font-size:.88rem; line-height:1.65; margin:0;}
-
-/* PERAN */
-.peran-wrap{display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem;}
-.peran-card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.6rem; text-align:center;}
-.peran-icon{width:52px; height:52px; margin:0 auto .9rem; border-radius:50%; background:var(--dark); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.3rem;}
-.peran-card h6{font-weight:700; margin-bottom:.4rem;}
-.peran-card p{color:var(--muted); font-size:.85rem; line-height:1.6; margin:0;}
-
-/* CTA */
-.cta{background:var(--dark); border-radius:20px; padding:3rem 2.5rem; text-align:center; color:#eaf5ef; max-width:1140px; margin:0 auto;}
-.cta h3{font-weight:800; font-size:1.6rem; margin-bottom:.6rem;}
-.cta p{color:#a9c2b7; margin-bottom:1.6rem; font-size:.95rem;}
-
-/* FOOTER */
-footer{padding:2.2rem 0; text-align:center; color:var(--dim); font-size:.82rem;}
-footer strong{color:var(--muted);}
-
-@media (max-width:860px){
-    .hero-inner{grid-template-columns:1fr;}
-    .hero h1{font-size:2.05rem;}
-    .grid-3, .peran-wrap{grid-template-columns:1fr;}
-    .nav-links .nav-item{display:none;}
-}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important;}}
 </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="container-nav navbar-inner w-100">
-        <div class="brand-mark">
-            <div class="brand-text">
-                <strong>E-Prestasi</strong>
-                <span>Show Your Pride</span>
-            </div>
-        </div>
-        <div class="nav-links">
-            <a class="nav-item" href="#alur">Alur</a>
-            <a class="nav-item" href="#peran">Untuk Siapa</a>
-            <a class="btn-masuk" href="{% url 'login' %}">Masuk</a>
-        </div>
+<nav id="nav">
+  <div class="wrap nav-in">
+    <div class="brand"><b>e-Prestasi</b><span>Show Your Pride</span></div>
+    <ul class="nav-links">
+      <li><a href="#hero" class="active">Beranda</a></li>
+      <li><a href="#tentang">Tentang e-Prestasi</a></li>
+      <li><a href="#alur">Alur Kerja</a></li>
+      <li><a href="#fitur">Fitur</a></li>
+      <li><a href="#cari">Cari Siswa</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Ganti tema">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.6A9 9 0 1111.4 3a7 7 0 009.6 9.6z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+      </button>
+      <a href="{% url "login" %}" class="btn btn-primary">Masuk</a>
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
     </div>
+  </div>
+  <ul class="nav-links" id="mobile-nav" style="display:none;flex-direction:column;padding:16px 24px 24px;gap:16px;border-top:1px solid var(--border);">
+    <li><a href="#hero">Beranda</a></li>
+    <li><a href="#tentang">Tentang e-Prestasi</a></li>
+    <li><a href="#alur">Alur Kerja</a></li>
+    <li><a href="#fitur">Fitur</a></li>
+    <li><a href="#cari">Cari Siswa</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
 </nav>
 
-<section class="hero">
-    <div class="hero-inner">
-        <div>
-            <span class="eyebrow"><i class="bi bi-mortarboard"></i> SMKN 11 Bandung</span>
-            <h1>Satu tempat untuk <span>semua prestasi</span> siswa, tercatat rapi dan terverifikasi.</h1>
-            <p>E-Prestasi membantu siswa menyimpan sertifikat dan dokumentasi pencapaiannya secara digital, diverifikasi pihak kesiswaan, lalu ditampilkan sebagai portofolio yang bisa dibagikan kapan saja.</p>
-            <div class="hero-actions">
-                <a href="{% url 'login' %}" class="btn-primary-lg">Masuk ke Akun</a>
-                <a href="#alur" class="btn-ghost-lg">Lihat Cara Kerja</a>
-            </div>
-        </div>
-        <div class="hero-card">
-            <div class="row-item">
-                <div class="row-icon ic-a"><i class="bi bi-trophy"></i></div>
-                <div class="rt"><strong>Juara 1 LKS Web Design</strong><small>Tingkat Provinsi</small></div>
-                <span class="status-pill status-diterima">Diterima</span>
-            </div>
-            <div class="row-item">
-                <div class="row-icon ic-b"><i class="bi bi-file-earmark-text"></i></div>
-                <div class="rt"><strong>Sertifikat Olimpiade Matematika</strong><small>Tingkat Kota</small></div>
-                <span class="status-pill status-pending">Menunggu</span>
-            </div>
-            <div class="row-item">
-                <div class="row-icon ic-a"><i class="bi bi-qr-code"></i></div>
-                <div class="rt"><strong>Portofolio Publik</strong><small>Siap dibagikan lewat QR</small></div>
-            </div>
-        </div>
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <svg class="hero-lines" viewBox="0 0 600 800" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="var(--accent)" stroke-width="1" fill="none" opacity="0.45">
+      <path d="M60 40 L60 220 L260 220 L260 400"/>
+      <path d="M420 0 L420 160 L560 160 L560 500"/>
+      <path d="M180 500 L180 640 L400 640 L400 800"/>
+      <circle cx="260" cy="400" r="4" fill="var(--accent)" stroke="none"/>
+      <circle cx="560" cy="500" r="4" fill="var(--accent)" stroke="none"/>
+      <circle cx="400" cy="640" r="4" fill="var(--accent)" stroke="none"/>
+      <circle cx="60" cy="220" r="3" fill="var(--accent)" stroke="none"/>
+    </g>
+  </svg>
+  <div class="wrap hero-in">
+    <div class="eyebrow">SMKN 11 BANDUNG</div>
+    <h1 class="headline">Showcase Your<br>Achievement.</h1>
+    <p class="hero-sub">Ruang digital untuk mencatat, memverifikasi, dan menunjukkan perjalanan prestasi siswa.</p>
+    <div class="hero-cta">
+      <a href="#showcase" class="btn btn-primary">Jelajahi Prestasi →</a>
+      <a href="#cari" class="btn btn-outline">Cari Siswa</a>
     </div>
+    <div class="stat-row">
+      <div><div class="n">1,500+</div><div class="l">Siswa Terdaftar</div></div>
+      <div><div class="n">350+</div><div class="l">Prestasi</div></div>
+      <div><div class="n">24+</div><div class="l">Bidang Prestasi</div></div>
+    </div>
+  </div>
 </section>
 
-<section class="section" id="alur">
-    <div class="container-nav">
-        <div class="section-head">
-            <span class="kicker">Cara Kerja</span>
-            <h2>Dari unggah sampai jadi portofolio</h2>
-            <p>Prosesnya sederhana — dirancang supaya siswa dan pihak kesiswaan sama-sama mudah memantau setiap prestasi.</p>
-        </div>
-        <div class="grid-3">
-            <div class="feat-card">
-                <span class="feat-num">01</span>
-                <div class="feat-icon"><i class="bi bi-cloud-arrow-up"></i></div>
-                <h5>Unggah Sertifikat</h5>
-                <p>Siswa mengunggah sertifikat dan dokumentasi prestasi kapan saja langsung dari akunnya masing-masing.</p>
-            </div>
-            <div class="feat-card">
-                <span class="feat-num">02</span>
-                <div class="feat-icon"><i class="bi bi-patch-check"></i></div>
-                <h5>Verifikasi Kesiswaan</h5>
-                <p>Setiap prestasi yang masuk diperiksa dan diverifikasi terlebih dahulu oleh pihak kesiswaan sebelum tampil resmi.</p>
-            </div>
-            <div class="feat-card">
-                <span class="feat-num">03</span>
-                <div class="feat-icon"><i class="bi bi-qr-code"></i></div>
-                <h5>Portofolio &amp; QR Code</h5>
-                <p>Prestasi yang diterima otomatis tersusun jadi portofolio digital, siap dibagikan lewat tautan atau QR code.</p>
-            </div>
-        </div>
+<section id="cari">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="s-tag">PENCARIAN SISWA</div>
+      <h2 class="s-title">Cari Siswa</h2>
+      <p class="s-sub">Temukan profil siswa SMKN 11 Bandung yang telah terdaftar di e-Prestasi.</p>
     </div>
+    <div class="search-box reveal">
+      <input id="search-input" type="text" placeholder="Masukkan NIS atau nama siswa...">
+      <button id="search-btn">Cari</button>
+    </div>
+    <div id="results"></div>
+  </div>
 </section>
 
-<section class="section" id="peran" style="padding-top:0;">
-    <div class="container-nav">
-        <div class="section-head">
-            <span class="kicker">Untuk Siapa</span>
-            <h2>Satu sistem, tiga peran berbeda</h2>
-            <p>Setiap pengguna punya akses dan tampilan yang disesuaikan dengan tugasnya.</p>
-        </div>
-        <div class="peran-wrap">
-            <div class="peran-card">
-                <div class="peran-icon"><i class="bi bi-person-video3"></i></div>
-                <h6>Siswa</h6>
-                <p>Mengunggah prestasi, memantau status verifikasi, dan mengelola portofolio pribadi.</p>
-            </div>
-            <div class="peran-card">
-                <div class="peran-icon"><i class="bi bi-clipboard-check"></i></div>
-                <h6>Kesiswaan</h6>
-                <p>Meninjau dan memverifikasi setiap prestasi yang diunggah siswa secara terpusat.</p>
-            </div>
-            <div class="peran-card">
-                <div class="peran-icon"><i class="bi bi-shield-lock"></i></div>
-                <h6>Admin</h6>
-                <p>Mengelola akun siswa, kesiswaan, dan data tahun ajaran di seluruh sistem.</p>
-            </div>
-        </div>
+<section id="tentang">
+  <div class="wrap about-grid">
+    <div class="reveal">
+      <div class="s-tag">DIGITAL ACHIEVEMENT PLATFORM</div>
+      <div class="about-big">e-Prestasi adalah platform portofolio digital yang membantu siswa <span class="g">mendokumentasikan</span> dan menampilkan pencapaian mereka secara terstruktur.</div>
     </div>
+    <div class="about-right reveal">
+      <p>Setiap prestasi yang diunggah siswa melewati proses verifikasi oleh pihak kesiswaan sebelum tampil di portofolio publik, sehingga data yang ditampilkan sekolah dapat dipertanggungjawabkan.</p>
+      <div class="about-stats">
+        <div><div class="n">1,500+</div><div class="l">SISWA AKTIF</div></div>
+        <div><div class="n">350+</div><div class="l">PRESTASI TERCATAT</div></div>
+        <div><div class="n">120+</div><div class="l">SERTIFIKAT TERSIMPAN</div></div>
+        <div><div class="n">15+</div><div class="l">KATEGORI PRESTASI</div></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section class="section" style="padding-top:0;">
-    <div class="container-nav">
-        <div class="cta">
-            <h3>Siap catat prestasimu di E-Prestasi?</h3>
-            <p>Masuk dengan akun yang sudah diberikan sekolah untuk mulai mengunggah dan memantau prestasimu.</p>
-            <a href="#" class="btn-primary-lg">Masuk Sekarang</a>
-        </div>
+<section id="alur" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="s-tag">PROSES</div>
+      <h2 class="s-title">Alur Kerja</h2>
+      <p class="s-sub">Dari pencapaian hingga menjadi portofolio digital.</p>
     </div>
+    <div class="flow">
+      <div class="flow-step reveal"><div class="flow-num">01</div><h4>Upload Prestasi</h4><p>Siswa mengunggah bukti dan dokumentasi pencapaian ke akun masing-masing.</p></div>
+      <div class="flow-step reveal"><div class="flow-num">02</div><h4>Verifikasi</h4><p>Pihak kesiswaan memeriksa kelengkapan dan keaslian dokumen yang diunggah.</p></div>
+      <div class="flow-step reveal"><div class="flow-num">03</div><h4>Validasi Data</h4><p>Data prestasi dicocokkan dengan kategori, tingkat, dan bidang yang sesuai.</p></div>
+      <div class="flow-step reveal"><div class="flow-num">04</div><h4>Portofolio Siswa</h4><p>Prestasi yang terverifikasi tampil pada portofolio publik siswa.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="fitur">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="s-tag">KAPABILITAS</div>
+      <h2 class="s-title">Fitur Utama</h2>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><h4>Digital Portfolio</h4><p>Setiap siswa memiliki portofolio digital yang dapat menampilkan perjalanan prestasinya.</p></div>
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><h4>Achievement Verification</h4><p>Prestasi dapat melalui proses verifikasi sebelum ditampilkan.</p></div>
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg><h4>Student Search</h4><p>Cari siswa menggunakan NIS atau nama.</p></div>
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><h4>Certificate Management</h4><p>Simpan dokumentasi sertifikat dan bukti pencapaian.</p></div>
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><h4>Achievement Categories</h4><p>Kelompokkan prestasi berdasarkan tingkat, bidang, dan kategori.</p></div>
+      <div class="feat-card reveal"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg><h4>Public Portfolio</h4><p>Portofolio siswa dapat ditampilkan secara terstruktur.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="showcase">
+  <div class="wrap">
+    <div class="s-head reveal">
+      <div class="s-tag">SOROTAN</div>
+      <h2 class="s-title">Achievement Showcase</h2>
+    </div>
+    <div class="ach-grid">
+      <div class="ach-card reveal"><div class="badge">TINGKAT NASIONAL</div><h4>Juara 1</h4><div class="comp">Web Development Competition</div><div class="ach-foot"><span>2026</span><span>XII RPL 2</span></div></div>
+      <div class="ach-card reveal"><div class="badge">TINGKAT PROVINSI</div><h4>Juara 2</h4><div class="comp">Lomba UI/UX Design</div><div class="ach-foot"><span>2026</span><span>XI DKV 1</span></div></div>
+      <div class="ach-card reveal"><div class="badge">TINGKAT KOTA</div><h4>Finalis</h4><div class="comp">IT Competition</div><div class="ach-foot"><span>2026</span><span>XII TJKT 1</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="stats-wide">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="reveal"><div class="n" data-count="1500">0</div><div class="l">SISWA</div></div>
+      <div class="reveal"><div class="n" data-count="350">0</div><div class="l">PRESTASI</div></div>
+      <div class="reveal"><div class="n" data-count="120">0</div><div class="l">SERTIFIKAT</div></div>
+      <div class="reveal"><div class="n" data-count="15">0</div><div class="l">KATEGORI</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap contact-grid">
+    <div class="c-info reveal">
+      <div class="s-tag">HUBUNGI KAMI</div>
+      <h2 class="s-title" style="margin-bottom:16px;">Have questions about e-Prestasi?</h2>
+      <p>Tim kesiswaan SMKN 11 Bandung siap membantu pertanyaan seputar pendaftaran akun, verifikasi prestasi, maupun portofolio siswa.</p>
+      <div class="c-row"><div class="l">EMAIL</div><div class="v">kesiswaan@smkn11bandung.sch.id</div></div>
+      <div class="c-row"><div class="l">TELEPON</div><div class="v"><a href="tel:+622266652442">+62 22 6652442</a></div></div>
+      <div class="c-row"><div class="l">ALAMAT</div><div class="v">Jl. Raya Cilember, RT.01/RW.04, Sukaraja, Kec. Cicendo, Kota Bandung, Jawa Barat 40153</div></div>
+      <div class="c-row"><div class="l">JAM LAYANAN</div><div class="v">Senin – Jumat, 07.00 – 15.00 WIB</div></div>
+
+      <div class="map-box" style="margin-top:24px;">
+        <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="220" fill="var(--card)"/>
+          <g stroke="var(--border)" stroke-width="1">
+            <path d="M0 40H400M0 90H400M0 140H400M0 190H400"/>
+            <path d="M60 0V220M140 0V220M240 0V220M330 0V220"/>
+          </g>
+          <path d="M0 96 C120 60,180 150,240 118 C300 88,340 130,400 100" stroke="var(--accent2)" stroke-width="3" fill="none" opacity=".55"/>
+          <path d="M0 150 C90 170,160 128,240 150 C300 166,350 150,400 160" stroke="var(--accent2)" stroke-width="2" fill="none" opacity=".4"/>
+        </svg>
+        <div class="map-pin" style="left:52%;top:46%;">
+          <div class="dot"></div>
+        </div>
+        <div class="map-link">
+          <span>SMKN 11 Bandung — Sukaraja, Cicendo</span>
+          <a href="https://www.google.com/maps/search/?api=1&amp;query=SMKN+11+Bandung+Jl+Raya+Cilember+Sukaraja+Cicendo+Kota+Bandung+Jawa+Barat+40153" target="_blank" rel="noopener">Buka di Google Maps →</a>
+        </div>
+      </div>
+    </div>
+    <form class="reveal" onsubmit="event.preventDefault();this.reset();document.getElementById('sent-msg').style.display='block';">
+      <div class="field"><label>Nama</label><input type="text" required></div>
+      <div class="field"><label>Email</label><input type="email" required></div>
+      <div class="field"><label>Pesan</label><textarea required></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Kirim Pesan</button>
+      <p id="sent-msg" style="display:none;color:var(--accent);font-size:.85rem;margin-top:12px;font-weight:600;">Pesan terkirim. Terima kasih.</p>
+    </form>
+  </div>
 </section>
 
 <footer>
-    <strong>E-Prestasi</strong> &middot; SMKN 11 Bandung — Show Your Pride
+  <div class="wrap">
+    <div class="f-top">
+      <div class="brand"><b>e-Prestasi</b><span style="margin-top:8px;">Integrated Portfolio of Student Achievement</span></div>
+      <ul class="f-nav">
+        <li><a href="#hero">Beranda</a></li>
+        <li><a href="#tentang">Tentang</a></li>
+        <li><a href="#alur">Alur Kerja</a></li>
+        <li><a href="#fitur">Fitur</a></li>
+        <li><a href="#cari">Cari Siswa</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="f-contact">
+      <div class="f-addr">
+        <div class="l">ALAMAT</div>
+        Jl. Raya Cilember, RT.01/RW.04, Sukaraja, Kec. Cicendo, Kota Bandung, Jawa Barat 40153, Indonesia<br>
+        <a href="tel:+622266652442">+62 22 6652442</a>
+      </div>
+      <div class="f-social">
+        <a href="https://instagram.com/smkn11bandung" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6" fill="currentColor" stroke="none"/></svg></a>
+        <a href="https://youtube.com/@smkn11bandung" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="6" width="19" height="12" rx="3"/><path d="M10.5 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/></svg></a>
+        <a href="https://facebook.com/smkn11bandung" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 21v-7h2.5l.5-3H14V9c0-.9.3-1.5 1.7-1.5H17V4.8c-.3 0-1.2-.1-2.3-.1-2.3 0-3.7 1.4-3.7 3.9V11H8.5v3H11v7z"/></svg></a>
+        <a href="https://tiktok.com/@smkn11bandung" target="_blank" rel="noopener" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3v11.5a3.2 3.2 0 11-2.7-3.16M14 3c.4 2.2 2 3.8 4.2 4.1"/></svg></a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© 2026 e-Prestasi — SMKN 11 Bandung</span>
+    </div>
+  </div>
 </footer>
 
+<script>
+// theme toggle (persisted per-browser)
+(function(){
+  const root=document.documentElement;
+  let saved=null;
+  try{saved=localStorage.getItem('eprestasi-theme');}catch(e){}
+  if(saved==='light')root.setAttribute('data-theme','light');
+  document.getElementById('theme-toggle').onclick=()=>{
+    const isLight=root.getAttribute('data-theme')==='light';
+    if(isLight){root.removeAttribute('data-theme');}else{root.setAttribute('data-theme','light');}
+    try{localStorage.setItem('eprestasi-theme',isLight?'dark':'light');}catch(e){}
+  };
+})();
+
+// navbar bg on scroll
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>nav.classList.toggle('on',scrollY>40));
+
+// mobile menu
+const ham=document.getElementById('hamburger'),mnav=document.getElementById('mobile-nav');
+ham.onclick=()=>{mnav.style.display=mnav.style.display==='flex'?'none':'flex';};
+mnav.querySelectorAll('a').forEach(a=>a.onclick=()=>mnav.style.display='none');
+
+// active link on scroll
+const links=[...document.querySelectorAll('.nav-links a')];
+const secs=['hero','tentang','alur','fitur','cari','contact'].map(id=>document.getElementById(id));
+secs.forEach(s=>{ 
+  if(s){ 
+    new IntersectionObserver(es=>es.forEach(e=>{ 
+      if(e.isIntersecting){ 
+        links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+s.id)); 
+      } 
+    }),{rootMargin:'-40% 0px -55% 0px'}).observe(s); 
+  } 
+});
+
+// reveal on scroll
+const revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');revealObs.unobserve(e.target);}}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+
+// count-up
+document.querySelectorAll('[data-count]').forEach(el=>{
+  const target=+el.dataset.count;
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){
+      let cur=0; const step=Math.max(1,Math.ceil(target/40));
+      const t=setInterval(()=>{cur+=step; if(cur>=target){cur=target;clearInterval(t);} el.textContent=cur.toLocaleString('id-ID')+'+';},30);
+      obs.unobserve(el);
+    }
+  }),{threshold:.4});
+  obs.observe(el);
+});
+
+// student search
+const siswaData=[
+  {nis:'12345678',nama:'Ahmad Rizky',kelas:'XII RPL 2',jurusan:'Rekayasa Perangkat Lunak',prestasi:8},
+  {nis:'12345679',nama:'Siti Nurhaliza',kelas:'XI DKV 1',jurusan:'Desain Komunikasi Visual',prestasi:5},
+  {nis:'12345680',nama:'Budi Santoso',kelas:'XII TJKT 1',jurusan:'Teknik Jaringan Komputer & Telekomunikasi',prestasi:12},
+  {nis:'12345681',nama:'Dewi Lestari',kelas:'X PM 2',jurusan:'Pemasaran',prestasi:3},
+];
+const resultsEl=document.getElementById('results');
+function initials(n){return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+function renderResults(list){
+  resultsEl.innerHTML='';
+  if(!list.length){resultsEl.innerHTML='<div class="empty">Siswa tidak ditemukan.</div>';return;}
+  list.forEach(s=>{
+    const card=document.createElement('div');
+    card.className='s-card';
+    card.innerHTML=`<div class="avatar">${initials(s.nama)}</div><h4>${s.nama}</h4><div class="meta">NIS: ${s.nis}</div><div class="meta">${s.kelas}</div><div class="meta">${s.jurusan}</div><div class="count">${s.prestasi} Prestasi</div><a class="go" href="#">Lihat Portofolio →</a>`;
+    resultsEl.appendChild(card);
+  });
+}
+function doSearch(){
+  const q=document.getElementById('search-input').value.trim().toLowerCase();
+  if(!q){resultsEl.innerHTML='';return;}
+  renderResults(siswaData.filter(s=>s.nis.includes(q)||s.nama.toLowerCase().includes(q)));
+}
+document.getElementById('search-btn').onclick=doSearch;
+document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+</script>
 </body>
 </html>

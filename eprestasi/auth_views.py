@@ -9,11 +9,19 @@ def login_view(request):
     """
     Halaman login otomatis (1 field): Otomatis mendeteksi role (siswa, kesiswaan, admin).
     """
-    # 1. Jika user sudah login, langsung lempar ke dashboard masing-masing
-    if request.session.get('user_id'):
+    # 1. Jika user sudah login DAN cuma buka halaman login (GET),
+    #    langsung lempar ke dashboard masing-masing.
+    #    PENTING: cek ini HANYA untuk GET. Kalau dibiarkan jalan juga saat POST,
+    #    submit form login baru (misal login sebagai super admin) akan langsung
+    #    di-redirect pakai role SESSION LAMA (misal siswa) tanpa sempat
+    #    memvalidasi username/password yang baru diinput sama sekali.
+    if request.method == 'GET' and request.session.get('user_id'):
         return _redirect_by_role(request.session.get('role'))
 
     if request.method == 'POST':
+        # Pastikan tidak ada sisa session lama yang nyangkut sebelum login baru diproses.
+        request.session.flush()
+
         username_input = request.POST.get('username', '').strip()
         password_input = request.POST.get('password', '')
 

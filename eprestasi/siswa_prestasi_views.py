@@ -61,8 +61,9 @@ def upload_prestasi(request):
                 deskripsi=data['deskripsi'],
                 kategori_prestasi=data['kategori_prestasi'],
                 status='pending',
-                # Dokumen Puspresnas -- opsional, cuma keisi kalau siswa
-                # benar-benar upload (biasanya prestasi tingkat nasional).
+                # Puspresnas -- kode & dokumen dua-duanya opsional, siswa bisa isi
+                # salah satu atau dua-duanya.
+                kode_puspresnas=data.get('kode_puspresnas') or None,
                 dokumen_puspresnas=data.get('dokumen_puspresnas') or None,
                 jenis_wilayah_puspresnas=data.get('jenis_wilayah_puspresnas') or None,
                 jenis_penyelenggara_puspresnas=data.get('jenis_penyelenggara_puspresnas') or None,

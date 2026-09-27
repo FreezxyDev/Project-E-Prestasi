@@ -1,0 +1,141 @@
+{% extends 'eprestasi/siswa_portal/base.html' %}
+{% block title %}Upload Prestasi{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0">Upload Prestasi Baru</h4>
+    <a href="{% url 'siswa_prestasi_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Kembali
+    </a>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    <p class="text-muted small mb-4">
+        Isi detail prestasi kamu, lalu lampirkan <strong>bukti prestasi</strong> dan
+        <strong>bukti dokumentasi</strong> (2-2nya wajib). Setelah dikirim, prestasi ini
+        akan berstatus <strong>pending</strong> sampai diverifikasi oleh kesiswaan.
+    </p>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="mb-3">
+            <label class="form-label">Nama Prestasi</label>
+            {{ form.nama_prestasi }}
+            {{ form.nama_prestasi.errors }}
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Kategori</label>
+                {{ form.kategori_prestasi }}
+                {{ form.kategori_prestasi.errors }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Tingkat</label>
+                {{ form.tingkat_prestasi }}
+                {{ form.tingkat_prestasi.errors }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-7 mb-3">
+                <label class="form-label">Penyelenggara</label>
+                {{ form.penyelenggara }}
+                {{ form.penyelenggara.errors }}
+            </div>
+            <div class="col-md-5 mb-3">
+                <label class="form-label">Tanggal Prestasi</label>
+                {{ form.tanggal_prestasi }}
+                {{ form.tanggal_prestasi.errors }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Deskripsi</label>
+            {{ form.deskripsi }}
+            {{ form.deskripsi.errors }}
+        </div>
+
+        <hr>
+        <h6 class="fw-bold mb-3"><i class="bi bi-paperclip"></i> Bukti Prestasi (Wajib)</h6>
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.file_sertifikat.label }}</label>
+            {{ form.file_sertifikat }}
+            {{ form.file_sertifikat.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.deskripsi_sertifikat.label }}</label>
+            {{ form.deskripsi_sertifikat }}
+            {{ form.deskripsi_sertifikat.errors }}
+        </div>
+
+        <hr>
+        <h6 class="fw-bold mb-3"><i class="bi bi-images"></i> Bukti Dokumentasi (Wajib)</h6>
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.foto_dokumentasi.label }}</label>
+            {{ form.foto_dokumentasi }}
+            {{ form.foto_dokumentasi.errors }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">{{ form.caption_dokumentasi.label }}</label>
+            {{ form.caption_dokumentasi }}
+            {{ form.caption_dokumentasi.errors }}
+        </div>
+
+        <hr>
+        <div id="bagian-puspresnas" style="display:none;">
+            <h6 class="fw-bold mb-1"><i class="bi bi-award"></i> Dokumen Puspresnas (Opsional)</h6>
+            <p class="text-muted small mb-3">Khusus prestasi tingkat Nasional -- lampirkan kalau ada.</p>
+
+            <div class="mb-3">
+                <label class="form-label">{{ form.dokumen_puspresnas.label }}</label>
+                {{ form.dokumen_puspresnas }}
+                {{ form.dokumen_puspresnas.errors }}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jenis_wilayah_puspresnas.label }}</label>
+                    {{ form.jenis_wilayah_puspresnas }}
+                    {{ form.jenis_wilayah_puspresnas.errors }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ form.jenis_penyelenggara_puspresnas.label }}</label>
+                    {{ form.jenis_penyelenggara_puspresnas }}
+                    {{ form.jenis_penyelenggara_puspresnas.errors }}
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">
+            <i class="bi bi-cloud-arrow-up"></i> Kirim untuk Verifikasi
+        </button>
+    </form>
+</div>
+
+<script>
+    // Bagian Puspresnas cuma muncul kalau tingkat prestasi = Nasional.
+    // Dicek juga pas halaman pertama kali dibuka (bukan cuma pas ganti pilihan),
+    // supaya kalau form di-render ulang gara-gara error validasi tapi tingkat
+    // yang dipilih sebelumnya sudah "nasional", bagian ini tetap kelihatan.
+    (function () {
+        const selectTingkat = document.getElementById('id_tingkat_prestasi');
+        const bagianPuspresnas = document.getElementById('bagian-puspresnas');
+
+        function toggleBagianPuspresnas() {
+            bagianPuspresnas.style.display = (selectTingkat.value === 'nasional') ? 'block' : 'none';
+        }
+
+        selectTingkat.addEventListener('change', toggleBagianPuspresnas);
+        toggleBagianPuspresnas();
+    })();
+</script>
+
+{% endblock %}

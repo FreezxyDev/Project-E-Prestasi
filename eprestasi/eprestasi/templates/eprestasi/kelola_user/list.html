@@ -1,0 +1,184 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Kelola User{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Kelola User</h4>
+    <div class="d-flex gap-2">
+        {% if active_menu == 'siswa' %}
+            <a href="{% url 'siswa_import' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-excel"></i> Import Excel
+            </a>
+            <a href="{% url 'tambah_siswa' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Tambah Siswa
+            </a>
+        {% else %}
+            <a href="{% url 'tambah_kesiswaan' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Tambah Akun Kesiswaan
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tab pemilih tabel Siswa / Kesiswaan -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if active_menu == 'siswa' %}active{% endif %}" href="{% url 'siswa_list' %}">
+            <i class="bi bi-mortarboard"></i> Siswa
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_menu == 'kesiswaan' %}active{% endif %}" href="{% url 'kesiswaan_list' %}">
+            <i class="bi bi-person-badge"></i> Kesiswaan
+        </a>
+    </li>
+</ul>
+
+{% if active_menu == 'siswa' %}
+
+    <div class="card p-3 mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link {% if not status_filter %}active{% endif %}" href="?{% if q %}q={{ q }}{% endif %}">
+                        Semua
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'aktif' %}active{% endif %}" href="?status=aktif{% if q %}&q={{ q }}{% endif %}">
+                        Aktif <span class="badge bg-light text-dark ms-1">{{ total_aktif }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'alumni' %}active{% endif %}" href="?status=alumni{% if q %}&q={{ q }}{% endif %}">
+                        Alumni <span class="badge bg-light text-dark ms-1">{{ total_alumni }}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <form method="get" class="d-flex" style="max-width: 280px;">
+                {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari nama / NIS / kelas...">
+                <button class="btn btn-sm btn-outline-secondary ms-1"><i class="bi bi-search"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>NIS</th>
+                        <th>Username</th>
+                        <th>Nama</th>
+                        <th>Tingkat</th>
+                        <th>Kelas</th>
+                        <th>Jurusan</th>
+                        <th>Status</th>
+                        <th>Profil</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for siswa in siswa_list %}
+                    <tr>
+                        <td class="fw-semibold">{{ siswa.nis }}</td>
+                        <td><code>{{ siswa.users.username }}</code></td>
+                        <td>{{ siswa.nama|default:"-" }}</td>
+                        <td>{{ siswa.tingkat }}</td>
+                        <td>{{ siswa.kelas|default:"-" }}</td>
+                        <td>{{ siswa.jurusan|default:"-" }}</td>
+                        <td>
+                            {% if siswa.status == 'aktif' %}
+                                <span class="badge badge-aktif">Aktif</span>
+                            {% else %}
+                                <span class="badge badge-alumni">Alumni</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if siswa.profil_lengkap %}
+                                <span class="badge bg-success-subtle text-success border border-success">Lengkap</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">Belum diisi</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'update_siswa' siswa.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{% url 'delete_siswa' siswa.id %}" class="d-inline"
+                                  onsubmit="return confirm('Yakin ingin menghapus akun {{ siswa.nis }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">Belum ada data siswa.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% elif active_menu == 'kesiswaan' %}
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>NIP</th>
+                        <th>Username</th>
+                        <th>Nama</th>
+                        <th>Jabatan</th>
+                        <th>Profil</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for kesiswaan in kesiswaan_list %}
+                    <tr>
+                        <td class="fw-semibold">{{ kesiswaan.nip }}</td>
+                        <td><code>{{ kesiswaan.user.username }}</code></td>
+                        <td>{{ kesiswaan.nama|default:"-" }}</td>
+                        <td>{{ kesiswaan.jabatan|default:"-" }}</td>
+                        <td>
+                            {% if kesiswaan.nama and kesiswaan.jabatan %}
+                                <span class="badge bg-success-subtle text-success border border-success">Lengkap</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">Belum diisi</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'update_kesiswaan' kesiswaan.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{% url 'delete_kesiswaan' kesiswaan.id %}" class="d-inline"
+                                  onsubmit="return confirm('Yakin ingin menghapus akun {{ kesiswaan.nip }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Belum ada akun kesiswaan.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endif %}
+
+{% endblock %}

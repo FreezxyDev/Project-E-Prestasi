@@ -46,6 +46,9 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="badge bg-light text-dark border mb-1">{{ prestasi.kategori_prestasi }}</span>
+                    {% if prestasi.tampilkan_tag_puspresnas %}
+                        <span class="badge mb-1" style="background-color:#00A868;color:#fff;"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
+                    {% endif %}
                     <h6 class="fw-bold mb-1">{{ prestasi.nama_prestasi }}</h6>
                     <div class="text-muted small">{{ prestasi.penyelenggara }} &middot; Tingkat {{ prestasi.tingkat_prestasi }}</div>
                     <div class="text-muted small">{{ prestasi.tanggal_prestasi|date:"d M Y" }}</div>

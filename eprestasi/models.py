@@ -174,6 +174,7 @@ class Prestasi(models.Model):
     kategori_prestasi = models.CharField(max_length=100, choices=[
         ('akademik','akademik'),
         ('non-akademik','non-akademik'),
+        ('kejuaraan','kejuaraan'),
     ])
     tanggal_upload = models.DateTimeField(auto_now_add=True)
     tanggal_verifikasi = models.DateTimeField(null=True, blank=True)
@@ -182,6 +183,7 @@ class Prestasi(models.Model):
     # Puspresnas (Pusat Prestasi Nasional, Kemendikbud) punya sistem klasifikasi
     # sendiri buat prestasi tingkat nasional: berdasarkan wilayah penyelenggaraan
     # dan jenis penyelenggara.
+    kode_puspresnas = models.CharField(max_length=100, blank=True, null=True)
     dokumen_puspresnas = CloudinaryField('dokumen_puspresnas', resource_type='auto', blank=True, null=True)
     jenis_wilayah_puspresnas = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('dalam_negeri', 'Dalam Negeri'),
@@ -191,6 +193,7 @@ class Prestasi(models.Model):
         ('kementerian', 'Kementerian'),
         ('non_kementerian', 'Non-Kementerian (Swasta)'),
     ])
+
 
     class Meta:
         db_table = 'prestasi'

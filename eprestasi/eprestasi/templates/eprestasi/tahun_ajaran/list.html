@@ -1,0 +1,80 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Tahun Ajaran{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Kelola Tahun Ajaran</h4>
+    <a href="{% url 'tambah_tahun_ajaran' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg"></i> Tambah Tahun Ajaran
+    </a>
+</div>
+
+<div class="alert alert-info d-flex gap-2">
+    <i class="bi bi-info-circle fs-5"></i>
+    <div class="small">
+        Saat kamu <strong>menambahkan tahun ajaran baru dan langsung mengaktifkannya</strong>,
+        seluruh siswa aktif otomatis naik 1 tingkat (10&nbsp;&rarr;&nbsp;11&nbsp;&rarr;&nbsp;12).
+        Siswa yang sudah di tingkat 12 otomatis berubah status menjadi <strong>alumni</strong> dan
+        tidak bisa lagi mengunggah sertifikat. Tombol "Aktifkan" pada tahun ajaran yang sudah ada
+        <u>tidak</u> memicu kenaikan tingkat, supaya siswa tidak naik kelas berulang kali.
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Tahun Ajaran</th>
+                    <th>Status</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for tahun in tahun_ajaran_list %}
+                <tr>
+                    <td class="fw-semibold">{{ tahun.tahun_ajaran }}</td>
+                    <td>
+                        {% if tahun.status == 'aktif' %}
+                            <span class="badge badge-aktif">Aktif</span>
+                        {% else %}
+                            <span class="badge badge-nonaktif">Nonaktif</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if tahun.status == 'aktif' %}
+                            <form method="POST" action="{% url 'nonaktifkan_tahun_ajaran' tahun.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Nonaktifkan</button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="{% url 'aktifkan_tahun_ajaran' tahun.id %}" class="d-inline"
+                                  onsubmit="return confirm('Aktifkan {{ tahun.tahun_ajaran }}? Tindakan ini TIDAK menaikkan tingkat siswa.')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-success">Aktifkan</button>
+                            </form>
+                        {% endif %}
+                        <a href="{% url 'update_tahun_ajaran' tahun.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="POST" action="{% url 'delete_tahun_ajaran' tahun.id %}" class="d-inline"
+                              onsubmit="return confirm('Hapus tahun ajaran {{ tahun.tahun_ajaran }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted py-4">Belum ada data tahun ajaran.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block title %}Verifikasi Prestasi{% endblock %}
+
+{% block content %}
+
+<h4 class="fw-bold mb-3">Antrean Verifikasi</h4>
+
+{% if not antrean %}
+    <div class="card p-4 text-center">
+        <i class="bi bi-check2-circle fs-2 text-success mb-2"></i>
+        <p class="text-muted mb-0">Tidak ada prestasi yang menunggu verifikasi. Semua sudah diproses.</p>
+    </div>
+{% else %}
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Siswa</th>
+                        <th>Nama Prestasi</th>
+                        <th>Kategori</th>
+                        <th>Tingkat</th>
+                        <th>Tahun Ajaran</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for prestasi in antrean %}
+                    <tr>
+                        <td>
+                            {{ prestasi.siswa.nama|default:"-" }}
+                            <div class="text-muted small">{{ prestasi.siswa.nis }}</div>
+                        </td>
+                        <td>{{ prestasi.nama_prestasi }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ prestasi.kategori_prestasi }}</span></td>
+                        <td>{{ prestasi.tingkat_prestasi }}</td>
+                        <td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" class="btn btn-sm btn-primary">
+                                Tinjau
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

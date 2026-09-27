@@ -21,6 +21,10 @@
         {% endif %}
     </div>
 
+    {% if prestasi.tampilkan_tag_puspresnas %}
+        <span class="badge mb-2" style="background-color:#00A868;color:#fff;width:fit-content;"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
+    {% endif %}
+
     <table class="table table-sm table-borderless mb-0 small mt-3">
         <tr><td class="text-muted" style="width:180px;">Siswa</td><td>{{ prestasi.siswa.nama|default:"-" }} ({{ prestasi.siswa.nis }})</td></tr>
         <tr><td class="text-muted">Kelas</td><td>{{ prestasi.siswa.kelas|default:"-" }} &middot; {{ prestasi.siswa.jurusan|default:"-" }}</td></tr>
@@ -37,13 +41,18 @@
         {% endif %}
     </table>
 
-    {% if prestasi.dokumen_puspresnas %}
+    {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
         <hr>
-        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Dokumen Puspresnas</h6>
+        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Puspresnas</h6>
         <table class="table table-sm table-borderless mb-0 small">
-            <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
-            <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
-            <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
+            {% if prestasi.kode_puspresnas %}
+                <tr><td class="text-muted" style="width:180px;">Kode Puspresnas</td><td>{{ prestasi.kode_puspresnas }}</td></tr>
+            {% endif %}
+            {% if prestasi.dokumen_puspresnas %}
+                <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
+                <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
+                <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
+            {% endif %}
         </table>
     {% endif %}
 </div>

@@ -1,0 +1,166 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .clock-box {
+        background: #fff;
+        border-radius: .8rem;
+        padding: .55rem 1.1rem;
+        box-shadow: 0 2px 14px rgba(31,59,77,.08);
+        text-align: right;
+        min-width: 168px;
+    }
+    .clock-box .clock-time {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--deep);
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+    .clock-box .clock-date {
+        font-size: .72rem;
+        color: var(--slate);
+        font-weight: 500;
+    }
+    .stat-card { position: relative; overflow: hidden; }
+    .stat-card .stat-icon {
+        position: absolute; right: -.5rem; top: -.5rem;
+        font-size: 3.2rem; color: var(--sky); opacity: .35;
+    }
+    .chart-card canvas { max-height: 280px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Dashboard</h4>
+    <div class="clock-box">
+        <div class="clock-time" id="live-clock-time">--:--:--</div>
+        <div class="clock-date" id="live-clock-date">-</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <i class="bi bi-mortarboard-fill stat-icon"></i>
+            <div class="text-muted small mb-1">Siswa Aktif</div>
+            <div class="fs-3 fw-bold" style="color:#16a34a;">{{ total_siswa_aktif }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <i class="bi bi-person-check-fill stat-icon"></i>
+            <div class="text-muted small mb-1">Siswa Alumni</div>
+            <div class="fs-3 fw-bold text-secondary">{{ total_siswa_alumni }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <i class="bi bi-person-badge-fill stat-icon"></i>
+            <div class="text-muted small mb-1">Akun Kesiswaan</div>
+            <div class="fs-3 fw-bold" style="color: var(--deep);">{{ total_kesiswaan }}</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card stat-card p-3">
+            <i class="bi bi-calendar3 stat-icon"></i>
+            <div class="text-muted small mb-1">Tahun Ajaran Aktif</div>
+            {% if tahun_ajaran_aktif %}
+                <div class="fs-4 fw-bold" style="color:#16a34a;">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
+            {% else %}
+                <div class="fs-6 text-danger">Belum ada tahun ajaran aktif</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card chart-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Ringkasan Data</h6>
+            <canvas id="chartRingkasan"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card chart-card p-4 h-100">
+            <h6 class="fw-bold mb-3">Status Siswa</h6>
+            <canvas id="chartStatusSiswa"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4">
+    <h6 class="fw-bold mb-3">Menu Cepat</h6>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'tambah_siswa' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Tambah Siswa</a>
+        <a href="{% url 'tambah_kesiswaan' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg"></i> Tambah Akun Kesiswaan</a>
+        <a href="{% url 'tambah_tahun_ajaran' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg"></i> Tambah Tahun Ajaran</a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    // ---- Jam realtime pojok kanan atas ----
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const date = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('live-clock-time').textContent = time;
+        document.getElementById('live-clock-date').textContent = date;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ---- Chart: Ringkasan Data (bar) ----
+    const ctxRingkasan = document.getElementById('chartRingkasan');
+    new Chart(ctxRingkasan, {
+        type: 'bar',
+        data: {
+            labels: ['Siswa Aktif', 'Siswa Alumni', 'Akun Kesiswaan'],
+            datasets: [{
+                label: 'Jumlah',
+                data: [{{ total_siswa_aktif|default:0 }}, {{ total_siswa_alumni|default:0 }}, {{ total_kesiswaan|default:0 }}],
+                backgroundColor: ['#4682a9', '#91c8e4', '#749bc2'],
+                borderRadius: 8,
+                maxBarThickness: 56
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f1f6' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ---- Chart: Status Siswa (doughnut) ----
+    const ctxStatus = document.getElementById('chartStatusSiswa');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['Aktif', 'Alumni'],
+            datasets: [{
+                data: [{{ total_siswa_aktif|default:0 }}, {{ total_siswa_alumni|default:0 }}],
+                backgroundColor: ['#4682a9', '#91c8e4'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom' } },
+            cutout: '65%'
+        }
+    });
+</script>
+{% endblock %}
