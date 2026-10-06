@@ -1,0 +1,563 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Pengelolaan Kelas{% endblock %}
+
+{% block extra_head %}
+<style>
+    .qa-btn { display: inline-flex; align-items: center; gap: .45rem; background: var(--bg-card-2); border: 1px solid var(--border-soft); color: var(--text); border-radius: 9999px; padding: .5rem .9rem; font-size: .78rem; font-weight: 500; transition: border-color .15s, background .15s; }
+    .qa-btn:hover { border-color: var(--accent); background: var(--accent-dim); color: var(--text); }
+
+    .widget-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; margin-bottom: .6rem; }
+    .nis-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; min-height: 128px; resize: vertical; }
+
+    .chip-list { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .chip { display: inline-flex; align-items: center; gap: .3rem; border-radius: 9999px; padding: .22rem .6rem; font-size: .72rem; font-weight: 600; border: 1px solid var(--border-soft); background: var(--bg-card-2); color: var(--text); }
+    .chip.ok { background: var(--success-dim); color: var(--success); border-color: rgba(21,128,61,.2); }
+    .chip.warn { background: var(--warning-dim); color: var(--warning); border-color: rgba(180,83,9,.2); }
+    .chip.bad { background: var(--danger-dim); color: var(--danger); border-color: rgba(185,28,28,.2); }
+    .chip button { border: 0; background: transparent; color: inherit; padding: 0; line-height: 1; opacity: .7; }
+    .chip button:hover { opacity: 1; }
+
+    .result-box { border: 1px solid var(--border-soft); border-radius: 12px; padding: .7rem .85rem; margin-top: .75rem; font-size: .78rem; display: none; }
+    .result-box.show { display: block; }
+    .result-line { display: flex; gap: .5rem; align-items: flex-start; margin-bottom: .4rem; }
+    .result-line:last-child { margin-bottom: 0; }
+    .result-line .lbl { min-width: 128px; font-weight: 600; color: var(--text-muted); }
+
+    .picked-wrap { max-height: 190px; overflow: auto; }
+    .empty-soft { color: var(--text-dim); font-size: .8rem; padding: .9rem 0; text-align: center; }
+
+    .kelas-count { display: inline-flex; gap: .35rem; align-items: center; border: 1px solid var(--border-soft); background: var(--bg-card-2); border-radius: 9999px; padding: .25rem .7rem; font-size: .74rem; }
+    .kelas-count strong { font-weight: 800; }
+
+    .row-picked td { background: var(--accent-dim) !important; }
+    .modal-body .table td, .modal-body .table th { font-size: .8rem; }
+    .st-pindah { color: var(--success); font-weight: 700; }
+    .st-lewati { color: var(--warning); font-weight: 700; }
+    .sticky-head thead th { position: sticky; top: 0; background: var(--bg-card); z-index: 1; }
+    .table-scroll { max-height: 520px; overflow: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+        <h1>Pengelolaan Kelas</h1>
+        <p>Tempatkan siswa ke kelas pada tahun ajaran {% if tahun_ajaran_terpilih %}<strong>{{ tahun_ajaran_terpilih.tahun_ajaran }}</strong>{% else %}yang dipilih{% endif %}.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'kelola_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="qa-btn"><i class="bi bi-grid-3x3-gap"></i> Kelola Daftar Kelas</a>
+        <a href="{% url 'riwayat_berdasarkan_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="qa-btn"><i class="bi bi-people"></i> Riwayat Berdasarkan Kelas</a>
+        <a href="{% url 'log_perubahan_kelas' %}" class="qa-btn"><i class="bi bi-journal-text"></i> Log Perubahan</a>
+    </div>
+</div>
+
+{% if not daftar_tahun_ajaran %}
+    <div class="alert alert-warning">
+        Belum ada data Tahun Ajaran. Silakan tambahkan Tahun Ajaran terlebih dahulu.
+        <a href="{% url 'tambah_tahun_ajaran' %}">Tambah Tahun Ajaran</a>
+    </div>
+{% else %}
+
+<!-- ============ KARTU RINGKASAN ============ -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge info"><i class="bi bi-grid-3x3-gap"></i></div>
+            <div class="stat-label">Kelas Tahun Ini</div>
+            <div class="stat-value">{{ jumlah_kelas }}</div>
+            <div class="stat-sub">{{ tahun_ajaran_terpilih.tahun_ajaran }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Siswa Ditampilkan</div>
+            <div class="stat-value">{{ jumlah_siswa_ditampilkan }}</div>
+            <div class="stat-sub">sesuai filter di bawah</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge amber"><i class="bi bi-person-exclamation"></i></div>
+            <div class="stat-label">Belum Ditempatkan</div>
+            <div class="stat-value">{{ jumlah_tanpa_kelas }}</div>
+            <div class="stat-sub">pada tabel yang tampil</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge success"><i class="bi bi-check2-square"></i></div>
+            <div class="stat-label">Siswa Terpilih</div>
+            <div class="stat-value" id="statTerpilih">0</div>
+            <div class="stat-sub">siap dipindahkan</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ JUMLAH SISWA PER KELAS ============ -->
+{% if daftar_kelas_tahun_ini %}
+<div class="card p-3 p-lg-4 mb-3">
+    <div class="panel-title"><i class="bi bi-bar-chart"></i> Jumlah Siswa Setiap Kelas</div>
+    <div class="panel-sub">Tahun ajaran {{ tahun_ajaran_terpilih.tahun_ajaran }}</div>
+    <div class="d-flex flex-wrap gap-2">
+        {% for k in daftar_kelas_tahun_ini %}
+            <span class="kelas-count">{{ k.nama_kelas }} <strong>{{ k.n_siswa }}</strong></span>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    Belum ada kelas untuk tahun ajaran ini. <a href="{% url 'kelola_kelas' %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}">Buat daftar kelas dulu</a> sebelum menempatkan siswa.
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'tempatkan_siswa' %}" id="formPenempatan">
+    {% csrf_token %}
+    <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+    <input type="hidden" name="balik_jurusan" value="{{ jurusan_filter }}">
+    <input type="hidden" name="balik_tingkat" value="{{ tingkat_filter }}">
+    <input type="hidden" name="balik_kelas" value="{{ kelas_filter }}">
+    <input type="hidden" name="balik_q" value="{{ q }}">
+    <input type="hidden" name="mode_manual_xii" id="inputModeManualXii" value="">
+    <input type="hidden" name="jenis_perubahan" id="inputJenisPerubahan" value="penempatan_awal">
+    <div id="hiddenIds"></div>
+
+    <!-- ============ WIDGET: INPUT NIS MASSAL + SISWA TERPILIH ============ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+            <div class="card p-3 p-lg-4 h-100">
+                <div class="widget-head">
+                    <div>
+                        <div class="panel-title"><i class="bi bi-upc-scan"></i> Input NIS Massal</div>
+                        <div class="panel-sub mb-0">Tempel banyak NIS sekaligus. Yang cocok otomatis dicentang.</div>
+                    </div>
+                </div>
+                <textarea id="nisInput" class="form-control nis-textarea" placeholder="Satu NIS per baris, atau pisahkan dengan spasi / koma.&#10;Contoh:&#10;10001&#10;10002, 10003"></textarea>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnCocokkan"><i class="bi bi-check2-all"></i> Cocokkan &amp; Centang</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnBersihNis">Bersihkan</button>
+                </div>
+
+                <div class="result-box" id="hasilNis" aria-live="polite">
+                    <div class="result-line"><span class="lbl">Cocok &amp; dicentang</span><div class="chip-list" id="hasilCocok"></div></div>
+                    <div class="result-line" id="barisBukanAktif" style="display:none;"><span class="lbl">Bukan siswa aktif</span><div class="chip-list" id="hasilBukanAktif"></div></div>
+                    <div class="result-line" id="barisTidakAda" style="display:none;"><span class="lbl">Tidak ditemukan</span><div class="chip-list" id="hasilTidakAda"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card p-3 p-lg-4 h-100">
+                <div class="widget-head">
+                    <div>
+                        <div class="panel-title"><i class="bi bi-person-check"></i> Siswa Terpilih <span class="text-muted fw-normal" id="labelJumlahPicked"></span></div>
+                        <div class="panel-sub mb-0">Gabungan centang di tabel dan hasil input NIS.</div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnKosongkan">Kosongkan</button>
+                </div>
+                <div class="picked-wrap">
+                    <div class="chip-list" id="daftarTerpilih"></div>
+                    <div class="empty-soft" id="kosongTerpilih">Belum ada siswa dipilih.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ WIDGET: KELAS TUJUAN ============ -->
+    <div class="card p-3 p-lg-4 mb-3">
+        <div class="panel-title"><i class="bi bi-box-arrow-in-right"></i> Pindahkan ke Kelas</div>
+        <div class="panel-sub">Pilih kelas tujuan, lalu tinjau daftar siswa yang akan dipindahkan sebelum dikonfirmasi.</div>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Kelas Tujuan</label>
+                <select name="kelas_tujuan" id="selectKelasTujuan" class="form-select form-select-sm" onchange="cekKelasTujuan()">
+                    <option value="">-- Pilih Kelas Tujuan --</option>
+                    {% regroup daftar_kelas_tahun_ini by jurusan as kelas_per_jurusan %}
+                    {% for grup in kelas_per_jurusan %}
+                        <optgroup label="Jurusan {{ grup.grouper }}">
+                        {% for k in grup.list %}
+                            <option value="{{ k.id }}" data-tingkat="{{ k.tingkat }}" data-jurusan="{{ k.jurusan }}">{{ k.nama_kelas }}</option>
+                        {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Alasan (opsional)</label>
+                <input type="text" name="alasan_perubahan" class="form-control form-control-sm" maxlength="200" placeholder="Mis. pembagian kelas awal tahun">
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm flex-grow-1" id="btnTinjau" {% if not daftar_kelas_tahun_ini %}disabled{% endif %}>
+                    <i class="bi bi-list-check"></i> Tinjau Pemindahan
+                </button>
+            </div>
+            <div class="col-12" id="wrapperModeManualXii" style="display:none;">
+                <div class="form-check border rounded-3 p-2 ps-4">
+                    <input class="form-check-input" type="checkbox" id="cbModeManualXii" onclick="toggleModeManualXii()">
+                    <label class="form-check-label small" for="cbModeManualXii">
+                        Ubah Pembagian Kelas XII (wajib diaktifkan untuk memindahkan siswa ke kelas XII secara manual)
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TABEL SISWA ============ -->
+    <div class="card mb-3">
+        <div class="table-toolbar" style="display:block;">
+            <div class="row g-2 align-items-end" id="toolbarFilter">
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Tahun Ajaran</label>
+                    <select name="tahun_ajaran" form="formFilter" class="form-select form-select-sm" onchange="document.getElementById('formFilter').submit()">
+                        {% for ta in daftar_tahun_ajaran %}
+                            <option value="{{ ta.id }}" {% if tahun_ajaran_terpilih.id == ta.id %}selected{% endif %}>{{ ta.tahun_ajaran }}{% if ta.status == 'aktif' %} (Aktif){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Tingkat</label>
+                    <select name="tingkat" form="formFilter" class="form-select form-select-sm" onchange="document.getElementById('formFilter').submit()">
+                        <option value="">Semua Tingkat</option>
+                        {% for nilai, label in daftar_tingkat %}
+                            <option value="{{ nilai }}" {% if tingkat_filter == nilai|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Kelas Saat Ini</label>
+                    <select name="kelas" form="formFilter" class="form-select form-select-sm" onchange="document.getElementById('formFilter').submit()">
+                        <option value="">Semua Kelas</option>
+                        <option value="__belum__" {% if kelas_filter == '__belum__' %}selected{% endif %}>Belum Ditempatkan</option>
+                        {% for k in daftar_kelas_tahun_ini %}
+                            <option value="{{ k.id }}" {% if kelas_filter == k.id|stringformat:"s" %}selected{% endif %}>{{ k.nama_kelas }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label small text-muted mb-1">Cari NIS / Nama</label>
+                    <div class="d-flex gap-2">
+                        <input type="text" name="q" form="formFilter" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari NIS atau Nama...">
+                        <button type="submit" form="formFilter" class="btn btn-sm btn-primary"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills mt-3 flex-wrap gap-y-2">
+                <li class="nav-item">
+                    <a class="nav-link py-1 {% if not jurusan_filter %}active{% endif %}" href="?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% if tingkat_filter %}&tingkat={{ tingkat_filter }}{% endif %}{% if q %}&q={{ q }}{% endif %}">Semua Jurusan</a>
+                </li>
+                {% for nilai, label in daftar_jurusan %}
+                <li class="nav-item">
+                    <a class="nav-link py-1 {% if jurusan_filter == nilai %}active{% endif %}" href="?tahun_ajaran={{ tahun_ajaran_terpilih.id }}&jurusan={{ nilai }}{% if tingkat_filter %}&tingkat={{ tingkat_filter }}{% endif %}{% if q %}&q={{ q }}{% endif %}">{{ label }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="table-responsive table-scroll sticky-head">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:40px;"><input type="checkbox" class="form-check-input" id="cbSemua" title="Centang semua yang tampil"></th>
+                        <th>NIS</th>
+                        <th>Nama</th>
+                        <th>Tingkat</th>
+                        <th>Jurusan</th>
+                        <th>Kelas Saat Ini</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in siswa_rows %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input siswa-checkbox"
+                                   value="{{ row.siswa.id }}"
+                                   data-nis="{{ row.siswa.nis }}"
+                                   data-nama="{{ row.siswa.nama|default:'-' }}"
+                                   data-jurusan="{{ row.siswa.jurusan|default:'' }}"
+                                   data-tingkat="{{ row.tingkat_romawi }}"
+                                   data-kelas-id="{{ row.kelas_saat_ini.id|default:'' }}"
+                                   data-kelas="{{ row.kelas_saat_ini.nama_kelas|default:'' }}">
+                        </td>
+                        <td class="fw-semibold">{{ row.siswa.nis }}</td>
+                        <td>{{ row.siswa.nama|default:"-" }}</td>
+                        <td>{{ row.tingkat_romawi }}</td>
+                        <td>{{ row.siswa.jurusan|default:"-" }}</td>
+                        <td>
+                            {% if row.kelas_saat_ini %}
+                                <span class="chip ok">{{ row.kelas_saat_ini.nama_kelas }}</span>
+                            {% else %}
+                                <span class="chip warn">Belum ditempatkan</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><i class="bi bi-inbox"></i></div><h6>Tidak ada siswa</h6><p>Tidak ada siswa yang cocok dengan filter ini.</p></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+<!-- Form filter (GET) dipisah dari form penempatan supaya tidak bersarang -->
+<form method="get" id="formFilter">
+    {% if jurusan_filter %}<input type="hidden" name="jurusan" value="{{ jurusan_filter }}">{% endif %}
+</form>
+
+<!-- ============ NAIKKAN OTOMATIS XI -> XII ============ -->
+<div class="card p-3 p-lg-4 mb-3">
+    <button class="btn btn-outline-secondary btn-sm align-self-start" type="button" data-bs-toggle="collapse" data-bs-target="#panelNaikOtomatis">
+        <i class="bi bi-arrow-up-circle"></i> Naikkan Otomatis Kelas XI &rarr; XII (kelas dipertahankan sama)
+    </button>
+    <div class="collapse mt-3" id="panelNaikOtomatis">
+        <form method="POST" action="{% url 'naikkan_otomatis' %}"
+              onsubmit="return confirm('Naikkan seluruh siswa tingkat XI terpilih ke kelas XII dengan nama kelas yang sama? Tindakan ini akan tercatat di riwayat.');">
+            {% csrf_token %}
+            <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+            <p class="small text-muted">
+                Seluruh siswa tingkat XI pada tahun ajaran asal akan dipindahkan otomatis ke kelas XII dengan nama kelas yang sama
+                (mis. "XI RPL 2" &rarr; "XII RPL 2") pada tahun ajaran <strong>{{ tahun_ajaran_terpilih.tahun_ajaran }}</strong> (tujuan).
+            </p>
+            <div class="row g-2">
+                <div class="col-6 col-md-4">
+                    <label class="form-label small">Tahun Ajaran Asal (kelas XI)</label>
+                    <select name="tahun_ajaran_asal" class="form-select form-select-sm" required>
+                        <option value="">-- Pilih --</option>
+                        {% for ta in daftar_tahun_ajaran %}{% if ta.id != tahun_ajaran_terpilih.id %}<option value="{{ ta.id }}">{{ ta.tahun_ajaran }}</option>{% endif %}{% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label small">Jurusan</label>
+                    <select name="jurusan" class="form-select form-select-sm">
+                        <option value="">Semua Jurusan</option>
+                        {% for nilai, label in daftar_jurusan %}<option value="{{ nilai }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Naikkan Sekarang</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============ MODAL KONFIRMASI ============ -->
+<div class="modal fade" id="modalKonfirmasi" tabindex="-1" aria-labelledby="judulModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header">
+                <div>
+                    <h6 class="modal-title fw-bold" id="judulModal">Konfirmasi Pemindahan Siswa</h6>
+                    <div class="small text-muted" id="subJudulModal"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="ringkasanModal"></div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>#</th><th>NIS</th><th>Nama</th><th>Kelas Sekarang</th><th></th><th>Kelas Baru</th><th>Status</th></tr></thead>
+                        <tbody id="isiModal"></tbody>
+                    </table>
+                </div>
+                <div class="small text-muted mt-3"><i class="bi bi-info-circle"></i> Siswa bertanda "dilewati" tidak akan diubah. Setiap perpindahan dicatat di Log Perubahan Kelas.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" form="formPenempatan" class="btn btn-primary btn-sm" id="btnKonfirmasi"><i class="bi bi-check-lg"></i> Ya, Pindahkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+{% if tahun_ajaran_terpilih %}
+<script>
+(function () {
+    var TAHUN_ID = "{{ tahun_ajaran_terpilih.id }}";
+    var URL_CEK = "{% url 'cek_nis_massal' %}";
+    var KEY = 'pengelolaan_kelas_terpilih_' + TAHUN_ID;
+    var terpilih = new Map();   // id -> {id, nis, nama, jurusan, tingkat, kelas_id, kelas}
+
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+    var checkboxes = function () { return document.querySelectorAll('.siswa-checkbox'); };
+
+    function simpan() {
+        try { sessionStorage.setItem(KEY, JSON.stringify(Array.from(terpilih.values()))); } catch (e) {}
+    }
+    function muat() {
+        try {
+            var data = JSON.parse(sessionStorage.getItem(KEY) || '[]');
+            data.forEach(function (s) { terpilih.set(String(s.id), s); });
+        } catch (e) {}
+    }
+
+    function infoDariCheckbox(cb) {
+        return { id: cb.value, nis: cb.dataset.nis, nama: cb.dataset.nama, jurusan: cb.dataset.jurusan,
+                 tingkat: cb.dataset.tingkat, kelas_id: cb.dataset.kelasId || null, kelas: cb.dataset.kelas || '' };
+    }
+
+    function tambah(info) { terpilih.set(String(info.id), info); }
+    function hapus(id) { terpilih.delete(String(id)); }
+
+    // Sinkronkan centang tabel, kartu, dan daftar chip dengan isi `terpilih`.
+    function segarkan() {
+        var semuaTercentang = true, adaBaris = false;
+        checkboxes().forEach(function (cb) {
+            adaBaris = true;
+            var aktif = terpilih.has(String(cb.value));
+            cb.checked = aktif;
+            cb.closest('tr').classList.toggle('row-picked', aktif);
+            if (!aktif) semuaTercentang = false;
+        });
+        $('cbSemua').checked = adaBaris && semuaTercentang;
+
+        var n = terpilih.size;
+        $('statTerpilih').textContent = n;
+        $('labelJumlahPicked').textContent = n ? '(' + n + ')' : '';
+        $('kosongTerpilih').style.display = n ? 'none' : 'block';
+
+        var html = '';
+        terpilih.forEach(function (s) {
+            html += '<span class="chip">' + esc(s.nis) + ' &middot; ' + esc(s.nama) +
+                    ' <button type="button" data-hapus="' + esc(s.id) + '" aria-label="Hapus ' + esc(s.nama) + '">&times;</button></span>';
+        });
+        $('daftarTerpilih').innerHTML = html;
+        simpan();
+    }
+
+    // ---------- Interaksi tabel ----------
+    document.addEventListener('change', function (e) {
+        if (e.target.classList && e.target.classList.contains('siswa-checkbox')) {
+            if (e.target.checked) tambah(infoDariCheckbox(e.target)); else hapus(e.target.value);
+            segarkan();
+        }
+    });
+    $('cbSemua').addEventListener('change', function () {
+        var centang = this.checked;
+        checkboxes().forEach(function (cb) { if (centang) tambah(infoDariCheckbox(cb)); else hapus(cb.value); });
+        segarkan();
+    });
+    $('daftarTerpilih').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-hapus]');
+        if (btn) { hapus(btn.dataset.hapus); segarkan(); }
+    });
+    $('btnKosongkan').addEventListener('click', function () { terpilih.clear(); segarkan(); });
+
+    // ---------- Widget Input NIS massal ----------
+    function chips(elId, items, kelas) {
+        $(elId).innerHTML = items.map(function (t) { return '<span class="chip ' + kelas + '">' + esc(t) + '</span>'; }).join('');
+    }
+    $('btnBersihNis').addEventListener('click', function () {
+        $('nisInput').value = '';
+        $('hasilNis').classList.remove('show');
+    });
+    $('btnCocokkan').addEventListener('click', function () {
+        var teks = $('nisInput').value.trim();
+        if (!teks) { $('nisInput').focus(); return; }
+        var btn = this;
+        btn.disabled = true;
+        var body = new URLSearchParams();
+        body.append('tahun_ajaran', TAHUN_ID);
+        body.append('nis_list', teks);
+        fetch(URL_CEK, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+            btn.disabled = false;
+            if (!res.ok) { alert(res.j.error || 'Gagal mencocokkan NIS.'); return; }
+            var h = res.j;
+            h.cocok.forEach(tambah);
+            $('hasilNis').classList.add('show');
+            chips('hasilCocok', h.cocok.map(function (s) { return s.nis; }), 'ok');
+            if (!h.cocok.length) $('hasilCocok').innerHTML = '<span class="text-muted">Tidak ada yang cocok.</span>';
+            $('barisBukanAktif').style.display = h.bukan_aktif.length ? 'flex' : 'none';
+            chips('hasilBukanAktif', h.bukan_aktif.map(function (s) { return s.nis + ' (' + s.status + ')'; }), 'warn');
+            $('barisTidakAda').style.display = h.tidak_ditemukan.length ? 'flex' : 'none';
+            chips('hasilTidakAda', h.tidak_ditemukan, 'bad');
+            segarkan();
+        }).catch(function () { btn.disabled = false; alert('Gagal menghubungi server. Coba lagi.'); });
+    });
+
+    // ---------- Kelas tujuan ----------
+    window.cekKelasTujuan = function () {
+        var select = $('selectKelasTujuan');
+        var opsi = select.options[select.selectedIndex];
+        var tingkat = opsi ? opsi.getAttribute('data-tingkat') : null;
+        var wrapper = $('wrapperModeManualXii');
+        if (tingkat === '12') {
+            wrapper.style.display = 'block';
+            $('inputJenisPerubahan').value = 'perubahan_manual';
+        } else {
+            wrapper.style.display = 'none';
+            $('cbModeManualXii').checked = false;
+            $('inputModeManualXii').value = '';
+            $('inputJenisPerubahan').value = (tingkat === '11') ? 'pembagian_ulang_x_ke_xi' : 'penempatan_awal';
+        }
+    };
+    window.toggleModeManualXii = function () {
+        $('inputModeManualXii').value = $('cbModeManualXii').checked ? '1' : '';
+    };
+
+    // ---------- Tinjau & konfirmasi ----------
+    var modal = new bootstrap.Modal($('modalKonfirmasi'));
+    var akanDipindah = [];
+
+    $('btnTinjau').addEventListener('click', function () {
+        var select = $('selectKelasTujuan');
+        if (!terpilih.size) { alert('Pilih minimal satu siswa (lewat centang atau Input NIS Massal).'); return; }
+        if (!select.value) { alert('Pilih kelas tujuan terlebih dahulu.'); select.focus(); return; }
+        var opsi = select.options[select.selectedIndex];
+        if (opsi.getAttribute('data-tingkat') === '12' && !$('cbModeManualXii').checked) {
+            alert('Aktifkan dulu opsi "Ubah Pembagian Kelas XII" untuk memindahkan siswa ke kelas XII secara manual.');
+            return;
+        }
+        var tujuan = { id: select.value, nama: opsi.text.trim(), jurusan: opsi.getAttribute('data-jurusan') };
+
+        var baris = '', nomor = 0, pindah = 0, sama = 0, beda = 0;
+        akanDipindah = [];
+        terpilih.forEach(function (s) {
+            nomor++;
+            var status, cls;
+            if (s.kelas_id && String(s.kelas_id) === String(tujuan.id)) { status = 'Dilewati: sudah di kelas ini'; cls = 'st-lewati'; sama++; }
+            else if ((s.jurusan || '') !== tujuan.jurusan) { status = 'Dilewati: jurusan ' + (s.jurusan || '-') + ' tidak cocok'; cls = 'st-lewati'; beda++; }
+            else { status = 'Dipindahkan'; cls = 'st-pindah'; pindah++; akanDipindah.push(s.id); }
+            baris += '<tr><td class="text-muted">' + nomor + '</td><td class="fw-semibold">' + esc(s.nis) + '</td><td>' + esc(s.nama) + '</td>' +
+                     '<td>' + (s.kelas ? esc(s.kelas) : '<span class="text-muted">Belum ditempatkan</span>') + '</td>' +
+                     '<td><i class="bi bi-arrow-right text-muted"></i></td><td class="fw-semibold">' + esc(tujuan.nama) + '</td>' +
+                     '<td class="' + cls + '">' + esc(status) + '</td></tr>';
+        });
+        $('isiModal').innerHTML = baris;
+        $('subJudulModal').textContent = 'Kelas tujuan: ' + tujuan.nama + ' \u00b7 Tahun ajaran {{ tahun_ajaran_terpilih.tahun_ajaran }}';
+        $('ringkasanModal').innerHTML =
+            '<span class="chip ok">' + pindah + ' akan dipindahkan</span>' +
+            (sama ? '<span class="chip warn">' + sama + ' sudah di kelas ini</span>' : '') +
+            (beda ? '<span class="chip warn">' + beda + ' jurusan tidak cocok</span>' : '');
+        $('btnKonfirmasi').disabled = pindah === 0;
+        modal.show();
+    });
+
+    // Saat dikonfirmasi: isi hidden siswa_ids dari daftar yang benar-benar dipindahkan.
+    $('btnKonfirmasi').addEventListener('click', function () {
+        $('hiddenIds').innerHTML = akanDipindah.map(function (id) {
+            return '<input type="hidden" name="siswa_ids" value="' + esc(id) + '">';
+        }).join('');
+        try { sessionStorage.removeItem(KEY); } catch (e) {}
+    });
+
+    muat();
+    segarkan();
+    cekKelasTujuan();
+})();
+</script>
+{% endif %}
+{% endblock %}

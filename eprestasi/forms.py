@@ -1,54 +1,22 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Siswa, Kesiswaan, Users, Prestasi, Sertifikat, Dokumentasi
-
-
-# ── Pemetaan Kelas berdasarkan Jurusan ──────────────────────────────────────
-# Dipakai supaya dropdown "Kelas" di form Tambah/Edit Siswa cuma menampilkan
-# kelas yang relevan dengan Jurusan yang dipilih admin (filter di JS, lihat
-# templates/eprestasi/siswa/form.html), dan divalidasi ulang di server lewat
-# SiswaAkunForm.clean() di bawah.
-KELAS_PER_JURUSAN = {
-    'RPL': ['X PPLG 1', 'X PPLG 2', 'XI RPL 1', 'XI RPL 2', 'XII RPL 1', 'XII RPL 2'],
-    'DKV': ['X DKV 1', 'X DKV 2', 'XI DKV 1', 'XI DKV 2', 'XII DKV 1', 'XII DKV 2'],
-    'TJKT': ['X TJKT 1', 'XI TJKT 1', 'XII TJKT 1'],
-    'PM': [
-        'X PM 1', 'X PM 2', 'X PM 3',
-        'XI PM 1', 'XI PM 2', 'XI PM 3',
-        'XII PM 1', 'XII PM 2', 'XII PM 3',
-    ],
-    'MPLB': [
-        'X MP 1', 'X MP 2', 'X MP 3', 'X MP 4', 'X MP 5',
-        'XI MP 1', 'XI MP 2', 'XI MP 3', 'XI MP 4', 'XI MP 5',
-        'XII MP 1', 'XII MP 2', 'XII MP 3', 'XII MP 4', 'XII MP 5',
-    ],
-    'AKL': [
-        'X AKL 1', 'X AKL 2', 'X AKL 3', 'X AKL 4',
-        'XI AKL 1', 'XI AKL 2', 'XI AKL 3', 'XI AKL 4',
-        'XII AKL 1', 'XII AKL 2', 'XII AKL 3', 'XII AKL 4',
-    ],
-}
-
-# Reverse map: nama kelas -> jurusan. Dipakai buat kasih atribut data-jurusan
-# ke tiap <option> Kelas (lihat KelasSelectWidget di bawah).
-_JURUSAN_PER_KELAS = {
-    kelas: jurusan
-    for jurusan, daftar_kelas in KELAS_PER_JURUSAN.items()
-    for kelas in daftar_kelas
-}
+from .models import (
+    Siswa, Kesiswaan, Users, Prestasi, Sertifikat, Dokumentasi,
+    Kelas, Tahun_ajaran, DAFTAR_JURUSAN, DAFTAR_TINGKAT,
+)
 
 
 class KelasSelectWidget(forms.Select):
     """
-    Select HTML biasa, tapi tiap <option> dikasih atribut data-jurusan="RPL"
-    dst, supaya JavaScript di form Tambah/Edit Siswa bisa menyembunyikan opsi
-    kelas yang tidak sesuai dengan Jurusan yang lagi dipilih.
+    Select biasa, tapi tiap <option> dikasih atribut data-jurusan="RPL" dst
+    (diambil dari objek Kelas-nya), supaya JavaScript di form Tambah/Edit
+    Siswa bisa menyembunyikan kelas yang tidak sesuai Jurusan yang dipilih.
     """
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(name, value, label, selected, index, subindex, attrs)
-        jurusan = _JURUSAN_PER_KELAS.get(value)
-        if jurusan:
-            option['attrs']['data-jurusan'] = jurusan
+        instance = getattr(value, 'instance', None)
+        if instance is not None:
+            option['attrs']['data-jurusan'] = instance.jurusan
         return option
 
 
@@ -74,6 +42,12 @@ from django import forms
 from .models import Siswa
 
 class SiswaAkunForm(forms.Form):
+    """
+    Form akun siswa untuk admin. Pilihan Kelas diambil dari model Kelas pada
+    TAHUN AJARAN AKTIF (struktur kelas dikelola admin per tahun ajaran di
+    Pengelolaan Kelas), bukan daftar tetap. Tingkat ditentukan otomatis dari
+    kelas yang dipilih, jadi tidak ada input tingkat di sini.
+    """
     nis = forms.CharField(
         max_length=20,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Masukkan NIS'})
@@ -82,17 +56,14 @@ class SiswaAkunForm(forms.Form):
         max_length=100,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Masukkan Nama Lengkap'})
     )
-    kelas = forms.ChoiceField(
-        choices=[('', '-- Pilih Jurusan dulu --')] + list(Siswa.KELAS_CHOICES),
+    kelas = forms.ModelChoiceField(
+        queryset=Kelas.objects.none(),
+        empty_label='-- Pilih Jurusan dulu --',
         widget=KelasSelectWidget(attrs={'class': 'form-select'})
     )
     jurusan = forms.ChoiceField(
         choices=[('', '-- Pilih Jurusan --')] + list(Siswa.JURUSAN_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    tingkat = forms.IntegerField(
-        required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 10, 'placeholder': 'Contoh: 10, 11, 12', 'value': 10})
     )
     status = forms.ChoiceField(
         choices=[('aktif', 'Aktif'), ('alumni', 'Alumni')],
@@ -106,17 +77,27 @@ class SiswaAkunForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.siswa_id = kwargs.pop('siswa_id', None)
+        # Siswa alumni tidak ditempatkan di kelas tahun aktif, jadi kelas tidak wajib.
+        kelas_wajib = kwargs.pop('kelas_wajib', True)
         super().__init__(*args, **kwargs)
+
+        self.tahun_aktif = Tahun_ajaran.objects.filter(status='aktif').order_by('-id').first()
+        field_kelas = self.fields['kelas']
+        field_kelas.required = kelas_wajib
+        field_kelas.label_from_instance = lambda k: k.nama_kelas
+        if self.tahun_aktif:
+            field_kelas.queryset = Kelas.objects.filter(tahun_ajaran=self.tahun_aktif).order_by('jurusan', 'tingkat', 'nama_kelas')
+            field_kelas.help_text = f'Kelas tahun ajaran {self.tahun_aktif.tahun_ajaran}.'
+        else:
+            field_kelas.help_text = 'Belum ada tahun ajaran aktif, kelas belum bisa dipilih.'
+
         if self.siswa_id is None:
-            # Mode tambah akun baru -> password wajib diisi.
             self.fields['password'].required = True
         else:
-            # Mode edit -> password opsional, cuma diganti kalau diisi.
             self.fields['password'].help_text = 'Kosongkan jika tidak ingin mengubah password.'
 
     def clean_nis(self):
         nis = self.cleaned_data.get('nis')
-        # Cek keunikan NIS (kecuali milik diri sendiri saat edit)
         qs = Siswa.objects.filter(nis=nis)
         if self.siswa_id:
             qs = qs.exclude(id=self.siswa_id)
@@ -129,13 +110,15 @@ class SiswaAkunForm(forms.Form):
         jurusan = cleaned_data.get('jurusan')
         kelas = cleaned_data.get('kelas')
 
-        # Validasi ulang di server, jaga-jaga kalau filter JS di browser
-        # di-nonaktifkan atau di-bypass -- kelas yang dipilih harus benar-benar
-        # milik jurusan yang dipilih.
-        if jurusan and kelas and kelas not in KELAS_PER_JURUSAN.get(jurusan, []):
+        # Validasi ulang di server kalau filter JS di-bypass: jurusan kelas harus
+        # sama dengan jurusan siswa.
+        if jurusan and kelas and kelas.jurusan != jurusan:
             self.add_error('kelas', 'Kelas yang dipilih tidak sesuai dengan Jurusan.')
+        if self.tahun_aktif is None and self.fields['kelas'].required:
+            self.add_error('kelas', 'Belum ada tahun ajaran aktif. Aktifkan tahun ajaran dulu.')
 
         return cleaned_data
+
 
 class KesiswaanAkunForm(forms.Form):
     """
@@ -219,25 +202,91 @@ class AdminAkunForm(forms.Form):
 
 class SiswaProfilForm(forms.Form):
     """
-    Form yang diisi SISWA SENDIRI (bukan admin) untuk melengkapi profilnya
-    setelah login pertama kali. Nama, kelas, dan jurusan SEPENUHNYA diisi
-    admin saat akun dibuat -- makanya field itu SENGAJA TIDAK ADA di form ini
-    (cuma ditampilkan sebagai teks biasa di template dari data `siswa`
-    langsung, lihat siswa_portal/lengkapi_profil.html).
+    Form yang diisi SISWA SENDIRI. Hanya data kontak: email, no. telepon, alamat.
+    NIS, nama, kelas, dan jurusan diisi admin -- SENGAJA tidak ada di form ini
+    (ditampilkan sebagai teks read-only dari objek `siswa` di template).
 
-    PENTING: jangan tambahkan field nama/kelas/jurusan ke sini lagi. Kalau
-    ditambah sebagai field wajib tapi template tidak merender inputnya,
-    form ini akan SELALU gagal validasi (karena field itu tidak pernah ada
-    di request.POST) -- inilah yang dulu menyebabkan siswa terjebak
-    redirect loop terus-menerus ke halaman "Lengkapi Profil".
+    PENTING: jangan tambahkan field nama/kelas/jurusan ke sini. Kalau ditambah
+    sebagai field wajib tapi template tidak merender inputnya, form ini akan
+    selalu gagal validasi dan siswa terjebak redirect loop ke "Lengkapi Profil".
     """
     email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'contoh@email.com'})
+        max_length=100,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'contoh@email.com', 'autocomplete': 'email'})
     )
     no_hp = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 08123456789'})
+        max_length=20,
+        label='Nomor Telepon',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 081234567890', 'inputmode': 'tel', 'autocomplete': 'tel'})
     )
+    alamat = forms.CharField(
+        max_length=255,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Alamat lengkap tempat tinggal'})
+    )
+
+    def clean_no_hp(self):
+        import re
+        nomor = re.sub(r'[\s\-\.\(\)]', '', self.cleaned_data['no_hp'])
+        if not re.fullmatch(r'\+?\d{9,15}', nomor):
+            raise forms.ValidationError('Nomor telepon tidak valid. Gunakan 9-15 digit angka, contoh: 081234567890.')
+        return nomor
+
+    def clean_alamat(self):
+        alamat = ' '.join(self.cleaned_data['alamat'].split())
+        if len(alamat) < 10:
+            raise forms.ValidationError('Alamat terlalu singkat, tulis alamat selengkapnya.')
+        return alamat
+
+
+SISWA_PASSWORD_MIN_LENGTH = 6
+
+
+class SiswaPasswordForm(forms.Form):
+    """Ganti password oleh siswa sendiri (wajib menyebut password saat ini)."""
+    password_lama = forms.CharField(
+        label='Password saat ini',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'current-password', 'placeholder': 'Masukkan password saat ini'})
+    )
+    password_baru = forms.CharField(
+        label='Password baru',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'new-password', 'placeholder': f'Minimal {SISWA_PASSWORD_MIN_LENGTH} karakter'})
+    )
+    konfirmasi_password = forms.CharField(
+        label='Konfirmasi password baru',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'autocomplete': 'new-password', 'placeholder': 'Ulangi password baru'})
+    )
+
+    def __init__(self, *args, user=None, siswa=None, **kwargs):
+        self.user = user
+        self.siswa = siswa
+        super().__init__(*args, **kwargs)
+
+    def clean_password_lama(self):
+        from django.contrib.auth.hashers import check_password
+        lama = self.cleaned_data['password_lama']
+        if not check_password(lama, self.user.password):
+            raise forms.ValidationError('Password saat ini salah.')
+        return lama
+
+    def clean_password_baru(self):
+        baru = self.cleaned_data['password_baru']
+        if len(baru) < SISWA_PASSWORD_MIN_LENGTH:
+            raise forms.ValidationError(f'Password baru minimal {SISWA_PASSWORD_MIN_LENGTH} karakter.')
+        terlarang = {self.user.username.lower()}
+        if self.siswa is not None:
+            terlarang.add(self.siswa.nis.lower())
+        if baru.lower() in terlarang:
+            raise forms.ValidationError('Password baru tidak boleh sama dengan username atau NIS.')
+        return baru
+
+    def clean(self):
+        data = super().clean()
+        lama, baru, konf = data.get('password_lama'), data.get('password_baru'), data.get('konfirmasi_password')
+        if baru and konf and baru != konf:
+            self.add_error('konfirmasi_password', 'Konfirmasi password tidak cocok.')
+        if lama and baru and lama == baru:
+            self.add_error('password_baru', 'Password baru harus berbeda dari password saat ini.')
+        return data
 
 
 TINGKAT_PRESTASI_CHOICES = [
@@ -245,6 +294,12 @@ TINGKAT_PRESTASI_CHOICES = [
     ('kabupaten/kota', 'Kabupaten/Kota'),
     ('provinsi', 'Provinsi'),
     ('nasional', 'Nasional'),
+    ('internasional', 'Internasional'),
+]
+
+WILAYAH_PRESTASI_CHOICES = [
+    ('dalam_negeri', 'Dalam Negeri'),
+    ('luar_negeri', 'Luar Negeri'),
 ]
 
 
@@ -254,10 +309,9 @@ class PrestasiUploadForm(forms.Form):
     file sertifikat (bukti prestasi) DAN foto dokumentasi -- keduanya wajib,
     tanpa bukti yang lengkap prestasinya tidak ada gunanya untuk diverifikasi.
 
-    Dokumen Puspresnas OPSIONAL, cuma relevan/ditampilkan kalau tingkat_prestasi
-    dipilih 'nasional' -- makanya semua field puspresnas di sini required=False
-    di level form, validasinya (saling melengkapi 1 sama lain) dicek manual di
-    clean(), bukan lewat required=True biasa.
+    Kode & dokumen Puspresnas OPSIONAL dan tersedia di SEMUA tingkat prestasi --
+    makanya semua field puspresnas di sini required=False di level form,
+    validasinya dicek manual di clean(), bukan lewat required=True biasa.
     """
     nama_prestasi = forms.CharField(
         max_length=100,
@@ -270,6 +324,12 @@ class PrestasiUploadForm(forms.Form):
     tingkat_prestasi = forms.ChoiceField(
         choices=TINGKAT_PRESTASI_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tingkat_prestasi'})
+    )
+    wilayah_prestasi = forms.ChoiceField(
+        label='Wilayah',
+        choices=WILAYAH_PRESTASI_CHOICES,
+        initial='dalam_negeri',
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
     penyelenggara = forms.CharField(
         max_length=100,
@@ -306,8 +366,8 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Foto saat penyerahan piala'})
     )
 
-    # ── Kode Puspresnas, OPSIONAL. Kalau diisi, field dokumen_puspresnas di
-    #    bawah jadi lampiran TAMBAHAN yang juga opsional (lihat JS di template). ──
+    # ── Kode Puspresnas (di atas bukti prestasi) & file bukti Puspresnas (paling
+    #    bawah form), dua-duanya OPSIONAL dan berdiri sendiri-sendiri. ──
     kode_puspresnas = forms.CharField(
         max_length=100, required=False,
         label='Kode Puspresnas (opsional)',
@@ -315,20 +375,14 @@ class PrestasiUploadForm(forms.Form):
     )
     dokumen_puspresnas = forms.FileField(
         required=False,
-        label='Dokumen Puspresnas (opsional)',
+        label='File Bukti Puspresnas (opsional)',
         validators=[validasi_ukuran_file],
         help_text=f'Maksimal {MAKS_UKURAN_FILE_MB}MB.',
         widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
     )
-    jenis_wilayah_puspresnas = forms.ChoiceField(
-        required=False,
-        label='Wilayah',
-        choices=[('', '-- Pilih --'), ('dalam_negeri', 'Dalam Negeri'), ('luar_negeri', 'Luar Negeri')],
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
     jenis_penyelenggara_puspresnas = forms.ChoiceField(
         required=False,
-        label='Jenis Penyelenggara',
+        label='Jenis Penyelenggara (isi jika melampirkan file Puspresnas)',
         choices=[('', '-- Pilih --'), ('kementerian', 'Kementerian'), ('non_kementerian', 'Non-Kementerian (Swasta)')],
         widget=forms.Select(attrs={'class': 'form-select'})
     )
@@ -336,13 +390,10 @@ class PrestasiUploadForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         dokumen = cleaned_data.get('dokumen_puspresnas')
-        wilayah = cleaned_data.get('jenis_wilayah_puspresnas')
         penyelenggara_jenis = cleaned_data.get('jenis_penyelenggara_puspresnas')
 
-        # Kalau siswa upload dokumen puspresnas, wilayah & jenis penyelenggaranya
-        # wajib dipilih juga -- tidak ada gunanya ada dokumen tanpa kategorinya.
-        if dokumen and not wilayah:
-            self.add_error('jenis_wilayah_puspresnas', 'Wajib dipilih kalau melampirkan dokumen Puspresnas.')
+        # Wilayah dokumen Puspresnas mengikuti field 'Wilayah' prestasi di atas
+        # (disalin di view), jadi cukup jenis penyelenggara yang divalidasi.
         if dokumen and not penyelenggara_jenis:
             self.add_error('jenis_penyelenggara_puspresnas', 'Wajib dipilih kalau melampirkan dokumen Puspresnas.')
 
@@ -378,25 +429,40 @@ class DokumentasiTambahanForm(forms.Form):
 
 class KesiswaanProfilForm(forms.Form):
     """
-    Form yang diisi user KESISWAAN SENDIRI (bukan admin) setelah login pertama kali.
-    Sama seperti siswa: admin cuma bikin akun dgn NIP+password, nama & jabatan
-    diisi sendiri -- itu yang menentukan Kesiswaan.profil_lengkap.
-    
-    FIELD READONLY (tidak bisa diedit):
-    - nama (data sekolah, dikirim dari admin)
+    Form profil yang diisi user KESISWAAN SENDIRI setelah login pertama kali.
+    Admin hanya membuat akun (NIP + password). NIP ditampilkan di template
+    sebagai teks read-only dan TIDAK ada di form ini -- jadi tidak mungkin
+    diubah lewat request POST. Yang bisa diisi/diubah: nama lengkap, nomor
+    telepon, dan jabatan. Ketiganya menentukan Kesiswaan.profil_lengkap.
     """
     nama = forms.CharField(
         max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control is-readonly',
-            'placeholder': 'Nama lengkap kamu',
-            'readonly': 'readonly'
-        })
+        label='Nama Lengkap',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nama lengkap beserta gelar (jika ada)', 'autocomplete': 'name'})
     )
-    jabatan = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Wakil Kesiswaan'})
+    no_hp = forms.CharField(
+        max_length=20,
+        label='Nomor Telepon',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 081234567890', 'inputmode': 'tel', 'autocomplete': 'tel'})
     )
+    jabatan = forms.ChoiceField(
+        label='Jabatan',
+        choices=[('', 'Pilih jabatan...')] + Kesiswaan.JABATAN_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def clean_nama(self):
+        nama = ' '.join(self.cleaned_data['nama'].split())  # rapikan spasi ganda
+        if len(nama) < 3:
+            raise forms.ValidationError('Nama lengkap minimal 3 karakter.')
+        return nama
+
+    def clean_no_hp(self):
+        import re
+        nomor = re.sub(r'[\s\-\.\(\)]', '', self.cleaned_data['no_hp'])
+        if not re.fullmatch(r'\+?\d{9,15}', nomor):
+            raise forms.ValidationError('Nomor telepon tidak valid. Gunakan 9-15 digit angka, contoh: 081234567890.')
+        return nomor
 
 
 class VerifikasiPrestasiForm(forms.Form):
@@ -462,6 +528,12 @@ class PrestasiEditForm(forms.Form):
         choices=TINGKAT_PRESTASI_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+    wilayah_prestasi = forms.ChoiceField(
+        label='Wilayah',
+        choices=WILAYAH_PRESTASI_CHOICES,
+        initial='dalam_negeri',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
     penyelenggara = forms.CharField(
         max_length=100,
         widget=forms.TextInput(attrs={'class': 'form-control'})
@@ -488,3 +560,91 @@ class ImportSiswaForm(forms.Form):
         if file.size > MAKS_UKURAN_FILE_BYTES:
             raise ValidationError(f'Ukuran file maksimal {MAKS_UKURAN_FILE_MB}MB.')
         return file
+
+
+# =========================================================
+# FORM PENGELOLAAN KELAS
+# =========================================================
+
+class KelasForm(forms.Form):
+    """Form tambah/edit satu baris Kelas untuk sebuah tahun ajaran tertentu."""
+    nama_kelas = forms.CharField(
+        max_length=100,
+        label='Nama Kelas',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: XI RPL 1'})
+    )
+    jurusan = forms.ChoiceField(
+        choices=DAFTAR_JURUSAN,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    tingkat = forms.ChoiceField(
+        choices=DAFTAR_TINGKAT,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def __init__(self, *args, tahun_ajaran=None, kelas_id=None, **kwargs):
+        self.tahun_ajaran = tahun_ajaran
+        self.kelas_id = kelas_id
+        super().__init__(*args, **kwargs)
+
+    def clean_nama_kelas(self):
+        nama_kelas = self.cleaned_data['nama_kelas'].strip()
+        qs = Kelas.objects.filter(tahun_ajaran=self.tahun_ajaran, nama_kelas__iexact=nama_kelas)
+        if self.kelas_id:
+            qs = qs.exclude(id=self.kelas_id)
+        if qs.exists():
+            raise ValidationError('Sudah ada kelas dengan nama tersebut pada tahun ajaran ini.')
+        return nama_kelas
+
+
+class BuatKelasMassalForm(forms.Form):
+    """
+    Membuat beberapa kelas sekaligus untuk satu jurusan & tingkat pada satu
+    tahun ajaran, contoh: jurusan RPL, tingkat X, jumlah 2 -> otomatis
+    membuat "X RPL 1" dan "X RPL 2".
+    """
+    jurusan = forms.ChoiceField(
+        choices=DAFTAR_JURUSAN,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    tingkat = forms.ChoiceField(
+        choices=DAFTAR_TINGKAT,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    jumlah_kelas = forms.IntegerField(
+        min_value=1, max_value=20,
+        label='Jumlah Kelas',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 2'})
+    )
+
+    def __init__(self, *args, tahun_ajaran=None, **kwargs):
+        self.tahun_ajaran = tahun_ajaran
+        super().__init__(*args, **kwargs)
+
+
+class SalinKelasForm(forms.Form):
+    """Menyalin seluruh daftar Kelas dari satu tahun ajaran ke tahun ajaran lain."""
+    tahun_ajaran_sumber = forms.ModelChoiceField(
+        queryset=Tahun_ajaran.objects.all(),
+        label='Salin Daftar Kelas Dari',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+
+class NaikkanOtomatisForm(forms.Form):
+    """
+    Kenaikan kelas XI ke XII secara BAWAAN (kelas dipertahankan sama,
+    lihat bagian 7 spesifikasi): tidak ada pembagian ulang, seluruh siswa
+    tingkat XI pada tahun ajaran asal otomatis dipindah ke kelas XII dengan
+    nama yang sama persis pada tahun ajaran tujuan.
+    """
+    tahun_ajaran_asal = forms.ModelChoiceField(
+        queryset=Tahun_ajaran.objects.all(),
+        label='Tahun Ajaran Asal (kelas XI)',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    jurusan = forms.ChoiceField(
+        choices=[('', 'Semua Jurusan')] + list(DAFTAR_JURUSAN),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )

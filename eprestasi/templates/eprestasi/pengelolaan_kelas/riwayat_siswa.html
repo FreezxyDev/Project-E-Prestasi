@@ -1,0 +1,112 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Riwayat Kelas - {{ siswa.nama }}{% endblock %}
+
+{% block content %}
+
+<div class="topbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="mb-0">Riwayat Kelas Siswa</h4>
+    <a href="{% url 'siswa_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Kembali ke Kelola User
+    </a>
+</div>
+
+<div class="card p-4 mb-3">
+    <div class="row">
+        <div class="col-md-3"><span class="text-muted small">NIS</span><div class="fw-semibold">{{ siswa.nis }}</div></div>
+        <div class="col-md-5"><span class="text-muted small">Nama</span><div class="fw-semibold">{{ siswa.nama|default:"-" }}</div></div>
+        <div class="col-md-2"><span class="text-muted small">Jurusan</span><div class="fw-semibold">{{ siswa.jurusan|default:"-" }}</div></div>
+        <div class="col-md-2">
+            <span class="text-muted small">Status</span>
+            <div>
+                {% if siswa.status == 'aktif' %}
+                    <span class="badge badge-aktif">Aktif</span>
+                {% else %}
+                    <span class="badge badge-alumni">Alumni</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Perjalanan kelas ringkas -->
+{% if perjalanan_kelas %}
+<div class="card p-3 mb-3">
+    <div class="small text-muted fw-semibold mb-2">PERJALANAN KELAS</div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        {% for nama_kelas in perjalanan_kelas %}
+            <span class="badge bg-light text-dark border">{{ nama_kelas }}</span>
+            {% if not forloop.last %}<i class="bi bi-arrow-right text-muted"></i>{% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabel riwayat kelas per tahun ajaran -->
+<div class="card p-3 mb-3">
+    <div class="small text-muted fw-semibold mb-2">RIWAYAT KELAS (diurutkan dari tahun ajaran paling lama)</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Tahun Ajaran</th>
+                    <th>Tingkat</th>
+                    <th>Jurusan</th>
+                    <th>Kelas</th>
+                    <th>Tanggal Penempatan</th>
+                    <th>Diubah Oleh</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in riwayat_kelas %}
+                <tr>
+                    <td class="fw-semibold">{{ r.tahun_ajaran.tahun_ajaran }}</td>
+                    <td>{{ r.kelas.tingkat_romawi }}</td>
+                    <td>{{ siswa.jurusan|default:"-" }}</td>
+                    <td>{{ r.kelas.nama_kelas }}</td>
+                    <td>{{ r.tanggal_penempatan|date:"d M Y H:i" }}</td>
+                    <td>{{ r.diubah_oleh.username|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Siswa ini belum memiliki riwayat kelas.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Log perubahan kelas (audit) -->
+<div class="card p-3">
+    <div class="small text-muted fw-semibold mb-2">RIWAYAT PERUBAHAN KELAS (jejak audit)</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Kelas Sebelumnya</th>
+                    <th>Kelas Baru</th>
+                    <th>Tahun Ajaran</th>
+                    <th>Jenis Perubahan</th>
+                    <th>Diubah Oleh</th>
+                    <th>Alasan</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in log_perubahan %}
+                <tr>
+                    <td>{{ log.waktu_perubahan|date:"d M Y H:i" }}</td>
+                    <td>{{ log.kelas_sebelumnya.nama_kelas|default:"-" }}</td>
+                    <td>{{ log.kelas_baru.nama_kelas|default:"-" }}</td>
+                    <td>{{ log.tahun_ajaran.tahun_ajaran }}</td>
+                    <td>{{ log.get_jenis_perubahan_display }}</td>
+                    <td>{{ log.diubah_oleh.username|default:"-" }}</td>
+                    <td>{{ log.alasan_perubahan|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Belum ada catatan perubahan kelas.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

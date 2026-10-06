@@ -1,143 +1,215 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
 {% block title %}{{ prestasi.nama_prestasi }}{% endblock %}
+{% block extra_head %}{% include 'eprestasi/_partials/detail_prestasi_style.html' %}{% endblock %}
 
 {% block content %}
 
-<a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+<a href="{% url 'kesiswaan_verifikasi_list' %}" class="dp-back">
     <i class="bi bi-arrow-left"></i> Kembali ke Antrean
 </a>
 
-<div class="card p-4 mb-3">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-        <h4 class="fw-bold mb-0">{{ prestasi.nama_prestasi }}</h4>
+{# ================= HEADER ================= #}
+<div class="card dp-header">
+    <div class="dp-top">
+        <h4 class="dp-title">{{ prestasi.nama_prestasi }}</h4>
         {% if prestasi.status == 'diterima' %}
-            <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill"></i> Diterima</span>
+            <span class="dp-pill diterima"><i class="bi bi-check-circle-fill"></i> Diterima</span>
         {% elif prestasi.status == 'perbaikan' %}
-            <span class="badge fs-6" style="background-color:#f97316;color:#fff;"><i class="bi bi-tools"></i> Perbaikan</span>
+            <span class="dp-pill perbaikan"><i class="bi bi-tools"></i> Perbaikan</span>
         {% elif prestasi.status == 'ditolak' %}
-            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
+            <span class="dp-pill ditolak"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
         {% else %}
-            <span class="badge bg-warning text-dark fs-6">Pending</span>
+            <span class="dp-pill pending"><i class="bi bi-hourglass-split"></i> Pending</span>
         {% endif %}
     </div>
 
-    {% if prestasi.tampilkan_tag_puspresnas %}
-        <span class="badge mb-2" style="background-color:#00A868;color:#fff;width:fit-content;"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
-    {% endif %}
-
-    <table class="table table-sm table-borderless mb-0 small mt-3">
-        <tr><td class="text-muted" style="width:180px;">Siswa</td><td>{{ prestasi.siswa.nama|default:"-" }} ({{ prestasi.siswa.nis }})</td></tr>
-        <tr><td class="text-muted">Kelas</td><td>{{ prestasi.siswa.kelas|default:"-" }} &middot; {{ prestasi.siswa.jurusan|default:"-" }}</td></tr>
-        <tr><td class="text-muted">Kategori</td><td>{{ prestasi.kategori_prestasi }}</td></tr>
-        <tr><td class="text-muted">Tingkat</td><td>{{ prestasi.tingkat_prestasi }}</td></tr>
-        <tr><td class="text-muted">Penyelenggara</td><td>{{ prestasi.penyelenggara }}</td></tr>
-        <tr><td class="text-muted">Tanggal</td><td>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</td></tr>
-        <tr><td class="text-muted">Tahun Ajaran</td><td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td></tr>
-        <tr><td class="text-muted align-top">Deskripsi</td><td>{{ prestasi.deskripsi|linebreaksbr }}</td></tr>
-        {% if prestasi.status == 'ditolak' %}
-            <tr><td class="text-muted align-top">Alasan Ditolak</td><td class="text-danger">{{ prestasi.alasan_penolakan|linebreaksbr }}</td></tr>
-        {% elif prestasi.status == 'perbaikan' %}
-            <tr><td class="text-muted align-top">Catatan Perbaikan</td><td style="color:#c2410c;">({{ prestasi.get_jenis_perbaikan_display }}) {{ prestasi.catatan_perbaikan|linebreaksbr }}</td></tr>
+    <div class="dp-tags">
+        <span class="dp-tag"><i class="bi bi-tag"></i> {{ prestasi.kategori_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.tingkat_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-geo-alt"></i> {{ prestasi.get_wilayah_prestasi_display }}</span>
+        {% if prestasi.tampilkan_tag_puspresnas %}
+            <span class="dp-tag puspresnas"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
         {% endif %}
-    </table>
+    </div>
 
-    {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
-        <hr>
-        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Puspresnas</h6>
-        <table class="table table-sm table-borderless mb-0 small">
-            {% if prestasi.kode_puspresnas %}
-                <tr><td class="text-muted" style="width:180px;">Kode Puspresnas</td><td>{{ prestasi.kode_puspresnas }}</td></tr>
-            {% endif %}
-            {% if prestasi.dokumen_puspresnas %}
-                <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
-                <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
-                <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
-            {% endif %}
-        </table>
+    <div class="dp-meta">
+        <span><i class="bi bi-calendar-event"></i> {{ prestasi.tanggal_prestasi|date:"d M Y" }}</span>
+        <span><i class="bi bi-mortarboard"></i> TA {{ prestasi.tahun_ajaran.tahun_ajaran }}</span>
+        <span><i class="bi bi-cloud-arrow-up"></i> Diunggah {{ prestasi.tanggal_upload|date:"d M Y" }}</span>
+        {% if prestasi.tanggal_verifikasi %}
+            <span><i class="bi bi-patch-check"></i> Diverifikasi {{ prestasi.tanggal_verifikasi|date:"d M Y" }}</span>
+        {% endif %}
+    </div>
+
+    {% if prestasi.status == 'perbaikan' %}
+        <div class="dp-notice perbaikan">
+            <i class="bi bi-tools"></i>
+            <div>
+                <div class="ttl">Catatan perbaikan ({{ prestasi.get_jenis_perbaikan_display }})</div>
+                <div class="txt">{{ prestasi.catatan_perbaikan|linebreaksbr }}</div>
+            </div>
+        </div>
+    {% elif prestasi.status == 'ditolak' %}
+        <div class="dp-notice ditolak">
+            <i class="bi bi-x-octagon"></i>
+            <div>
+                <div class="ttl">Alasan ditolak</div>
+                <div class="txt">{{ prestasi.alasan_penolakan|linebreaksbr }}</div>
+            </div>
+        </div>
     {% endif %}
 </div>
 
-<div class="card p-4 mb-3">
-    <h6 class="fw-bold mb-3"><i class="bi bi-paperclip"></i> Bukti Sertifikat ({{ sertifikat_list|length }})</h6>
-    {% for s in sertifikat_list %}
-        <div class="border-bottom py-2">
-            <a href="{{ s.file.url }}" target="_blank">
-                <i class="bi bi-file-earmark-text"></i> Sertifikat #{{ s.pk }}
-            </a>
-            <div class="text-muted small">{{ s.deskripsi }}</div>
-        </div>
-    {% empty %}
-        <p class="text-muted small mb-0">Tidak ada file sertifikat.</p>
-    {% endfor %}
-</div>
+<div class="row g-3">
+    {# ================= KOLOM UTAMA ================= #}
+    <div class="col-lg-8">
 
-<div class="card p-4 mb-3">
-    <h6 class="fw-bold mb-3"><i class="bi bi-images"></i> Dokumentasi ({{ dokumentasi_list|length }})</h6>
-    <div class="row g-2">
-        {% for d in dokumentasi_list %}
-            <div class="col-4">
-                <a href="{{ d.foto.url }}" target="_blank">
-                    <img src="{{ d.foto.url }}" class="img-fluid rounded" alt="{{ d.caption }}">
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-info-circle"></i> Informasi Prestasi</h6>
+            <dl class="dp-info">
+                <div><dt>Kategori</dt><dd>{{ prestasi.kategori_prestasi|capfirst }}</dd></div>
+                <div><dt>Tingkat</dt><dd>{{ prestasi.tingkat_prestasi|capfirst }}</dd></div>
+                <div><dt>Wilayah</dt><dd>{{ prestasi.get_wilayah_prestasi_display }}</dd></div>
+                <div><dt>Tanggal Prestasi</dt><dd>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</dd></div>
+                <div class="full"><dt>Penyelenggara</dt><dd>{{ prestasi.penyelenggara }}</dd></div>
+            </dl>
+            <hr class="dp-divider">
+            <div class="dp-label">Deskripsi</div>
+            <p class="dp-desc">{{ prestasi.deskripsi|linebreaksbr }}</p>
+        </div>
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-paperclip"></i> Bukti Sertifikat <span class="count">{{ sertifikat_list|length }}</span></h6>
+            {% for s in sertifikat_list %}
+                <a href="{{ s.file.url }}" target="_blank" class="dp-file">
+                    <span class="ico"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="info">
+                        <div class="nm">Sertifikat #{{ s.pk }}</div>
+                        <div class="ds">{{ s.deskripsi }}</div>
+                    </span>
+                    <i class="bi bi-box-arrow-up-right go"></i>
                 </a>
-                {% if d.caption %}<div class="text-muted small mt-1">{{ d.caption }}</div>{% endif %}
+            {% empty %}
+                <div class="dp-empty"><i class="bi bi-info-circle"></i> Tidak ada file sertifikat.</div>
+            {% endfor %}
+        </div>
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-images"></i> Dokumentasi <span class="count">{{ dokumentasi_list|length }}</span></h6>
+            {% if dokumentasi_list %}
+                <div class="dp-gallery">
+                    {% for d in dokumentasi_list %}
+                        <a href="{{ d.foto.url }}" target="_blank" class="dp-photo">
+                            <img src="{{ d.foto.url }}" alt="{{ d.caption|default:'Dokumentasi' }}">
+                            {% if d.caption %}<div class="cap">{{ d.caption }}</div>{% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="dp-empty"><i class="bi bi-info-circle"></i> Tidak ada foto dokumentasi.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ================= KOLOM SAMPING ================= #}
+    <div class="col-lg-4">
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-person"></i> Siswa</h6>
+            <div class="dp-person">
+                <div class="dp-avatar">{{ prestasi.siswa.nama|default:"?"|slice:":1"|upper }}</div>
+                <div>
+                    <div class="nm">{{ prestasi.siswa.nama|default:"-" }}</div>
+                    <div class="sub">NIS {{ prestasi.siswa.nis }}</div>
+                </div>
             </div>
-        {% empty %}
-            <p class="text-muted small mb-0 ps-2">Tidak ada foto dokumentasi.</p>
-        {% endfor %}
+            <hr class="dp-divider">
+            <dl class="dp-info" style="grid-template-columns:1fr 1fr;">
+                <div><dt>Kelas</dt><dd>{{ prestasi.siswa.kelas|default:"-" }}</dd></div>
+                <div><dt>Jurusan</dt><dd>{{ prestasi.siswa.jurusan|default:"-" }}</dd></div>
+            </dl>
+        </div>
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-award"></i> Puspresnas</h6>
+            {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
+                <dl class="dp-info" style="grid-template-columns:1fr;">
+                    {% if prestasi.kode_puspresnas %}
+                        <div><dt>Kode Puspresnas</dt><dd>{{ prestasi.kode_puspresnas }}</dd></div>
+                    {% endif %}
+                    {% if prestasi.dokumen_puspresnas %}
+                        <div><dt>Jenis Penyelenggara</dt><dd>{{ prestasi.get_jenis_penyelenggara_puspresnas_display|default:"-" }}</dd></div>
+                    {% endif %}
+                </dl>
+                {% if prestasi.dokumen_puspresnas %}
+                    <a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank" class="dp-file mt-3">
+                        <span class="ico"><i class="bi bi-file-earmark-check"></i></span>
+                        <span class="info"><div class="nm">Dokumen Puspresnas</div><div class="ds">Klik untuk membuka</div></span>
+                        <i class="bi bi-box-arrow-up-right go"></i>
+                    </a>
+                {% endif %}
+            {% else %}
+                <div class="dp-empty"><i class="bi bi-dash-circle"></i> Tidak ada kode atau dokumen Puspresnas.</div>
+            {% endif %}
+        </div>
+
+        {% if prestasi.status == 'pending' %}
+        <div class="card dp-card dp-sticky">
+            <h6 class="dp-card-title"><i class="bi bi-clipboard-check"></i> Keputusan Verifikasi</h6>
+            <form method="POST" id="form-verifikasi">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="dp-choices" id="pilihan-keputusan">
+                    <label class="opsi-keputusan" data-opsi="diterima">
+                        <input type="radio" name="keputusan" value="diterima" required>
+                        <i class="bi bi-check-circle-fill text-success"></i> Terima
+                    </label>
+                    <label class="opsi-keputusan" data-opsi="perbaikan">
+                        <input type="radio" name="keputusan" value="perbaikan" required>
+                        <i class="bi bi-tools" style="color:#f97316;"></i> Perbaiki
+                    </label>
+                    <label class="opsi-keputusan" data-opsi="ditolak">
+                        <input type="radio" name="keputusan" value="ditolak" required>
+                        <i class="bi bi-x-circle-fill text-danger"></i> Tolak
+                    </label>
+                </div>
+                {{ form.keputusan.errors }}
+
+                <div class="mb-3 blok-perbaikan" style="display:none;">
+                    <label class="form-label small fw-semibold">Jenis Perbaikan</label>
+                    <div class="d-grid gap-2 mb-3">
+                        <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                            <input type="radio" name="jenis_perbaikan" value="data"> Perbaikan Data
+                        </label>
+                        <label class="d-flex align-items-start gap-2" style="cursor:pointer;">
+                            <input type="radio" name="jenis_perbaikan" value="file" class="mt-1">
+                            <span>Perbaikan File<br><span class="text-muted small">File sertifikat lama akan dihapus</span></span>
+                        </label>
+                    </div>
+                    {{ form.jenis_perbaikan.errors }}
+
+                    <label class="form-label small fw-semibold">Catatan Perbaikan <span class="text-muted fw-normal">(wajib diisi)</span></label>
+                    {{ form.catatan_perbaikan }}
+                    {{ form.catatan_perbaikan.errors }}
+                </div>
+
+                <div class="mb-3 blok-tolak" style="display:none;">
+                    <label class="form-label small fw-semibold">Alasan Penolakan <span class="text-muted fw-normal">(wajib diisi, file sertifikat akan dihapus)</span></label>
+                    {{ form.alasan_penolakan }}
+                    {{ form.alasan_penolakan.errors }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-send"></i> Kirim Keputusan
+                </button>
+            </form>
+        </div>
+        {% endif %}
     </div>
 </div>
 
 {% if prestasi.status == 'pending' %}
-<div class="card p-4">
-    <h6 class="fw-bold mb-3">Keputusan Verifikasi</h6>
-    <form method="POST" id="form-verifikasi">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-
-        <div class="d-flex gap-3 mb-3 flex-wrap" id="pilihan-keputusan">
-            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="diterima" style="cursor:pointer;">
-                <input type="radio" name="keputusan" value="diterima" required>
-                <i class="bi bi-check-circle-fill text-success"></i> Terima
-            </label>
-            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="perbaikan" style="cursor:pointer;">
-                <input type="radio" name="keputusan" value="perbaikan" required>
-                <i class="bi bi-tools" style="color:#f97316;"></i> Perbaiki
-            </label>
-            <label class="border rounded px-3 py-2 d-flex align-items-center gap-2 opsi-keputusan" data-opsi="ditolak" style="cursor:pointer;">
-                <input type="radio" name="keputusan" value="ditolak" required>
-                <i class="bi bi-x-circle-fill text-danger"></i> Tolak
-            </label>
-        </div>
-        {{ form.keputusan.errors }}
-
-        <div class="mb-3 blok-perbaikan" style="display:none;">
-            <label class="form-label small">Jenis Perbaikan</label>
-            <div class="d-flex gap-3 mb-2">
-                <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                    <input type="radio" name="jenis_perbaikan" value="data"> Perbaikan Data
-                </label>
-                <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
-                    <input type="radio" name="jenis_perbaikan" value="file"> Perbaikan File
-                    <span class="text-muted small">(file sertifikat lama akan dihapus)</span>
-                </label>
-            </div>
-            {{ form.jenis_perbaikan.errors }}
-
-            <label class="form-label small">Catatan Perbaikan <span class="text-muted">(wajib diisi)</span></label>
-            {{ form.catatan_perbaikan }}
-            {{ form.catatan_perbaikan.errors }}
-        </div>
-
-        <div class="mb-3 blok-tolak" style="display:none;">
-            <label class="form-label small">Alasan Penolakan <span class="text-muted">(wajib diisi, file sertifikat akan dihapus)</span></label>
-            {{ form.alasan_penolakan }}
-            {{ form.alasan_penolakan.errors }}
-        </div>
-
-        <button type="submit" class="btn btn-primary">Kirim Keputusan</button>
-    </form>
-</div>
-
 <script>
     (function () {
         var labels = document.querySelectorAll('.opsi-keputusan');
@@ -152,7 +224,7 @@
             blokTolak.style.display = (nilai === 'ditolak') ? 'block' : 'none';
 
             labels.forEach(function (label) {
-                label.classList.toggle('border-primary', label.dataset.opsi === nilai);
+                label.classList.toggle('aktif', label.dataset.opsi === nilai);
             });
         }
 

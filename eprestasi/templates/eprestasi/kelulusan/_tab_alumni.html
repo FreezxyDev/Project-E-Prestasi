@@ -1,0 +1,154 @@
+{% load eprestasi_extras %}
+
+<form method="GET" class="js-filter-form" id="filterFormAlumni">
+    <input type="hidden" name="tab" value="alumni">
+    <input type="hidden" name="sort" value="{{ sort }}">
+
+    <div class="card data-region" data-skeleton-root>
+        <div class="table-toolbar">
+            <div class="table-toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+                       placeholder="Cari nama atau NIS...">
+            </div>
+
+            <div class="dropdown">
+                <button type="button" class="filter-btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-funnel"></i> Filter
+                    {% if filter_aktif_count %}<span class="filter-count-badge">{{ filter_aktif_count }}</span>{% endif %}
+                </button>
+                <div class="dropdown-menu filter-panel p-0">
+                    <div class="p-3">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label">Tahun Lulus</label>
+                                <select name="tahun_lulus" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for tahun in daftar_tahun_lulus %}
+                                        <option value="{{ tahun }}" {% if f_tahun_lulus == tahun|stringformat:'s' %}selected{% endif %}>{{ tahun }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Jurusan</label>
+                                <select name="jurusan" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for kode, label in daftar_jurusan %}
+                                        <option value="{{ kode }}" {% if f_jurusan == kode %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Kelas Terakhir</label>
+                                <select name="kelas" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for k in daftar_kelas_alumni %}
+                                        <option value="{{ k }}" {% if f_kelas == k %}selected{% endif %}>{{ k }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-panel-footer px-3 pb-3">
+                        <a href="?tab=alumni" class="clear-all-link">Reset Filter</a>
+                        <button type="submit" class="btn btn-primary btn-sm">Terapkan</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i> Cari</button>
+
+            <span class="table-toolbar-meta">{{ page_obj.paginator.count }} alumni ditemukan</span>
+        </div>
+
+        {% if filter_aktif_count or q %}
+        <div class="active-filters">
+            {% if q %}
+                <span class="filter-chip">"{{ q }}" <a href="?{% url_replace q='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_tahun_lulus %}
+                <span class="filter-chip">Lulus {{ f_tahun_lulus }} <a href="?{% url_replace tahun_lulus='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_jurusan %}
+                <span class="filter-chip">{{ f_jurusan }} <a href="?{% url_replace jurusan='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_kelas %}
+                <span class="filter-chip">{{ f_kelas }} <a href="?{% url_replace kelas='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            <a href="?tab=alumni" class="clear-all-link ms-1">Hapus semua</a>
+        </div>
+        {% endif %}
+
+        <div class="table-responsive real-content">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.nis %}">
+                                NIS <i class="bi {% sort_icon sort 'nis_asc' 'nis_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.nama %}">
+                                Nama <i class="bi {% sort_icon sort 'nama_asc' 'nama_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.tahun_lulus %}">
+                                Tahun Lulus <i class="bi {% sort_icon sort 'tahun_lulus_asc' 'tahun_lulus_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.jurusan %}">
+                                Jurusan <i class="bi {% sort_icon sort 'jurusan_asc' 'jurusan_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.kelas %}">
+                                Kelas Terakhir <i class="bi {% sort_icon sort 'kelas_asc' 'kelas_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th>Status</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for alumnus in page_obj %}
+                    <tr>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td class="fw-semibold">{{ alumnus.nis }}</td>
+                        <td>{{ alumnus.nama|default:"-" }}</td>
+                        <td>{{ alumnus.tanggal_kelulusan|date:"Y"|default:"-" }}</td>
+                        <td>{{ alumnus.jurusan|default:"-" }}</td>
+                        <td>{{ alumnus.kelas|default:"-" }}</td>
+                        <td><span class="badge badge-alumni">Alumni</span></td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'update_siswa' alumnus.id %}"><i class="bi bi-eye"></i> Lihat Profil</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'riwayat_kelas_siswa' alumnus.id %}"><i class="bi bi-clock-history"></i> Riwayat Kelas</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'portofolio_publik' alumnus.nis %}" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Portofolio Publik</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% include 'eprestasi/_partials/skeleton_rows.html' %}
+
+        <div class="real-content">
+        {% if not page_obj.object_list %}
+            {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-mortarboard' empty_title='Belum ada data alumni' empty_desc='Data alumni akan muncul otomatis setelah siswa kelas XII diproses kelulusannya.' show_reset=True reset_url='?tab=alumni' %}
+        {% else %}
+            {% include 'eprestasi/_partials/pagination.html' %}
+        {% endif %}
+        </div>
+    </div>
+</form>

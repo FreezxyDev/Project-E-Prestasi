@@ -1,27 +1,56 @@
 {% extends 'eprestasi/base.html' %}
 {% block title %}Kelola Admin{% endblock %}
 
+{% block extra_head %}
+<style>
+    .admin-avatar {
+        width: 34px; height: 34px; border-radius: 50%; flex: none;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--bg-card-2); border: 1px solid var(--border-soft);
+        color: var(--text); font-size: .72rem; font-weight: 700;
+    }
+    .admin-avatar.super { background: #f3e8ff; border-color: #e9d5ff; color: #7c3aed; }
+    .role-badge-super { background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff; font-weight: 600; }
+    .role-badge-admin { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
+    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .8rem; color: var(--text-muted);
+                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
+    .info-note i { color: var(--info, #1d4ed8); margin-top: .1rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<div class="topbar">
-    <h4>Kelola Admin</h4>
-    <a href="{% url 'tambah_admin' %}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg"></i> Tambah Admin
-    </a>
+<div class="page-header">
+    <h1>Kelola Admin</h1>
+    <p>Daftar akun admin yang dapat mengelola sistem E-Prestasi.</p>
 </div>
 
-<div class="alert alert-info small">
+<div class="info-note mb-3">
     <i class="bi bi-info-circle"></i>
-    Menu ini hanya bisa membuat akun <strong>admin biasa</strong>. Akun <strong>super admin</strong>
-    hanya bisa dibuat lewat terminal (<code>python manage.py buat_admin ... --super</code>) demi keamanan.
+    <div>
+        Menu ini hanya bisa membuat akun <strong>admin biasa</strong>. Akun <strong>super admin</strong>
+        hanya bisa dibuat lewat terminal (<code>python manage.py buat_admin ... --super</code>) demi keamanan.
+    </div>
 </div>
 
-<div class="card p-3">
+<div class="card">
+    <!-- Toolbar: judul daftar di kiri, tombol tambah di kanan (tepat di atas tabel) -->
+    <div class="table-toolbar">
+        <div>
+            <div class="panel-title mb-0">Daftar Akun Admin</div>
+            <div class="table-toolbar-meta" style="margin-left:0;">{{ admin_list|length }} akun terdaftar</div>
+        </div>
+        <a href="{% url 'tambah_admin' %}" class="btn btn-primary btn-sm ms-auto">
+            <i class="bi bi-plus-lg"></i> Tambah Admin
+        </a>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Username</th>
+                    <th style="width:60px;">No</th>
+                    <th>Akun</th>
                     <th>Role</th>
                     <th>Dibuat</th>
                     <th class="text-end">Aksi</th>
@@ -30,42 +59,51 @@
             <tbody>
             {% for admin_user in admin_list %}
                 <tr>
-                    <td class="fw-semibold">
-                        {{ admin_user.username }}
-                        {% if admin_user.id == request.session.user_id %}
-                            <span class="badge bg-light text-dark border">Anda</span>
-                        {% endif %}
+                    <td class="text-muted">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="admin-avatar {% if admin_user.role == 'super_admin' %}super{% endif %}">{{ admin_user.username|slice:":2"|upper }}</span>
+                            <div>
+                                <span class="fw-semibold">{{ admin_user.username }}</span>
+                                {% if admin_user.id == request.session.user_id %}
+                                    <span class="badge bg-light text-dark border ms-1">Anda</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </td>
                     <td>
                         {% if admin_user.role == 'super_admin' %}
-                            <span class="badge" style="background:#7c3aed;">Super Admin</span>
+                            <span class="badge role-badge-super">Super Admin</span>
                         {% else %}
-                            <span class="badge bg-secondary">Admin</span>
+                            <span class="badge role-badge-admin">Admin</span>
                         {% endif %}
                     </td>
                     <td class="text-muted small">{{ admin_user.created_at|date:"d M Y" }}</td>
                     <td class="text-end">
                         {% if admin_user.role != 'super_admin' %}
-                            <a href="{% url 'update_admin' admin_user.id %}" class="btn btn-sm btn-outline-primary">
+                            <a href="{% url 'update_admin' admin_user.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             {% if admin_user.id != request.session.user_id %}
                                 <form method="POST" action="{% url 'delete_admin' admin_user.id %}" class="d-inline"
-                                      onsubmit="return confirm('Yakin ingin menghapus akun {{ admin_user.username }}?')">
+                                      onsubmit="return confirm('Yakin ingin menghapus akun {{ admin_user.username|escapejs }}?')">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
                             {% endif %}
                         {% else %}
-                            <span class="text-muted small">Tidak dapat diubah di sini</span>
+                            <span class="text-muted small"><i class="bi bi-lock"></i> Dikunci</span>
                         {% endif %}
                     </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">Belum ada akun admin.</td>
+                    <td colspan="5" class="p-0">
+                        {% url 'tambah_admin' as url_tambah_admin %}
+                        {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-shield-lock' empty_title='Belum ada akun admin' empty_desc='Tambahkan akun admin pertama untuk mulai mengelola sistem.' show_add=True add_url=url_tambah_admin add_label='Tambah Admin' %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

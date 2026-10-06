@@ -28,7 +28,13 @@
         --accent-dim: #f2f2f2;
         --accent-muted: #707070;
         --warning: #b45309;
+        --warning-dim: rgba(180,83,9,.1);
         --danger: #b91c1c;
+        --danger-dim: rgba(185,28,28,.08);
+        --success: #15803d;
+        --success-dim: rgba(21,128,61,.1);
+        --info: #1d4ed8;
+        --info-dim: rgba(29,78,216,.08);
 
         /* konten -- putih penuh, hierarki lewat bobot & border */
         --bg: #ffffff;
@@ -131,6 +137,8 @@
         flex-shrink: 0;
     }
     .user-meta { line-height: 1.25; overflow: hidden; }
+    a.sidebar-user { color: inherit; text-decoration: none; border-radius: 8px; }
+    a.sidebar-user:hover .user-name { text-decoration: underline; }
     .user-name { color: var(--chrome-text); font-size: .78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-role { color: var(--chrome-text-muted); font-size: .66rem; }
     .logout-link {
@@ -245,6 +253,163 @@
     .modal-content { background-color: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
     .alert { border-radius: var(--radius); border: 1px solid var(--border-soft); }
 
+    /* ================================================================
+       KOMPONEN BERSAMA -- dipakai di semua halaman admin (page-header,
+       stat-card, panel, toolbar tabel, filter panel, chip, pagination,
+       empty-state, skeleton, tab). Ditaruh satu tempat di base.html supaya
+       seluruh halaman otomatis konsisten & tidak duplikasi style per file.
+       ================================================================ */
+
+    /* -- Page header -- */
+    .page-header { margin-bottom: 1.35rem; }
+    .page-header h1 { font-size: 1.35rem; font-weight: 800; color: var(--text); margin-bottom: .2rem; }
+    .page-header p { color: var(--text-muted); font-size: .82rem; margin: 0; }
+
+    /* -- Tabs (dipakai utk Kelulusan/Alumni, Siswa/Kesiswaan, dst) -- */
+    .page-tabs { margin-bottom: 1.1rem; }
+    .page-tabs .nav-pills .nav-link {
+        border: 1px solid var(--border-soft); border-radius: 9999px;
+        color: var(--text-muted); font-weight: 600; font-size: .82rem;
+        padding: .48rem 1rem; margin-right: .4rem; display: inline-flex; align-items: center; gap: .4rem;
+    }
+    .page-tabs .nav-pills .nav-link.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .page-tabs .nav-pills .nav-link .tab-count {
+        background: var(--bg-card-2); color: var(--text-muted); border-radius: 9999px;
+        font-size: .68rem; padding: .05rem .45rem; font-weight: 700;
+    }
+    .page-tabs .nav-pills .nav-link.active .tab-count { background: rgba(255,255,255,.2); color: #fff; }
+
+    /* -- Stat card -- */
+    .stat-card { padding: 1.1rem 1.2rem; position: relative; overflow: hidden; }
+    .stat-card .stat-icon-badge {
+        width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+        background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border-soft);
+        font-size: .95rem; margin-bottom: .65rem;
+    }
+    .stat-card .stat-icon-badge.amber { background: var(--warning-dim); color: var(--warning); border-color: rgba(180,83,9,.2); }
+    .stat-card .stat-icon-badge.success { background: var(--success-dim); color: var(--success); border-color: rgba(21,128,61,.2); }
+    .stat-card .stat-icon-badge.danger { background: var(--danger-dim); color: var(--danger); border-color: rgba(185,28,28,.2); }
+    .stat-card .stat-icon-badge.info { background: var(--info-dim); color: var(--info); border-color: rgba(29,78,216,.2); }
+    .stat-card .stat-label { color: var(--text-muted); font-size: .7rem; letter-spacing: .3px; margin-bottom: .45rem; text-transform: uppercase; font-weight: 600; }
+    .stat-card .stat-value { color: var(--text); font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: .4rem; }
+    .stat-card .stat-sub { font-size: .72rem; color: var(--text-muted); }
+    .stat-card .stat-sub .accent-txt { color: var(--accent); font-weight: 600; }
+    .stat-card .stat-sub .amber-txt { color: var(--warning); font-weight: 600; }
+    .stat-card .stat-sub .success-txt { color: var(--success); font-weight: 600; }
+    .stat-card .stat-sub .danger-txt { color: var(--danger); font-weight: 600; }
+
+    /* -- Panel title (dipakai di dalam card non-tabel) -- */
+    .panel-title { color: var(--text); font-size: .92rem; font-weight: 700; margin-bottom: .1rem; display: flex; align-items: center; gap: .4rem; }
+    .panel-sub { color: var(--text-muted); font-size: .74rem; margin-bottom: .85rem; }
+
+    /* -- Toolbar tabel: search + filter + sort dalam satu baris -- */
+    .table-toolbar {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+        padding: .9rem 1rem; border-bottom: 1px solid var(--border-soft);
+    }
+    .table-toolbar-search { position: relative; flex: 1 1 240px; max-width: 320px; }
+    .table-toolbar-search i { position: absolute; left: .7rem; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: .8rem; }
+    .table-toolbar-search input { padding-left: 1.9rem; }
+    .table-toolbar .divider-v { width: 1px; height: 22px; background: var(--border-soft); margin: 0 .15rem; }
+    .table-toolbar-meta { margin-left: auto; font-size: .76rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* -- Filter button + dropdown panel -- */
+    .filter-btn {
+        display: inline-flex; align-items: center; gap: .4rem;
+        border: 1px solid var(--border-soft); background: var(--bg-card);
+        border-radius: 9999px; padding: .45rem .9rem; font-size: .8rem; font-weight: 600;
+        color: var(--text); position: relative;
+    }
+    .filter-btn:hover { background: var(--bg-card-2); }
+    .filter-btn .filter-count-badge {
+        background: var(--accent); color: #fff; border-radius: 9999px;
+        font-size: .66rem; font-weight: 700; padding: .05rem .4rem;
+    }
+    .filter-panel {
+        border: 1px solid var(--border-soft); border-radius: var(--radius);
+        box-shadow: 0 12px 32px rgba(0,0,0,.1); padding: 1rem; min-width: 320px;
+    }
+    .filter-panel .form-label { font-size: .74rem; font-weight: 600; color: var(--text-muted); margin-bottom: .3rem; }
+    .filter-panel-footer { display: flex; justify-content: space-between; align-items: center; margin-top: .85rem; padding-top: .75rem; border-top: 1px solid var(--border-soft); }
+
+    /* -- Active filter chips -- */
+    .active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding: 0 1rem .85rem 1rem; }
+    .filter-chip {
+        display: inline-flex; align-items: center; gap: .35rem;
+        background: var(--accent-dim); border: 1px solid var(--border-soft);
+        color: var(--text); border-radius: 9999px; padding: .28rem .55rem .28rem .7rem;
+        font-size: .74rem; font-weight: 600;
+    }
+    .filter-chip a { color: var(--text-muted); line-height: 0; }
+    .filter-chip a:hover { color: var(--danger); }
+    .clear-all-link { font-size: .76rem; color: var(--text-muted); font-weight: 600; }
+    .clear-all-link:hover { color: var(--danger); }
+
+    /* -- Sortable table header -- */
+    .sortable-th a { color: inherit; display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
+    .sortable-th a:hover { color: var(--accent); }
+    .sortable-th a i { font-size: .75rem; }
+
+    /* -- Bulk action bar (checkbox massal) -- */
+    .bulk-bar {
+        display: none; align-items: center; gap: .75rem;
+        background: var(--accent-dim); border: 1px solid var(--border-soft);
+        border-radius: var(--radius); padding: .65rem 1rem; margin-bottom: .75rem;
+        font-size: .82rem; font-weight: 600; color: var(--text);
+    }
+    .bulk-bar.show { display: flex; }
+
+    /* -- Pagination footer -- */
+    .pagination-footer {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: .6rem; padding: .85rem 1rem; border-top: 1px solid var(--border-soft);
+        font-size: .78rem; color: var(--text-muted);
+    }
+    .pg-pills { display: flex; align-items: center; gap: .25rem; }
+    .pg-pills a, .pg-pills span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 30px; height: 30px; border-radius: 9999px; padding: 0 .5rem;
+        font-size: .78rem; font-weight: 600; color: var(--text-muted);
+    }
+    .pg-pills a:hover { background: var(--bg-card-2); color: var(--text); }
+    .pg-pills a.active, .pg-pills span.active { background: var(--accent); color: #fff; }
+    .pg-pills span.dots { color: var(--text-dim); }
+    .pg-pills a.disabled, .pg-pills span.disabled { opacity: .35; pointer-events: none; }
+
+    /* -- Empty state -- */
+    .empty-state { text-align: center; padding: 3rem 1.5rem; }
+    .empty-state .empty-icon {
+        width: 56px; height: 56px; border-radius: 50%; background: var(--bg-card-2);
+        display: flex; align-items: center; justify-content: center; margin: 0 auto .9rem auto;
+        color: var(--text-dim); font-size: 1.4rem;
+    }
+    .empty-state h6 { font-weight: 700; color: var(--text); margin-bottom: .3rem; }
+    .empty-state p { color: var(--text-muted); font-size: .82rem; margin-bottom: 1rem; }
+
+    /* -- Skeleton loading -- */
+    @keyframes skeleton-pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+    .skeleton-bar { background: var(--bg-card-2); border-radius: 6px; animation: skeleton-pulse 1.1s ease-in-out infinite; }
+    .skeleton-rows { display: none; padding: .3rem 1rem; }
+    .skeleton-row { display: flex; gap: .9rem; align-items: center; padding: .65rem 0; border-bottom: 1px solid var(--border-soft); }
+    .skeleton-row .skeleton-bar.avatar { width: 30px; height: 30px; border-radius: 50%; flex: none; }
+    .skeleton-row .skeleton-bar.line { height: 12px; flex: 1 1 auto; }
+    .skeleton-row .skeleton-bar.line.short { flex: 0 0 60px; }
+    .data-region.is-loading .real-content { display: none; }
+    .data-region.is-loading .skeleton-rows { display: block; }
+    .stat-card.is-loading .stat-value, .stat-card.is-loading .stat-sub-wrap { visibility: hidden; }
+    .stat-card.is-loading::after {
+        content: ''; position: absolute; left: 1.2rem; right: 1.2rem; bottom: 1.15rem; height: 14px;
+        background: var(--bg-card-2); border-radius: 6px; animation: skeleton-pulse 1.1s ease-in-out infinite;
+    }
+
+    /* -- Top page-loading bar (feedback instan saat pindah halaman/filter/sort) -- */
+    #page-loading-bar {
+        position: fixed; top: 0; left: 0; height: 2.5px; width: 0%;
+        background: var(--accent); z-index: 2000; opacity: 0;
+        transition: width .35s ease, opacity .2s ease;
+    }
+    #page-loading-bar.active { width: 72%; opacity: 1; }
+
     @media (max-width: 992px) {
         .sidebar { transform: translateX(-100%); transition: transform .2s ease; width: 240px; }
         .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.6); }
@@ -257,10 +422,19 @@
         .btn-new span { display: none; }
         .main-content { padding: 1.1rem; }
     }
+    @media (max-width: 768px) {
+        .table-toolbar { padding: .8rem; }
+        .table-toolbar-search { max-width: 100%; flex-basis: 100%; }
+        .table-toolbar-meta { margin-left: 0; }
+        .filter-panel { min-width: 260px; }
+        .pagination-footer { justify-content: center; text-align: center; }
+    }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
 <body>
+
+<div id="page-loading-bar"></div>
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
@@ -287,6 +461,12 @@
             <a href="{% url 'tahun_ajaran_list' %}" class="nav-link {% if active_menu == 'tahun_ajaran' %}active{% endif %}">
                 <i class="bi bi-calendar3"></i><span>Tahun Ajaran</span>
             </a>
+            <a href="{% url 'pengelolaan_kelas' %}" class="nav-link {% if active_menu == 'pengelolaan_kelas' %}active{% endif %}">
+                <i class="bi bi-diagram-3"></i><span>Pengelolaan Kelas</span>
+            </a>
+            <a href="{% url 'kelulusan_alumni' %}" class="nav-link {% if active_menu == 'kelulusan_alumni' %}active{% endif %}">
+                <i class="bi bi-mortarboard-fill"></i><span>Kelulusan &amp; Alumni</span>
+            </a>
         </div>
 
         {% if request.session.role == 'super_admin' %}
@@ -297,16 +477,23 @@
             </a>
         </div>
         {% endif %}
+
+        <div class="nav-section">
+            <div class="nav-label">AKUN</div>
+            <a href="{% url 'profil_admin' %}" class="nav-link {% if active_menu == 'profil_admin' %}active{% endif %}">
+                <i class="bi bi-person-gear"></i><span>Profil &amp; Password</span>
+            </a>
+        </div>
     </nav>
 
     <div class="sidebar-footer">
-        <div class="sidebar-user">
+        <a href="{% url 'profil_admin' %}" class="sidebar-user" title="Profil saya">
             <div class="user-avatar">{{ request.session.username|slice:":2"|upper }}</div>
             <div class="user-meta">
                 <div class="user-name">{{ request.session.username }}</div>
                 <div class="user-role">{% if request.session.role == 'super_admin' %}Super Admin{% else %}Administrator{% endif %}</div>
             </div>
-        </div>
+        </a>
         <a href="{% url 'logout' %}" class="logout-link">
             <i class="bi bi-box-arrow-right"></i><span>Keluar</span>
         </a>
@@ -327,10 +514,14 @@
         <div class="topnav-actions">
             {% if active_menu == 'kesiswaan' %}
                 <a href="{% url 'tambah_kesiswaan' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
+            {% elif active_menu == 'admin' %}
+                <a href="{% url 'tambah_admin' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
+            {% elif active_menu == 'kelulusan_alumni' or active_menu == 'profil_admin' %}
+                {# Tidak relevan di halaman ini: kelulusan diproses lewat aksi massal di tabel; profil tidak punya "tambah data". #}
             {% else %}
                 <a href="{% url 'tambah_siswa' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
             {% endif %}
-            <div class="topnav-avatar">{{ request.session.username|slice:":2"|upper }}</div>
+            <a href="{% url 'profil_admin' %}" class="topnav-avatar text-decoration-none" title="Profil saya">{{ request.session.username|slice:":2"|upper }}</a>
         </div>
     </div>
 
@@ -363,6 +554,64 @@
             }
         });
     }
+
+    /* ================================================================
+       LOADING STATE saat pindah halaman/filter/sort/pagination.
+       Karena halaman full-reload (bukan AJAX), efeknya berupa:
+       1. Top progress bar (semua halaman, otomatis, tanpa markup tambahan).
+       2. Skeleton pada region yang ditandai [data-skeleton-root] (kalau ada
+          di halaman ini) -- dipicu oleh elemen apa pun berclass
+          "js-nav-loading" (link sort/paginasi) atau form berclass
+          "js-filter-form" (form search/filter).
+       ================================================================ */
+    (function () {
+        const bar = document.getElementById('page-loading-bar');
+        function startLoading() {
+            if (bar) { bar.classList.add('active'); }
+            document.querySelectorAll('[data-skeleton-root]').forEach((el) => el.classList.add('is-loading'));
+        }
+        document.addEventListener('click', function (e) {
+            const link = e.target.closest('a.js-nav-loading, .pg-pills a, .sortable-th a');
+            if (link && link.href && !link.target) { startLoading(); }
+        });
+        document.addEventListener('submit', function (e) {
+            if (e.target.matches && e.target.matches('.js-filter-form')) { startLoading(); }
+        });
+        window.addEventListener('pageshow', function () {
+            if (bar) { bar.classList.remove('active'); }
+            document.querySelectorAll('[data-skeleton-root]').forEach((el) => el.classList.remove('is-loading'));
+        });
+    })();
+
+    /* Bulk action bar generik: checkbox "pilih semua" + checkbox per-baris.
+       Dipakai oleh halaman yang punya bulk action (misal Proses Kelulusan).
+       Membutuhkan: input.js-select-all, input.js-row-check, elemen dgn
+       id sesuai data-bulk-bar milik select-all, dan span[data-selected-count]. */
+    document.querySelectorAll('.js-select-all').forEach(function (master) {
+        const scope = document.getElementById(master.dataset.scope);
+        if (!scope) return;
+        const rowChecks = () => scope.querySelectorAll('.js-row-check');
+        const bar = document.getElementById(master.dataset.bulkBar);
+        function refresh() {
+            const checked = Array.from(rowChecks()).filter((c) => c.checked);
+            if (bar) {
+                bar.classList.toggle('show', checked.length > 0);
+                const countEl = bar.querySelector('[data-selected-count]');
+                if (countEl) countEl.textContent = checked.length;
+            }
+        }
+        master.addEventListener('change', function () {
+            rowChecks().forEach((c) => { if (!c.disabled) c.checked = master.checked; });
+            refresh();
+        });
+        scope.addEventListener('change', function (e) {
+            if (e.target.classList.contains('js-row-check')) {
+                if (!e.target.checked) master.checked = false;
+                refresh();
+            }
+        });
+        refresh();
+    });
 </script>
 {% block extra_scripts %}{% endblock %}
 </body>

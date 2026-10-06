@@ -1,4 +1,5 @@
 {% extends 'eprestasi/base.html' %}
+{% load eprestasi_extras %}
 {% block title %}Tahun Ajaran{% endblock %}
 
 {% block extra_head %}
@@ -15,6 +16,10 @@
     .donut-center .t { font-size: .62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-top: .2rem; }
     .sortable-th a { color: inherit; display: inline-flex; align-items: center; gap: .3rem; }
     .sortable-th a:hover { color: var(--accent); }
+    .stat-mini { border: 1px solid var(--border-soft); border-radius: 10px; padding: .8rem 1rem; }
+    .stat-mini .v { font-size: 1.5rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .stat-mini .l { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; font-weight: 600; margin-top: .3rem; }
+    .pie-wrap { position: relative; max-width: 220px; margin: 0 auto; }
 </style>
 {% endblock %}
 
@@ -135,18 +140,21 @@
     </div>
 </div>
 
-<!-- TABEL + TOOLBAR SEARCH/SORT DI DALAM CARD YANG SAMA -->
-<div class="card">
-    <form method="GET" class="table-toolbar">
+<!-- TABEL: toolbar search + sort, tabel, skeleton, pagination -->
+<div class="card data-region" data-skeleton-root>
+    <form method="GET" class="table-toolbar js-filter-form">
         <div class="table-toolbar-search">
+            <i class="bi bi-search"></i>
             <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
-                   placeholder="Cari nama tahun ajaran... contoh 2024/2025">
+                   placeholder="Cari tahun ajaran... contoh 2024/2025">
         </div>
-        <select name="sort" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <select name="sort" class="form-select form-select-sm" style="width:auto;" onchange="this.form.requestSubmit()">
             <option value="terbaru" {% if sort == 'terbaru' %}selected{% endif %}>Terbaru Ditambahkan</option>
             <option value="terlama" {% if sort == 'terlama' %}selected{% endif %}>Terlama Ditambahkan</option>
             <option value="nama_asc" {% if sort == 'nama_asc' %}selected{% endif %}>Nama (A-Z)</option>
             <option value="nama_desc" {% if sort == 'nama_desc' %}selected{% endif %}>Nama (Z-A)</option>
+            <option value="siswa_desc" {% if sort == 'siswa_desc' %}selected{% endif %}>Siswa Terbanyak</option>
+            <option value="prestasi_desc" {% if sort == 'prestasi_desc' %}selected{% endif %}>Prestasi Terbanyak</option>
         </select>
         <button type="submit" class="btn btn-primary btn-sm">
             <i class="bi bi-search"></i> Cari
@@ -156,28 +164,41 @@
                 <i class="bi bi-x-circle"></i> Reset
             </a>
         {% endif %}
-        <span class="ms-auto small text-muted">{{ tahun_ajaran_list|length }} tahun ajaran ditampilkan</span>
+        <span class="table-toolbar-meta">{{ page_obj.paginator.count }} tahun ajaran ditemukan</span>
     </form>
 
-    <div class="table-responsive">
+    <div class="table-responsive real-content">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
+                    <th>No</th>
                     <th class="sortable-th">
-                        <a href="?q={{ q|urlencode }}&sort={% if sort == 'nama_asc' %}nama_desc{% else %}nama_asc{% endif %}">
-                            Tahun Ajaran
-                            {% if sort == 'nama_asc' %}<i class="bi bi-sort-alpha-down"></i>
-                            {% elif sort == 'nama_desc' %}<i class="bi bi-sort-alpha-up"></i>
-                            {% else %}<i class="bi bi-arrow-down-up text-muted"></i>{% endif %}
+                        <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.nama %}">
+                            Tahun Ajaran <i class="bi {% sort_icon sort 'nama_asc' 'nama_desc' %}"></i>
                         </a>
                     </th>
-                    <th>Status</th>
+                    <th class="sortable-th">
+                        <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.status %}">
+                            Status <i class="bi {% sort_icon sort 'status_asc' 'status_desc' %}"></i>
+                        </a>
+                    </th>
+                    <th class="sortable-th">
+                        <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.siswa %}">
+                            Siswa <i class="bi {% sort_icon sort 'siswa_asc' 'siswa_desc' %}"></i>
+                        </a>
+                    </th>
+                    <th class="sortable-th">
+                        <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.prestasi %}">
+                            Prestasi <i class="bi {% sort_icon sort 'prestasi_asc' 'prestasi_desc' %}"></i>
+                        </a>
+                    </th>
                     <th class="text-end">Aksi</th>
                 </tr>
             </thead>
             <tbody>
-            {% for tahun in tahun_ajaran_list %}
+            {% for tahun in page_obj %}
                 <tr>
+                    <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="fw-semibold">{{ tahun.tahun_ajaran }}</td>
                     <td>
                         {% if tahun.status == 'aktif' %}
@@ -186,7 +207,13 @@
                             <span class="badge badge-nonaktif">Nonaktif</span>
                         {% endif %}
                     </td>
+                    <td>{{ tahun.jumlah_siswa }}</td>
+                    <td>{{ tahun.jumlah_prestasi }}</td>
                     <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-info js-lihat-statistik" title="Lihat Statistik"
+                                data-url="{% url 'tahun_ajaran_statistik' tahun.id %}">
+                            <i class="bi bi-pie-chart"></i>
+                        </button>
                         {% if tahun.status == 'aktif' %}
                             <form method="POST" action="{% url 'nonaktifkan_tahun_ajaran' tahun.id %}" class="d-inline">
                                 {% csrf_token %}
@@ -194,65 +221,171 @@
                             </form>
                         {% else %}
                             <form method="POST" action="{% url 'aktifkan_tahun_ajaran' tahun.id %}" class="d-inline"
-                                  onsubmit="return confirm('Aktifkan {{ tahun.tahun_ajaran }}? Tindakan ini TIDAK menaikkan tingkat siswa.')">
+                                  onsubmit="return confirm('Aktifkan {{ tahun.tahun_ajaran|escapejs }}? Tindakan ini TIDAK menaikkan tingkat siswa.')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-success">Aktifkan</button>
                             </form>
                         {% endif %}
-                        <a href="{% url 'update_tahun_ajaran' tahun.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'update_tahun_ajaran' tahun.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form method="POST" action="{% url 'delete_tahun_ajaran' tahun.id %}" class="d-inline"
-                              onsubmit="return confirm('Hapus tahun ajaran {{ tahun.tahun_ajaran }}?')">
+                              onsubmit="return confirm('Hapus tahun ajaran {{ tahun.tahun_ajaran|escapejs }}?')">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3" class="text-center text-muted py-4">
-                        {% if q %}
-                            Tidak ada tahun ajaran yang cocok dengan "{{ q }}".
-                        {% else %}
-                            Belum ada data tahun ajaran.
-                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% include 'eprestasi/_partials/skeleton_rows.html' %}
+
+    <div class="real-content">
+        {% if not page_obj.object_list %}
+            {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-calendar-range' empty_title='Tahun ajaran tidak ditemukan' empty_desc='Coba ubah kata kunci pencarian Anda atau tambahkan tahun ajaran baru.' show_reset=q reset_url='?' %}
+        {% else %}
+            {% include 'eprestasi/_partials/pagination.html' %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL STATISTIK TAHUN AJARAN -->
+<div class="modal fade" id="modalStatistik" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title mb-0">
+                    <i class="bi bi-pie-chart"></i> Statistik Tahun Ajaran <span id="statTitle" class="fw-bold"></span>
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <div id="statLoading" class="text-center text-muted py-5">
+                    <div class="spinner-border spinner-border-sm"></div> Memuat statistik...
+                </div>
+                <div id="statError" class="alert alert-danger d-none mb-0">Gagal memuat statistik. Coba lagi.</div>
+                <div id="statContent" class="d-none">
+                    <div class="row g-2 mb-3">
+                        <div class="col-4"><div class="stat-mini"><div class="v" id="statSiswa">0</div><div class="l">Siswa</div></div></div>
+                        <div class="col-4"><div class="stat-mini"><div class="v" id="statPrestasi">0</div><div class="l">Prestasi</div></div></div>
+                        <div class="col-4"><div class="stat-mini"><div class="v" id="statDiterima">0</div><div class="l">Diterima</div></div></div>
+                    </div>
+                    <div class="panel-title mb-2">Siswa per Jurusan</div>
+                    <div id="statPieEmpty" class="text-muted small text-center py-3 d-none">
+                        Belum ada siswa yang ditempatkan di kelas pada tahun ajaran ini.
+                    </div>
+                    <div id="statPieBox">
+                        <div class="donut-wrap pie-wrap">
+                            <canvas id="chartJurusan"></canvas>
+                            <div class="donut-center">
+                                <div class="n" id="statPieTotal">0</div>
+                                <div class="t">Siswa</div>
+                            </div>
+                        </div>
+                        <div class="chart-legend mt-3" id="statLegend"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
 {% block extra_scripts %}
-{% if statistik_prestasi.total > 0 %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+    // ---- Diagram status prestasi (kartu atas) ----
+    {% if statistik_prestasi.total > 0 %}
     new Chart(document.getElementById('chartStatusPrestasi'), {
         type: 'doughnut',
         data: {
             labels: ['Diterima', 'Pending', 'Perbaikan', 'Ditolak'],
             datasets: [{
-                data: [
-                    {{ statistik_prestasi.diterima }},
-                    {{ statistik_prestasi.pending }},
-                    {{ statistik_prestasi.perbaikan }},
-                    {{ statistik_prestasi.ditolak }}
-                ],
+                data: [{{ statistik_prestasi.diterima }}, {{ statistik_prestasi.pending }}, {{ statistik_prestasi.perbaikan }}, {{ statistik_prestasi.ditolak }}],
                 backgroundColor: ['#00d084', '#f5a623', '#4f8fd4', '#ef4444'],
                 borderWidth: 0,
             }]
         },
-        options: {
-            cutout: '72%',
-            plugins: { legend: { display: false }, tooltip: { enabled: true } }
-        }
+        options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: true } } }
     });
+    {% endif %}
+
+    // ---- Modal "Lihat Statistik" per tahun ajaran ----
+    (function () {
+        const WARNA = ['#4f8fd4', '#00d084', '#f5a623', '#ef4444', '#8b5cf6', '#14b8a6', '#9ca3af'];
+        const modalEl = document.getElementById('modalStatistik');
+        const modal = new bootstrap.Modal(modalEl);
+        const $ = (id) => document.getElementById(id);
+        let chart = null;
+        let requestId = 0;
+
+        function tampil(state) {
+            $('statLoading').classList.toggle('d-none', state !== 'loading');
+            $('statError').classList.toggle('d-none', state !== 'error');
+            $('statContent').classList.toggle('d-none', state !== 'ok');
+        }
+
+        function render(d) {
+            $('statTitle').textContent = d.tahun_ajaran;
+            $('statSiswa').textContent = d.total_siswa;
+            $('statPrestasi').textContent = d.prestasi.total;
+            $('statDiterima').textContent = d.prestasi.diterima;
+            $('statPieTotal').textContent = d.total_siswa;
+
+            if (chart) { chart.destroy(); chart = null; }
+            const legend = $('statLegend');
+            legend.innerHTML = '';
+
+            const kosong = d.total_siswa === 0;
+            $('statPieEmpty').classList.toggle('d-none', !kosong);
+            $('statPieBox').classList.toggle('d-none', kosong);
+            if (kosong) { return; }
+
+            chart = new Chart($('chartJurusan'), {
+                type: 'doughnut',
+                data: {
+                    labels: d.jurusan.map((j) => j.label),
+                    datasets: [{ data: d.jurusan.map((j) => j.jumlah), backgroundColor: WARNA, borderWidth: 0 }]
+                },
+                options: { cutout: '62%', plugins: { legend: { display: false } } }
+            });
+
+            d.jurusan.forEach(function (j, i) {
+                const persen = Math.round((j.jumlah / d.total_siswa) * 100);
+                const row = document.createElement('div');
+                row.className = 'leg-row';
+                const dot = document.createElement('span');
+                dot.className = 'dot';
+                dot.style.background = WARNA[i % WARNA.length];
+                const lbl = document.createElement('span');
+                lbl.className = 'leg-label';
+                lbl.textContent = j.label;
+                const val = document.createElement('span');
+                val.className = 'leg-val';
+                val.textContent = j.jumlah + ' (' + persen + '%)';
+                row.append(dot, lbl, val);
+                legend.appendChild(row);
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.js-lihat-statistik');
+            if (!btn) { return; }
+            const myRequest = ++requestId;
+            $('statTitle').textContent = '';
+            tampil('loading');
+            modal.show();
+            fetch(btn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then((r) => { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                .then((d) => { if (myRequest === requestId) { render(d); tampil('ok'); } })
+                .catch(() => { if (myRequest === requestId) { tampil('error'); } });
+        });
+    })();
 </script>
-{% endif %}
 {% endblock %}

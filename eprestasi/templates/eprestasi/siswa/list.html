@@ -1,10 +1,15 @@
 {% extends 'eprestasi/base.html' %}
-{% block title %}Data Siswa{% endblock %}
+{% load eprestasi_extras %}
+
+{% block title %}Kelola User{% endblock %}
 
 {% block content %}
 
-<div class="topbar">
-    <h4>Kelola Siswa</h4>
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1>Kelola User</h1>
+        <p>Manajemen data siswa aktif, nonaktif, dan alumni.</p>
+    </div>
     <div class="d-flex gap-2">
         <a href="{% url 'siswa_import' %}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-file-earmark-excel"></i> Import Excel
@@ -15,94 +20,256 @@
     </div>
 </div>
 
-<div class="card p-3 mb-3">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <ul class="nav nav-pills">
-            <li class="nav-item">
-                <a class="nav-link {% if not status_filter %}active{% endif %}" href="?{% if q %}q={{ q }}{% endif %}">
-                    Semua
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if status_filter == 'aktif' %}active{% endif %}" href="?status=aktif{% if q %}&q={{ q }}{% endif %}">
-                    Aktif <span class="badge bg-light text-dark ms-1">{{ total_aktif }}</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {% if status_filter == 'alumni' %}active{% endif %}" href="?status=alumni{% if q %}&q={{ q }}{% endif %}">
-                    Alumni <span class="badge bg-light text-dark ms-1">{{ total_alumni }}</span>
-                </a>
-            </li>
-        </ul>
+<!-- Tab pemilih tabel Siswa / Kesiswaan -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'siswa_list' %}"><i class="bi bi-mortarboard"></i> Siswa</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'kesiswaan_list' %}"><i class="bi bi-person-badge"></i> Kesiswaan</a>
+    </li>
+</ul>
 
-        <form method="get" class="d-flex" style="max-width: 280px;">
-            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
-            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari nama / NIS / kelas...">
-            <button class="btn btn-sm btn-outline-secondary ms-1"><i class="bi bi-search"></i></button>
-        </form>
+<!-- STATISTIK -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge success"><i class="bi bi-person-check"></i></div>
+            <div class="stat-label">Siswa Aktif</div>
+            <div class="stat-value">{{ total_aktif }}</div>
+            <div class="stat-sub"><span class="success-txt">sedang aktif belajar</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge danger"><i class="bi bi-person-x"></i></div>
+            <div class="stat-label">Siswa Nonaktif</div>
+            <div class="stat-value">{{ total_tidak_aktif }}</div>
+            <div class="stat-sub"><span class="danger-txt">tidak aktif</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-mortarboard"></i></div>
+            <div class="stat-label">Total Alumni</div>
+            <div class="stat-value">{{ total_alumni }}</div>
+            <div class="stat-sub"><span class="amber-txt">sudah lulus</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge info"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">Tahun Ajaran Aktif</div>
+            <div class="stat-value" style="font-size:1.25rem;">{{ tahun_ajaran_aktif|default:"Belum diset" }}</div>
+            <div class="stat-sub">periode berjalan</div>
+        </div>
     </div>
 </div>
 
-<div class="card p-3">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>NIS</th>
-                    <th>Username</th>
-                    <th>Nama</th>
-                    <th>Tingkat</th>
-                    <th>Kelas</th>
-                    <th>Jurusan</th>
-                    <th>Status</th>
-                    <th>Profil</th>
-                    <th class="text-end">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for siswa in siswa_list %}
-                <tr>
-                    <td class="fw-semibold">{{ siswa.nis }}</td>
-                    <td><code>{{ siswa.users.username }}</code></td>
-                    <td>{{ siswa.nama|default:"-" }}</td>
-                    <td>{{ siswa.tingkat }}</td>
-                    <td>{{ siswa.kelas|default:"-" }}</td>
-                    <td>{{ siswa.jurusan|default:"-" }}</td>
-                    <td>
-                        {% if siswa.status == 'aktif' %}
-                            <span class="badge badge-aktif">Aktif</span>
-                        {% else %}
-                            <span class="badge badge-alumni">Alumni</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if siswa.profil_lengkap %}
-                            <span class="badge bg-success-subtle text-success border border-success">Lengkap</span>
-                        {% else %}
-                            <span class="badge bg-warning-subtle text-warning border border-warning">Belum diisi</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'update_siswa' siswa.id %}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <form method="POST" action="{% url 'delete_siswa' siswa.id %}" class="d-inline"
-                              onsubmit="return confirm('Yakin ingin menghapus akun {{ siswa.nis }}?')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
+<!-- TAB STATUS (Semua / Aktif / Nonaktif / Alumni) -->
+<div class="page-tabs">
+    <ul class="nav nav-pills mb-0">
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if not status_filter %}active{% endif %}" href="?{% url_replace status='' %}">
+                Semua <span class="tab-count">{{ total_semua }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if status_filter == 'aktif' %}active{% endif %}" href="?{% url_replace status='aktif' %}">
+                Aktif <span class="tab-count">{{ total_aktif }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if status_filter == 'nonaktif' %}active{% endif %}" href="?{% url_replace status='nonaktif' %}">
+                Nonaktif <span class="tab-count">{{ total_tidak_aktif }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if status_filter == 'alumni' %}active{% endif %}" href="?{% url_replace status='alumni' %}">
+                Alumni <span class="tab-count">{{ total_alumni }}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- FORM SEARCH + FILTER (GET). sort & status ikut terbawa lewat hidden input -->
+<form method="GET" class="js-filter-form" id="filterFormSiswa">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="status" value="{{ status_filter }}">
+
+    <div class="card data-region" data-skeleton-root>
+
+        <!-- Toolbar: search + filter -->
+        <div class="table-toolbar">
+            <div class="table-toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+                       placeholder="Cari nama / NIS / kelas...">
+            </div>
+
+            <div class="dropdown">
+                <button type="button" class="filter-btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-funnel"></i> Filter
+                    {% if filter_aktif_count %}<span class="filter-count-badge">{{ filter_aktif_count }}</span>{% endif %}
+                </button>
+                <div class="dropdown-menu filter-panel p-0">
+                    <div class="p-3">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Tingkat</label>
+                                <select name="tingkat" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for kode, label in daftar_tingkat %}
+                                        <option value="{{ kode }}" {% if f_tingkat == kode|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Jurusan</label>
+                                <select name="jurusan" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for kode, label in daftar_jurusan %}
+                                        <option value="{{ kode }}" {% if f_jurusan == kode %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Kelas</label>
+                                <select name="kelas" class="form-select form-select-sm">
+                                    <option value="">Semua</option>
+                                    {% for k in daftar_kelas %}
+                                        <option value="{{ k }}" {% if f_kelas == k %}selected{% endif %}>{{ k }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-panel-footer px-3 pb-3">
+                        <a href="?{% url_replace tingkat='' jurusan='' kelas='' %}" class="clear-all-link">Reset Filter</a>
+                        <button type="submit" class="btn btn-primary btn-sm">Terapkan</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-search"></i> Cari</button>
+
+            <span class="table-toolbar-meta">{{ page_obj.paginator.count }} siswa ditemukan</span>
+        </div>
+
+        {% if filter_aktif_count or q %}
+        <div class="active-filters">
+            {% if q %}
+                <span class="filter-chip">"{{ q }}" <a href="?{% url_replace q='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_tingkat %}
+                <span class="filter-chip">Tingkat {{ f_tingkat }} <a href="?{% url_replace tingkat='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_kelas %}
+                <span class="filter-chip">{{ f_kelas }} <a href="?{% url_replace kelas='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            {% if f_jurusan %}
+                <span class="filter-chip">{{ f_jurusan }} <a href="?{% url_replace jurusan='' %}"><i class="bi bi-x"></i></a></span>
+            {% endif %}
+            <a href="?{% url_replace q='' tingkat='' jurusan='' kelas='' %}" class="clear-all-link ms-1">Hapus semua</a>
+        </div>
+        {% endif %}
+
+        <!-- Tabel (disembunyikan otomatis saat .is-loading, diganti skeleton) -->
+        <div class="table-responsive real-content">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.nis %}">
+                                NIS <i class="bi {% sort_icon sort 'nis_asc' 'nis_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.username %}">
+                                Username <i class="bi {% sort_icon sort 'username_asc' 'username_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.nama %}">
+                                Nama <i class="bi {% sort_icon sort 'nama_asc' 'nama_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th class="sortable-th">
+                            <a class="js-nav-loading" href="?{% url_replace sort=sort_toggle.tingkat %}">
+                                Tingkat <i class="bi {% sort_icon sort 'tingkat_asc' 'tingkat_desc' %}"></i>
+                            </a>
+                        </th>
+                        <th>Kelas</th>
+                        <th>Jurusan</th>
+                        <th>Status</th>
+                        <th>Profil</th>
+                        <th class="text-end">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for siswa in page_obj %}
+                    <tr>
+                        <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td class="fw-semibold">{{ siswa.nis }}</td>
+                        <td><code>{{ siswa.users.username }}</code></td>
+                        <td>{{ siswa.nama|default:"-" }}</td>
+                        <td>{{ siswa.tingkat }}</td>
+                        <td>{{ siswa.kelas|default:"-" }}</td>
+                        <td>{{ siswa.jurusan|default:"-" }}</td>
+                        <td>
+                            {% if siswa.status == 'aktif' %}
+                                <span class="badge badge-aktif">Aktif</span>
+                            {% elif siswa.status == 'alumni' %}
+                                <span class="badge badge-alumni">Alumni</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger">Nonaktif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if siswa.profil_lengkap %}
+                                <span class="badge bg-success-subtle text-success border border-success">Lengkap</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning">Belum diisi</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'riwayat_kelas_siswa' siswa.id %}" class="btn btn-sm btn-outline-secondary" title="Riwayat Kelas">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                            <a href="{% url 'update_siswa' siswa.id %}" class="btn btn-sm btn-outline-primary" title="Edit Data">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="submit" form="deleteForm{{ siswa.id }}" class="btn btn-sm btn-outline-danger" title="Hapus Data"
+                                    onclick="return confirm('Yakin ingin menghapus akun {{ siswa.nama|escapejs }} ({{ siswa.nis }})?')">
                                 <i class="bi bi-trash"></i>
                             </button>
-                        </form>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="9" class="text-center text-muted py-4">Belum ada data siswa.</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Skeleton rows (tampil saat .is-loading, dipicu js-nav-loading / js-filter-form di base.html) -->
+        {% include 'eprestasi/_partials/skeleton_rows.html' %}
+
+        <!-- Footer: pagination atau empty state -->
+        <div class="real-content">
+            {% if not page_obj.object_list %}
+                {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-people' empty_title='Siswa tidak ditemukan' empty_desc='Coba ubah kata kunci pencarian atau filter Anda.' show_reset=True reset_url='?' %}
+            {% else %}
+                {% include 'eprestasi/_partials/pagination.html' %}
+            {% endif %}
+        </div>
     </div>
-</div>
+</form>
+
+<!-- Form hapus dipisah dari form filter (form tidak boleh bersarang) -->
+{% for siswa in page_obj %}
+<form method="POST" action="{% url 'delete_siswa' siswa.id %}" id="deleteForm{{ siswa.id }}" class="d-none">
+    {% csrf_token %}
+</form>
+{% endfor %}
 
 {% endblock %}

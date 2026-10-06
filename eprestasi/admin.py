@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import Users, Siswa, Kesiswaan, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi
+from .models import (
+    Users, Siswa, Kesiswaan, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi,
+    Kelas, RiwayatKelas, LogPerubahanKelas,
+)
 
 
 @admin.register(Users)
@@ -31,3 +34,24 @@ class TahunAjaranAdmin(admin.ModelAdmin):
 admin.site.register(Prestasi)
 admin.site.register(Sertifikat)
 admin.site.register(Dokumentasi)
+
+
+@admin.register(Kelas)
+class KelasAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nama_kelas', 'jurusan', 'tingkat', 'tahun_ajaran')
+    list_filter = ('tahun_ajaran', 'jurusan', 'tingkat')
+    search_fields = ('nama_kelas',)
+
+
+@admin.register(RiwayatKelas)
+class RiwayatKelasAdmin(admin.ModelAdmin):
+    list_display = ('id', 'siswa', 'kelas', 'tahun_ajaran', 'tingkat', 'tanggal_penempatan')
+    list_filter = ('tahun_ajaran', 'tingkat')
+    search_fields = ('siswa__nama', 'siswa__nis')
+
+
+@admin.register(LogPerubahanKelas)
+class LogPerubahanKelasAdmin(admin.ModelAdmin):
+    list_display = ('id', 'siswa', 'kelas_sebelumnya', 'kelas_baru', 'tahun_ajaran', 'jenis_perubahan', 'waktu_perubahan')
+    list_filter = ('tahun_ajaran', 'jenis_perubahan')
+    search_fields = ('siswa__nama', 'siswa__nis')

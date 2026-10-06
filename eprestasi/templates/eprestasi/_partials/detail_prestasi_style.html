@@ -1,0 +1,95 @@
+{# Gaya bersama untuk halaman detail prestasi (portal siswa & kesiswaan). Di-include lewat block extra_head. #}
+<style>
+    .dp-back { display: inline-flex; align-items: center; gap: .4rem; color: var(--text-muted); font-weight: 500; margin-bottom: 1rem; }
+    .dp-back:hover { color: var(--text); }
+
+    /* ---------- Header ---------- */
+    .dp-header { padding: 1.5rem; margin-bottom: 1rem; }
+    .dp-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .dp-title { font-size: 1.35rem; font-weight: 700; line-height: 1.3; margin: 0; letter-spacing: -.01em; }
+    .dp-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .85rem; }
+    .dp-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .65rem;
+        font-size: .75rem; font-weight: 500; border-radius: 9999px;
+        background: var(--bg-card-2); color: var(--text); border: 1px solid var(--border);
+    }
+    .dp-tag.puspresnas { background: rgba(0,168,104,.1); color: #007a4d; border-color: rgba(0,168,104,.25); font-weight: 600; }
+    .dp-meta { display: flex; flex-wrap: wrap; gap: .35rem 1.4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .8rem; }
+    .dp-meta span { display: inline-flex; align-items: center; gap: .4rem; }
+
+    /* ---------- Status pill ---------- */
+    .dp-pill { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .85rem; border-radius: 9999px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+    .dp-pill.pending { background: var(--warning-dim); color: var(--warning); }
+    .dp-pill.diterima { background: var(--success-dim); color: var(--success); }
+    .dp-pill.perbaikan { background: rgba(249,115,22,.12); color: #c2410c; }
+    .dp-pill.ditolak { background: var(--danger-dim); color: var(--danger); }
+
+    /* ---------- Notice (perbaikan / ditolak) ---------- */
+    .dp-notice { display: flex; gap: .75rem; align-items: flex-start; padding: .9rem 1rem; border-radius: 12px; margin-top: 1rem; border: 1px solid; }
+    .dp-notice i { font-size: 1.1rem; margin-top: .1rem; }
+    .dp-notice .ttl { font-weight: 600; font-size: .85rem; margin-bottom: .15rem; }
+    .dp-notice .txt { font-size: .83rem; line-height: 1.5; }
+    .dp-notice.perbaikan { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+    .dp-notice.ditolak { background: var(--danger-dim); border-color: rgba(185,28,28,.25); color: var(--danger); }
+
+    /* ---------- Section card ---------- */
+    .dp-card { padding: 1.25rem 1.35rem; margin-bottom: 1rem; }
+    .dp-card-title { display: flex; align-items: center; gap: .5rem; font-size: .9rem; font-weight: 700; margin: 0 0 1rem; }
+    .dp-card-title i { color: var(--text-muted); font-size: 1rem; }
+    .dp-card-title .count { margin-left: auto; font-size: .72rem; font-weight: 600; background: var(--bg-card-2); color: var(--text-muted); border-radius: 9999px; padding: .1rem .55rem; }
+
+    /* ---------- Info grid ---------- */
+    .dp-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 0; }
+    .dp-info > div { min-width: 0; }
+    .dp-info dt { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: .2rem; }
+    .dp-info dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+    .dp-info .full { grid-column: 1 / -1; }
+    .dp-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: .4rem; }
+    .dp-desc { white-space: normal; line-height: 1.65; color: var(--text); margin: 0; }
+    .dp-divider { border: 0; border-top: 1px solid var(--border); margin: 1.1rem 0; }
+
+    /* ---------- Siswa (kesiswaan) ---------- */
+    .dp-person { display: flex; align-items: center; gap: .85rem; }
+    .dp-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text); flex-shrink: 0; }
+    .dp-person .nm { font-weight: 600; line-height: 1.25; }
+    .dp-person .sub { font-size: .78rem; color: var(--text-muted); }
+
+    /* ---------- File list ---------- */
+    .dp-file { display: flex; align-items: center; gap: .85rem; padding: .75rem .85rem; border: 1px solid var(--border); border-radius: 12px; margin-bottom: .6rem; transition: background .15s; }
+    .dp-file:last-child { margin-bottom: 0; }
+    .dp-file:hover { background: var(--bg-card-2); }
+    .dp-file .ico { width: 38px; height: 38px; border-radius: 10px; background: var(--bg-card-2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text); flex-shrink: 0; }
+    .dp-file:hover .ico { background: #fff; }
+    .dp-file .info { flex: 1; min-width: 0; }
+    .dp-file .nm { font-weight: 600; font-size: .85rem; color: var(--text); }
+    .dp-file .ds { font-size: .78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dp-file .go { color: var(--text-muted); }
+
+    .dp-empty { display: flex; align-items: center; gap: .6rem; padding: .9rem 1rem; border: 1px dashed var(--border); border-radius: 12px; color: var(--text-muted); font-size: .83rem; }
+
+    /* ---------- Galeri dokumentasi ---------- */
+    .dp-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+    .dp-photo { display: block; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; transition: box-shadow .15s, transform .15s; }
+    .dp-photo:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); transform: translateY(-1px); }
+    .dp-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+    .dp-photo .cap { padding: .45rem .65rem; font-size: .75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+    /* ---------- Form tambah bukti (siswa) ---------- */
+    .dp-addbox { margin-top: 1rem; padding: 1rem; background: var(--bg-card-2); border-radius: 12px; }
+    .dp-addbox .lbl { font-size: .8rem; font-weight: 600; margin-bottom: .5rem; display: block; }
+
+    /* ---------- Keputusan verifikasi ---------- */
+    .dp-sticky { position: sticky; top: 1rem; }
+    .dp-choices { display: grid; gap: .6rem; margin-bottom: 1rem; }
+    .opsi-keputusan { display: flex; align-items: center; gap: .65rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; transition: border-color .15s, background .15s; margin: 0; }
+    .opsi-keputusan:hover { background: var(--bg-card-2); }
+    .opsi-keputusan.aktif { border-color: var(--accent); background: var(--bg-card-2); box-shadow: 0 0 0 1px var(--accent); }
+    .opsi-keputusan i { font-size: 1.05rem; }
+
+    @media (max-width: 767.98px) {
+        .dp-header { padding: 1.1rem; }
+        .dp-title { font-size: 1.15rem; }
+        .dp-info { grid-template-columns: 1fr; }
+        .dp-sticky { position: static; }
+    }
+</style>

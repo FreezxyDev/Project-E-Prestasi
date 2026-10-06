@@ -1,0 +1,95 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Riwayat Berdasarkan Kelas{% endblock %}
+
+{% block content %}
+
+<div class="topbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="mb-0">Riwayat Berdasarkan Kelas</h4>
+    <a href="{% url 'pengelolaan_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-left"></i> Kembali ke Pengelolaan Kelas
+    </a>
+</div>
+
+{% if not daftar_tahun_ajaran %}
+    <div class="alert alert-warning">Belum ada data Tahun Ajaran.</div>
+{% else %}
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">Tahun Ajaran</label>
+            <select name="tahun_ajaran" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for ta in daftar_tahun_ajaran %}
+                    <option value="{{ ta.id }}" {% if tahun_ajaran_terpilih.id == ta.id %}selected{% endif %}>{{ ta.tahun_ajaran }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">Jurusan</label>
+            <select name="jurusan" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Semua Jurusan</option>
+                {% for nilai, label in daftar_jurusan %}
+                    <option value="{{ nilai }}" {% if jurusan_filter == nilai %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-8 col-md-4">
+            <label class="form-label small text-muted mb-1">Kelas</label>
+            <select name="kelas" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">-- Pilih Kelas --</option>
+                {% for k in daftar_kelas %}
+                    <option value="{{ k.id }}" {% if kelas_id == k.id|stringformat:"s" %}selected{% endif %}>{{ k.nama_kelas }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if kelas_terpilih %}
+<div class="card p-3">
+    <div class="small text-muted fw-semibold mb-2">
+        SISWA DI KELAS {{ kelas_terpilih.nama_kelas }} &mdash; TAHUN AJARAN {{ tahun_ajaran_terpilih.tahun_ajaran }}
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>NIS</th>
+                    <th>Nama</th>
+                    <th>Jurusan</th>
+                    <th>Kelas</th>
+                    <th>Perjalanan Kelas</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in daftar_riwayat %}
+                <tr>
+                    <td class="fw-semibold">{{ r.siswa.nis }}</td>
+                    <td>
+                        <a href="{% url 'riwayat_kelas_siswa' r.siswa.id %}">{{ r.siswa.nama|default:"-" }}</a>
+                    </td>
+                    <td>{{ r.siswa.jurusan|default:"-" }}</td>
+                    <td>{{ kelas_terpilih.nama_kelas }}</td>
+                    <td>
+                        <div class="d-flex flex-wrap align-items-center gap-1">
+                            {% for p in r.perjalanan %}
+                                <span class="badge bg-light text-dark border">{{ p.kelas.nama_kelas }}</span>
+                                {% if not forloop.last %}<i class="bi bi-arrow-right text-muted small"></i>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Belum ada siswa di kelas ini.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    <div class="alert alert-info">Pilih Jurusan dan Kelas di atas untuk melihat daftar siswa &amp; riwayat perjalanan kelasnya.</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

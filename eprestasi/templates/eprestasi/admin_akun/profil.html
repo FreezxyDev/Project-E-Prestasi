@@ -1,0 +1,159 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Profil Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profil-avatar {
+        width: 84px; height: 84px; border-radius: 50%; margin: 0 auto .9rem;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--bg-card-2); border: 1px solid var(--border-soft);
+        font-size: 1.7rem; font-weight: 800; color: var(--text);
+    }
+    .profil-avatar.super { background: #f3e8ff; border-color: #e9d5ff; color: #7c3aed; }
+    .role-badge-super { background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff; font-weight: 600; }
+    .role-badge-admin { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
+    .profil-info { margin: 0; }
+    .profil-info .row-item { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--border-soft); font-size: .82rem; }
+    .profil-info dt { color: var(--text-muted); font-weight: 600; }
+    .profil-info dd { margin: 0; color: var(--text); text-align: right; }
+    .pw-field { position: relative; }
+    .pw-field .form-control { padding-right: 2.6rem; }
+    .pw-field .js-toggle-pw {
+        position: absolute; right: .4rem; top: 50%; transform: translateY(-50%);
+        border: 0; background: transparent; color: var(--text-muted); padding: .25rem .5rem; line-height: 1;
+    }
+    .pw-field .js-toggle-pw:hover { color: var(--text); }
+    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .78rem; color: var(--text-muted);
+                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
+    .info-note i { margin-top: .1rem; }
+    .pw-tips { font-size: .78rem; color: var(--text-muted); margin: 0; padding-left: 1.1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Profil Admin</h1>
+    <p>Informasi akun Anda dan pengaturan keamanan.</p>
+</div>
+
+<div class="row g-3">
+
+    <!-- INFO AKUN -->
+    <div class="col-lg-4">
+        <div class="card p-3 h-100">
+            <div class="text-center">
+                <div class="profil-avatar {% if profil_user.role == 'super_admin' %}super{% endif %}">
+                    {{ profil_user.username|slice:":2"|upper }}
+                </div>
+                <div class="fw-bold fs-5">{{ profil_user.username }}</div>
+                <div class="mt-1 mb-3">
+                    {% if profil_user.role == 'super_admin' %}
+                        <span class="badge role-badge-super">Super Admin</span>
+                    {% else %}
+                        <span class="badge role-badge-admin">Admin</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <dl class="profil-info">
+                <div class="row-item"><dt>Username</dt><dd><code>{{ profil_user.username }}</code></dd></div>
+                <div class="row-item"><dt>Role</dt><dd>{% if profil_user.role == 'super_admin' %}Super Admin{% else %}Administrator{% endif %}</dd></div>
+                <div class="row-item"><dt>Akun dibuat</dt><dd>{{ profil_user.created_at|date:"d M Y" }}</dd></div>
+                <div class="row-item"><dt>Terakhir diperbarui</dt><dd>{{ profil_user.updated_at|date:"d M Y, H:i" }}</dd></div>
+            </dl>
+
+            <div class="small text-muted mt-2">
+                <i class="bi bi-info-circle"></i> Username tidak dapat diubah dari halaman ini.
+            </div>
+
+            <div class="info-note mt-3">
+                <i class="bi bi-shield-check"></i>
+                <div>
+                    {% if profil_user.role == 'super_admin' %}
+                        Sebagai super admin, Anda dapat menambah admin dan mengatur ulang password admin lain di menu
+                        <a href="{% url 'admin_list' %}">Kelola Admin</a>.
+                    {% else %}
+                        Anda hanya dapat mengganti password akun ini. Menambah admin atau mengatur ulang password
+                        admin lain hanya bisa dilakukan oleh <strong>super admin</strong>.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GANTI PASSWORD -->
+    <div class="col-lg-8">
+        <div class="card p-3 h-100">
+            <div class="panel-title"><i class="bi bi-shield-lock"></i> Ganti Password</div>
+            <div class="panel-sub">Gunakan password yang kuat dan tidak dipakai di layanan lain.</div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1" for="{{ form.password_lama.id_for_label }}">{{ form.password_lama.label }}</label>
+                        <div class="pw-field">
+                            {{ form.password_lama }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form.password_lama.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form.password_lama.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.password_baru.id_for_label }}">{{ form.password_baru.label }}</label>
+                        <div class="pw-field">
+                            {{ form.password_baru }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form.password_baru.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form.password_baru.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.konfirmasi_password.id_for_label }}">{{ form.konfirmasi_password.label }}</label>
+                        <div class="pw-field">
+                            {{ form.konfirmasi_password }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form.konfirmasi_password.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form.konfirmasi_password.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <ul class="pw-tips mt-3">
+                    <li>Minimal {{ password_min_length }} karakter.</li>
+                    <li>Tidak boleh sama dengan username atau password saat ini.</li>
+                </ul>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg"></i> Simpan Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Tombol mata: tampil/sembunyikan isi kolom password.
+    document.querySelectorAll('.js-toggle-pw').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector('i');
+            const tampil = input.type === 'password';
+            input.type = tampil ? 'text' : 'password';
+            icon.className = tampil ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
+{% endblock %}

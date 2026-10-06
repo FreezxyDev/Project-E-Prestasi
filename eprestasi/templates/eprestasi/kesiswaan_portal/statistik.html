@@ -1,0 +1,232 @@
+{% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block title %}Statistik{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chart-box { position: relative; height: 240px; }
+    .rank-item { display: flex; align-items: center; gap: .8rem; padding: .7rem 0; border-bottom: 1px solid var(--border-soft); }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-no { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-card-2); color: var(--text-muted); font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rank-item:first-child .rank-no { background: var(--accent); color: #fff; }
+    .rank-name { font-size: .82rem; font-weight: 600; color: var(--text); }
+    .rank-sub { font-size: .7rem; color: var(--text-muted); }
+    .rank-val { margin-left: auto; text-align: right; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+    .rank-pill { display: inline-block; font-size: .66rem; font-weight: 700; padding: .2rem .55rem; border-radius: 9999px; background: var(--info-dim); color: var(--info); }
+    .rank-pill.nasional { background: var(--success-dim); color: var(--success); }
+    .empty-note { color: var(--text-dim); font-size: .78rem; padding: 1rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h1>Statistik Prestasi</h1>
+        <p>{% if tahun_terpilih %}Tahun ajaran {{ tahun_terpilih.tahun_ajaran }}{% else %}Seluruh tahun ajaran{% endif %}</p>
+    </div>
+
+    <form method="get" class="d-flex align-items-center gap-2 m-0">
+        <label class="small fw-semibold text-muted mb-0" for="pilihTahun">Tahun Ajaran</label>
+        <select id="pilihTahun" name="tahun" class="form-select form-select-sm" style="width:auto; border-radius:9999px;" onchange="this.form.submit()">
+            <option value="" {% if not tahun_id %}selected{% endif %}>Semua tahun</option>
+            {% for t in tahun_list %}
+                <option value="{{ t.id }}" {% if tahun_id == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.tahun_ajaran }}{% if tahun_ajaran_aktif and tahun_ajaran_aktif.id == t.id %} (Aktif){% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<!-- ============ KARTU ============ -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Siswa</div>
+            <div class="stat-value">{{ total_siswa }}</div>
+            <div class="stat-sub">{{ ringkasan.siswa_berprestasi }} siswa berprestasi</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge info"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-label">Diajukan</div>
+            <div class="stat-value">{{ ringkasan.diajukan }}</div>
+            <div class="stat-sub">total pengajuan</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge success"><i class="bi bi-patch-check"></i></div>
+            <div class="stat-label">Terverifikasi</div>
+            <div class="stat-value">{{ ringkasan.diterima }}</div>
+            <div class="stat-sub">{{ ringkasan.persen_diterima }}% dari pengajuan</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">{{ ringkasan.pending }}</div>
+            <div class="stat-sub">menunggu verifikasi</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge info"><i class="bi bi-tools"></i></div>
+            <div class="stat-label">Perbaikan</div>
+            <div class="stat-value">{{ ringkasan.perbaikan }}</div>
+            <div class="stat-sub">menunggu revisi siswa</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3 col-xl">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge danger"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-label">Ditolak</div>
+            <div class="stat-value">{{ ringkasan.ditolak }}</div>
+            <div class="stat-sub">ditolak permanen</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ GRAFIK BARIS 1 ============ -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title">Status Pengajuan</div>
+            <div class="panel-sub">Sebaran seluruh pengajuan</div>
+            <div class="chart-box"><canvas id="chartStatus"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title">Tingkat Prestasi</div>
+            <div class="panel-sub">Prestasi terverifikasi per tingkat</div>
+            <div class="chart-box"><canvas id="chartTingkat"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title">Kategori Prestasi</div>
+            <div class="panel-sub">Prestasi terverifikasi per kategori</div>
+            <div class="chart-box"><canvas id="chartKategori"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ GRAFIK BARIS 2 ============ -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title">Pengajuan per Bulan</div>
+            <div class="panel-sub">Berdasarkan tanggal upload</div>
+            <div class="chart-box"><canvas id="chartBulan"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title">Prestasi per Jurusan</div>
+            <div class="panel-sub">Prestasi terverifikasi, jurusan sesuai tahun ajaran</div>
+            <div class="chart-box"><canvas id="chartJurusan"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ WIDGET SISWA TERBAIK ============ -->
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title"><i class="bi bi-trophy"></i> Prestasi Terverifikasi Terbanyak</div>
+            <div class="panel-sub">5 siswa dengan prestasi diterima paling banyak</div>
+            {% for r in top_jumlah %}
+            <div class="rank-item">
+                <div class="rank-no">{{ forloop.counter }}</div>
+                <div style="min-width:0;">
+                    <div class="rank-name">{{ r.siswa__nama|default:r.siswa__nis }}</div>
+                    <div class="rank-sub">{{ r.siswa__nis }}</div>
+                </div>
+                <div class="rank-val">{{ r.total }} prestasi</div>
+            </div>
+            {% empty %}
+            <div class="empty-note">Belum ada prestasi terverifikasi.</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title"><i class="bi bi-award"></i> Tingkat Prestasi Tertinggi</div>
+            <div class="panel-sub">5 siswa dengan tingkat prestasi tertinggi</div>
+            {% for r in top_tingkat %}
+            <div class="rank-item">
+                <div class="rank-no">{{ forloop.counter }}</div>
+                <div style="min-width:0;">
+                    <div class="rank-name">{{ r.siswa__nama|default:r.siswa__nis }}</div>
+                    <div class="rank-sub text-truncate">{{ r.contoh }}</div>
+                </div>
+                <div class="rank-val">
+                    <span class="rank-pill {% if r.tingkat_label == 'Nasional' or r.tingkat_label == 'Internasional' %}nasional{% endif %}">{{ r.tingkat_label }}</span>
+                    <div class="rank-sub">{{ r.total }} prestasi</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-note">Belum ada prestasi terverifikasi.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{{ chart_data|json_script:"chartData" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const D = JSON.parse(document.getElementById('chartData').textContent);
+    Chart.defaults.font.family = 'Inter';
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#707070';
+
+    const warna = { pending: '#b45309', diterima: '#15803d', perbaikan: '#1d4ed8', ditolak: '#b91c1c' };
+    const palet = ['#141414', '#707070', '#adadad', '#d4d4d4', '#1d4ed8', '#15803d'];
+    const sumbuY = { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(20,20,20,.06)' } };
+    const sumbuX = { grid: { display: false } };
+    const opsiDasar = { maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+    new Chart(document.getElementById('chartStatus'), {
+        type: 'doughnut',
+        data: { labels: D.status.labels, datasets: [{
+            data: D.status.data, borderWidth: 2, borderColor: '#fff',
+            backgroundColor: [warna.pending, warna.diterima, warna.perbaikan, warna.ditolak],
+        }]},
+        options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } } },
+    });
+
+    new Chart(document.getElementById('chartTingkat'), {
+        type: 'bar',
+        data: { labels: D.tingkat.labels, datasets: [{ data: D.tingkat.data, backgroundColor: '#141414', borderRadius: 6, maxBarThickness: 40 }] },
+        options: { ...opsiDasar, scales: { y: sumbuY, x: sumbuX } },
+    });
+
+    new Chart(document.getElementById('chartKategori'), {
+        type: 'doughnut',
+        data: { labels: D.kategori.labels, datasets: [{ data: D.kategori.data, backgroundColor: palet, borderWidth: 2, borderColor: '#fff' }] },
+        options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } } },
+    });
+
+    new Chart(document.getElementById('chartBulan'), {
+        type: 'line',
+        data: { labels: D.bulan.labels, datasets: [{
+            data: D.bulan.data, borderColor: '#141414', backgroundColor: 'rgba(20,20,20,.08)',
+            fill: true, tension: .35, pointRadius: 3, pointBackgroundColor: '#141414', borderWidth: 2,
+        }]},
+        options: { ...opsiDasar, scales: { y: sumbuY, x: sumbuX } },
+    });
+
+    new Chart(document.getElementById('chartJurusan'), {
+        type: 'bar',
+        data: { labels: D.jurusan.labels, datasets: [{ data: D.jurusan.data, backgroundColor: '#141414', borderRadius: 6, maxBarThickness: 22 }] },
+        options: { ...opsiDasar, indexAxis: 'y', scales: { x: sumbuY, y: sumbuX } },
+    });
+</script>
+{% endblock %}

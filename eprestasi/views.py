@@ -1,6 +1,7 @@
+from django import forms
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
@@ -9,6 +10,8 @@ import json
 from .models import Users, Siswa, Kesiswaan, Tahun_ajaran, Prestasi, LogAktivitas
 from .forms import SiswaAkunForm, KesiswaanAkunForm, TahunAjaranForm, AdminAkunForm
 from .decorators import role_required
+from .log_utils import catat_aktivitas
+from .kelas_utils import tempatkan_ke_kelas, kelas_siswa_aktif
 
 
 def landing_page(request):
@@ -28,19 +31,6 @@ def _generate_username(identifier):
         suffix += 1
         username = f"{identifier}-{suffix}"
     return username
-
-
-def _log_aktivitas(request, aksi, judul, deskripsi=''):
-    """
-    Simpan satu baris jejak aktivitas (dipakai untuk Activity Log di dashboard).
-    aksi: 'akun_dibuat' atau 'akun_dihapus'.
-    """
-    LogAktivitas.objects.create(
-        aksi=aksi,
-        judul=judul,
-        deskripsi=deskripsi,
-        actor=request.session.get('username', ''),
-    )
 
 
 def _naikkan_kelas_siswa_aktif():
@@ -218,24 +208,28 @@ def Create_siswa(request):
                 role='siswa'
             )
 
-            tingkat_input = data.get('tingkat')
-            tingkat_final = max(10, int(tingkat_input)) if tingkat_input else 10
+            kelas_obj = data['kelas']
 
             # 2. Simpan Data Diri ke Tabel Siswa (Terhubung via Foreign Key 'users')
-            Siswa.objects.create(
+            siswa_baru = Siswa.objects.create(
                 users=user_account,
                 nis=data['nis'],
-                nama=data['nama'],          # <--- Disimpan ke tabel Siswa
-                kelas=data.get('kelas', ''),# <--- Disimpan ke tabel Siswa
-                jurusan=data.get('jurusan', ''), # <--- Disimpan ke tabel Siswa
-                tingkat=tingkat_final,
+                nama=data['nama'],
+                jurusan=data.get('jurusan', ''),
+                tingkat=kelas_obj.tingkat,
                 status=data.get('status') or 'aktif',
             )
+            # Kelas dicatat per tahun ajaran (RiwayatKelas + log), bukan cuma teks di Siswa.
+            tempatkan_ke_kelas(
+                siswa_baru, kelas_obj,
+                Users.objects.filter(id=request.session.get('user_id')).first(),
+            )
 
-            _log_aktivitas(
+            catat_aktivitas(
                 request, 'akun_dibuat',
-                'Akun siswa baru dibuat',
-                f'Akun siswa "{data["nama"]}" (NIS {data["nis"]}, username {username}) berhasil dibuat'
+                'Admin menambahkan siswa',
+                f'Akun siswa "{data["nama"]}" (NIS {data["nis"]}, username {username}) berhasil dibuat',
+                modul='siswa',
             )
 
             messages.success(
@@ -255,7 +249,7 @@ def Update_siswa(request, siswa_id):
     user_account = siswa.users
 
     if request.method == 'POST':
-        form = SiswaAkunForm(request.POST, siswa_id=siswa.id)
+        form = SiswaAkunForm(request.POST, siswa_id=siswa.id, kelas_wajib=(siswa.status == 'aktif'))
         if form.is_valid():
             data = form.cleaned_data
 
@@ -265,27 +259,48 @@ def Update_siswa(request, siswa_id):
                 user_account.save()
 
             # 2. Update Data Profil di Tabel Siswa
+            perubahan = []
+            kelas_obj = data.get('kelas')
+            if kelas_obj and kelas_obj.nama_kelas != siswa.kelas:
+                perubahan.append(f'kelas {siswa.kelas or "-"} → {kelas_obj.nama_kelas}')
+            if siswa.status != (data.get('status') or siswa.status):
+                perubahan.append(f'status {siswa.status} → {data.get("status")}')
+
             siswa.nis = data['nis']
             siswa.nama = data['nama']
-            siswa.kelas = data.get('kelas', '')
             siswa.jurusan = data.get('jurusan', '')
-
-            if data.get('tingkat'):
-                siswa.tingkat = data['tingkat']
             if data.get('status'):
                 siswa.status = data['status']
             siswa.save()
+
+            # Perubahan kelas ditulis ke RiwayatKelas tahun ajaran aktif + log perubahan;
+            # Siswa.kelas/tingkat ikut disinkronkan oleh helper.
+            if kelas_obj:
+                tempatkan_ke_kelas(
+                    siswa, kelas_obj,
+                    Users.objects.filter(id=request.session.get('user_id')).first(),
+                    alasan='Diubah lewat form Edit Siswa',
+                )
+
+            catat_aktivitas(
+                request, 'akun_diubah',
+                'Admin mengubah data siswa',
+                f'Data siswa "{siswa.nama}" (NIS {siswa.nis}) diperbarui.' + (
+                    ' Perubahan: ' + '; '.join(perubahan) if perubahan else ''
+                ),
+                modul='siswa',
+            )
 
             messages.success(request, f'Data akun siswa (NIS {siswa.nis}) berhasil diperbarui.')
             return redirect('siswa_list')
     else:
         # Pre-fill data form dari instance Siswa saat ini
-        form = SiswaAkunForm(siswa_id=siswa.id, initial={
+        kelas_sekarang = kelas_siswa_aktif(siswa)
+        form = SiswaAkunForm(siswa_id=siswa.id, kelas_wajib=(siswa.status == 'aktif'), initial={
             'nis': siswa.nis,
             'nama': siswa.nama,
-            'kelas': siswa.kelas,
+            'kelas': kelas_sekarang.pk if kelas_sekarang else None,
             'jurusan': siswa.jurusan,
-            'tingkat': siswa.tingkat,
             'status': siswa.status,
         })
 
@@ -300,10 +315,11 @@ def delete_siswa(request, siswa_id):
         nama = siswa.nama
         siswa.users.delete()  # cascade menghapus Siswa juga
 
-        _log_aktivitas(
+        catat_aktivitas(
             request, 'akun_dihapus',
-            'Akun siswa dihapus',
-            f'Akun siswa "{nama}" (NIS {nis}) telah dihapus'
+            'Admin menghapus siswa',
+            f'Akun siswa "{nama}" (NIS {nis}) telah dihapus',
+            modul='siswa',
         )
 
         messages.success(request, f'Akun siswa dengan NIS {nis} telah berhasil dihapus!')
@@ -341,10 +357,11 @@ def Create_kesiswaan(request):
                 nip=data['nip'],
                 # nama & jabatan diisi user kesiswaan sendiri setelah login
             )
-            _log_aktivitas(
+            catat_aktivitas(
                 request, 'akun_dibuat',
-                'Akun kesiswaan baru dibuat',
-                f'Akun kesiswaan (NIP {data["nip"]}, username {username}) berhasil dibuat'
+                'Admin menambahkan kesiswaan',
+                f'Akun kesiswaan (NIP {data["nip"]}, username {username}) berhasil dibuat',
+                modul='kesiswaan',
             )
 
             messages.success(
@@ -376,6 +393,13 @@ def Update_kesiswaan(request, kesiswaan_id):
             kesiswaan.nip = data['nip']
             kesiswaan.save()
 
+            catat_aktivitas(
+                request, 'akun_diubah',
+                'Admin mengubah data kesiswaan',
+                f'Data akun kesiswaan "{kesiswaan.nama or kesiswaan.nip}" (NIP {kesiswaan.nip}) diperbarui.',
+                modul='kesiswaan',
+            )
+
             messages.success(request, f'Data akun kesiswaan (NIP {kesiswaan.nip}) berhasil diperbarui.')
             return redirect('kesiswaan_list')
     else:
@@ -393,10 +417,11 @@ def delete_kesiswaan(request, kesiswaan_id):
         nama = kesiswaan.nama
         kesiswaan.user.delete()  # cascade menghapus Kesiswaan juga
 
-        _log_aktivitas(
+        catat_aktivitas(
             request, 'akun_dihapus',
-            'Akun kesiswaan dihapus',
-            f'Akun kesiswaan "{nama or nip}" (NIP {nip}) telah dihapus'
+            'Admin menghapus kesiswaan',
+            f'Akun kesiswaan "{nama or nip}" (NIP {nip}) telah dihapus',
+            modul='kesiswaan',
         )
 
         messages.success(request, f'Akun kesiswaan dengan NIP {nip} telah berhasil dihapus!')
@@ -486,12 +511,25 @@ def Create_tahun_ajaran(request):
 
             if jadi_aktif:
                 naik, lulus = _naikkan_kelas_siswa_aktif()
+                catat_aktivitas(
+                    request, 'tahun_ajaran_ditambah',
+                    'Admin membuat tahun ajaran baru',
+                    f'Tahun ajaran "{data["tahun_ajaran"]}" ditambahkan & diaktifkan. '
+                    f'{naik} siswa naik tingkat, {lulus} siswa lulus menjadi alumni.',
+                    modul='tahun_ajaran',
+                )
                 messages.success(
                     request,
                     f'Tahun ajaran {data["tahun_ajaran"]} berhasil ditambahkan dan diaktifkan. '
                     f'{naik} siswa naik tingkat, {lulus} siswa lulus menjadi alumni.'
                 )
             else:
+                catat_aktivitas(
+                    request, 'tahun_ajaran_ditambah',
+                    'Admin membuat tahun ajaran baru',
+                    f'Tahun ajaran "{data["tahun_ajaran"]}" ditambahkan (nonaktif).',
+                    modul='tahun_ajaran',
+                )
                 messages.success(request, f'Tahun ajaran {data["tahun_ajaran"]} berhasil ditambahkan.')
 
             return redirect('tahun_ajaran_list')
@@ -519,6 +557,12 @@ def Update_tahun_ajaran(request, tahun_ajaran_id):
             tahun.tahun_ajaran = data['tahun_ajaran']
             tahun.status = data['status']
             tahun.save()
+            catat_aktivitas(
+                request, 'tahun_ajaran_diubah',
+                'Admin mengubah tahun ajaran',
+                f'Tahun ajaran "{tahun.tahun_ajaran}" diperbarui (status: {tahun.status}).',
+                modul='tahun_ajaran',
+            )
             messages.success(request, f'Tahun ajaran {tahun.tahun_ajaran} berhasil diperbarui.')
             return redirect('tahun_ajaran_list')
     else:
@@ -544,6 +588,10 @@ def aktifkan_tahun_ajaran(request, tahun_ajaran_id):
         Tahun_ajaran.objects.filter(status='aktif').exclude(id=tahun.id).update(status='nonaktif')
         tahun.status = 'aktif'
         tahun.save()
+        catat_aktivitas(
+            request, 'tahun_ajaran_diubah', 'Admin mengaktifkan tahun ajaran',
+            f'Tahun ajaran "{tahun.tahun_ajaran}" kini aktif.', modul='tahun_ajaran',
+        )
         messages.success(request, f'Tahun ajaran {tahun.tahun_ajaran} kini aktif.')
     return redirect('tahun_ajaran_list')
 
@@ -554,6 +602,10 @@ def nonaktifkan_tahun_ajaran(request, tahun_ajaran_id):
     if request.method == 'POST':
         tahun.status = 'nonaktif'
         tahun.save()
+        catat_aktivitas(
+            request, 'tahun_ajaran_diubah', 'Admin menonaktifkan tahun ajaran',
+            f'Tahun ajaran "{tahun.tahun_ajaran}" dinonaktifkan.', modul='tahun_ajaran',
+        )
         messages.success(request, f'Tahun ajaran {tahun.tahun_ajaran} dinonaktifkan.')
     return redirect('tahun_ajaran_list')
 
@@ -564,6 +616,10 @@ def delete_tahun_ajaran(request, tahun_ajaran_id):
     if request.method == 'POST':
         nama = tahun.tahun_ajaran
         tahun.delete()
+        catat_aktivitas(
+            request, 'akun_dihapus', 'Admin menghapus tahun ajaran',
+            f'Tahun ajaran "{nama}" telah dihapus.', modul='tahun_ajaran',
+        )
         messages.success(request, f'Tahun ajaran {nama} telah dihapus.')
     return redirect('tahun_ajaran_list')
 
@@ -595,10 +651,11 @@ def Create_admin(request):
                 password=make_password(data['password']),
                 role='admin',  # dibuat lewat web selalu 'admin' biasa, bukan super_admin
             )
-            _log_aktivitas(
+            catat_aktivitas(
                 request, 'akun_dibuat',
-                'Akun admin baru dibuat',
-                f'Akun admin "{data["username"]}" berhasil dibuat'
+                'Super admin menambahkan admin',
+                f'Akun admin "{data["username"]}" berhasil dibuat',
+                modul='admin',
             )
 
             messages.success(request, f'Akun admin "{data["username"]}" berhasil dibuat.')
@@ -622,6 +679,10 @@ def Update_admin(request, admin_id):
             if data.get('password'):
                 admin_user.password = make_password(data['password'])
             admin_user.save()
+            catat_aktivitas(
+                request, 'akun_diubah', 'Super admin mengubah data admin',
+                f'Akun admin "{admin_user.username}" diperbarui.', modul='admin',
+            )
             messages.success(request, f'Akun admin "{admin_user.username}" berhasil diperbarui.')
             return redirect('admin_list')
     else:
@@ -650,12 +711,117 @@ def delete_admin(request, admin_id):
         username = admin_user.username
         admin_user.delete()
 
-        _log_aktivitas(
+        catat_aktivitas(
             request, 'akun_dihapus',
-            'Akun admin dihapus',
-            f'Akun admin "{username}" telah dihapus'
+            'Super admin menghapus admin',
+            f'Akun admin "{username}" telah dihapus',
+            modul='admin',
         )
 
         messages.success(request, f'Akun admin "{username}" telah dihapus.')
 
     return redirect('admin_list')
+
+
+# =========================================================
+# PROFIL ADMIN (admin & super_admin)
+# =========================================================
+# Lihat identitas akun yang sedang login (username, role, tanggal dibuat)
+# dan ganti password sendiri. Username hanya bisa DILIHAT di sini --
+# perubahan akun admin lain tetap lewat menu Kelola Admin (super_admin).
+
+PASSWORD_MIN_LENGTH = 8
+
+
+class AdminGantiPasswordForm(forms.Form):
+    password_lama = forms.CharField(
+        label='Password saat ini',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 'autocomplete': 'current-password',
+            'placeholder': 'Masukkan password saat ini',
+        }),
+    )
+    password_baru = forms.CharField(
+        label='Password baru',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 'autocomplete': 'new-password',
+            'placeholder': f'Minimal {PASSWORD_MIN_LENGTH} karakter',
+        }),
+    )
+    konfirmasi_password = forms.CharField(
+        label='Konfirmasi password baru',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 'autocomplete': 'new-password',
+            'placeholder': 'Ulangi password baru',
+        }),
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password_lama(self):
+        lama = self.cleaned_data['password_lama']
+        if not check_password(lama, self.user.password):
+            raise forms.ValidationError('Password saat ini salah.')
+        return lama
+
+    def clean_password_baru(self):
+        baru = self.cleaned_data['password_baru']
+        if len(baru) < PASSWORD_MIN_LENGTH:
+            raise forms.ValidationError(f'Password baru minimal {PASSWORD_MIN_LENGTH} karakter.')
+        if baru.lower() == self.user.username.lower():
+            raise forms.ValidationError('Password baru tidak boleh sama dengan username.')
+        return baru
+
+    def clean(self):
+        data = super().clean()
+        lama, baru, konfirmasi = (
+            data.get('password_lama'), data.get('password_baru'), data.get('konfirmasi_password'),
+        )
+        if baru and konfirmasi and baru != konfirmasi:
+            self.add_error('konfirmasi_password', 'Konfirmasi password tidak cocok.')
+        if lama and baru and lama == baru:
+            self.add_error('password_baru', 'Password baru harus berbeda dari password saat ini.')
+        return data
+
+
+@role_required('admin', 'super_admin')
+def profil_admin(request):
+    user = get_object_or_404(Users, id=request.session.get('user_id'))
+
+    if request.method == 'POST':
+        form = AdminGantiPasswordForm(request.POST, user=user)
+        if form.is_valid():
+            user.password = make_password(form.cleaned_data['password_baru'])
+            user.save(update_fields=['password', 'updated_at'])
+            # Ganti session key supaya session lama tidak bisa dipakai ulang;
+            # user tetap login di browser ini.
+            request.session.cycle_key()
+            catat_aktivitas(
+                request, 'akun_diubah',
+                'Admin mengganti password sendiri',
+                f'Akun \"{user.username}\" berhasil mengganti password.',
+                modul='admin',
+            )
+            messages.success(request, 'Password berhasil diganti.')
+            return redirect('profil_admin')
+
+        # Jejak percobaan gagal hanya bila password lama yang salah.
+        if 'password_lama' in form.errors:
+            catat_aktivitas(
+                request, 'akun_diubah',
+                'Percobaan ganti password gagal',
+                f'Akun \"{user.username}\" salah memasukkan password saat ini.',
+                modul='admin', status_log='gagal',
+            )
+    else:
+        form = AdminGantiPasswordForm(user=user)
+
+    context = {
+        'active_menu': 'profil_admin',
+        'profil_user': user,
+        'form': form,
+        'password_min_length': PASSWORD_MIN_LENGTH,
+    }
+    return render(request, 'eprestasi/admin_akun/profil.html', context)

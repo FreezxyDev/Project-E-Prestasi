@@ -1,0 +1,85 @@
+{% extends 'eprestasi/base.html' %}
+{% load eprestasi_extras %}
+{% block title %}Kelulusan & Alumni{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Kelulusan &amp; Alumni</h1>
+    <p>Proses kelulusan siswa kelas XII dan kelola data alumni sekolah.</p>
+</div>
+
+<!-- STATISTIK KELULUSAN -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge info"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Siswa Kelas XII</div>
+            <div class="stat-value">{{ statistik.total_xii }}</div>
+            <div class="stat-sub">total siswa tingkat XII</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-label">Siap Diproses</div>
+            <div class="stat-value">{{ statistik.siap_diproses }}</div>
+            <div class="stat-sub"><span class="amber-txt">belum diproses kelulusannya</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge success"><i class="bi bi-patch-check"></i></div>
+            <div class="stat-label">Lulus</div>
+            <div class="stat-value">{{ statistik.lulus }}</div>
+            <div class="stat-sub"><span class="success-txt">sudah ditetapkan lulus</span></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge danger"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-label">Belum Lulus</div>
+            <div class="stat-value">{{ statistik.belum_lulus }}</div>
+            <div class="stat-sub"><span class="danger-txt">ditandai tidak lulus</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB KELULUSAN / ALUMNI -->
+<div class="page-tabs d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <ul class="nav nav-pills mb-0">
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if active_tab == 'kelulusan' %}active{% endif %}" href="?tab=kelulusan">
+                <i class="bi bi-clipboard-check"></i> Kelulusan <span class="tab-count">{{ statistik.total_xii }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if active_tab == 'alumni' %}active{% endif %}" href="?tab=alumni">
+                <i class="bi bi-mortarboard"></i> Alumni <span class="tab-count">{{ statistik.alumni }}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+{% if active_tab == 'alumni' %}
+    {% include 'eprestasi/kelulusan/_tab_alumni.html' %}
+{% else %}
+    {% include 'eprestasi/kelulusan/_tab_kelulusan.html' %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Konfirmasi sebelum aksi massal "Proses Kelulusan" / "Tandai Tidak Lulus".
+    // formEl: elemen <form> bulk action. template: teks konfirmasi, "{n}" diganti jumlah terpilih.
+    function confirmBulkKelulusan(formEl, tmpl) {
+        const checked = formEl.querySelectorAll('.js-row-check:checked').length;
+        if (checked === 0) {
+            alert('Pilih minimal satu siswa terlebih dahulu.');
+            return false;
+        }
+        return confirm(tmpl.replace('{n}', checked));
+    }
+</script>
+{% endblock %}

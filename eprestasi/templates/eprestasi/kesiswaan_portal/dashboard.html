@@ -1,532 +1,115 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
-{% block title %}Dashboard - Verifikasi Prestasi{% endblock %}
+{% block title %}Dashboard Kesiswaan{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card .stat-value.small-text { font-size: 1.15rem; line-height: 1.3; }
+    .stat-card .stat-sub .amber-txt { color: var(--warning); font-weight: 600; }
+
+    /* ---- Activity log ---- */
+    .activity-item { display: flex; gap: .85rem; padding: .85rem 0; border-bottom: 1px solid var(--border-soft); }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-time { color: var(--text-dim); font-size: .68rem; width: 46px; flex-shrink: 0; padding-top: .15rem; }
+    .activity-icon {
+        width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: .8rem;
+        background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border);
+    }
+    .activity-icon.success { background: var(--success-dim); color: var(--success); border-color: rgba(21,128,61,.2); }
+    .activity-icon.danger { background: var(--danger-dim); color: var(--danger); border-color: rgba(185,28,28,.2); }
+    .activity-icon.pending { background: var(--warning-dim); color: var(--warning); border-color: rgba(180,83,9,.2); }
+    .activity-title { color: var(--text); font-size: .8rem; font-weight: 600; margin-bottom: .1rem; }
+    .activity-desc { color: var(--text-muted); font-size: .74rem; }
+    .empty-note { color: var(--text-dim); font-size: .78rem; padding: 1rem 0; }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<style>
-    /* Statistics Cards */
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 25px;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .stat-card.pending {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    .stat-card.diterima {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-
-    .stat-card.ditolak {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    }
-
-    .stat-number {
-        font-size: 36px;
-        font-weight: bold;
-        margin: 10px 0;
-    }
-
-    .stat-label {
-        font-size: 14px;
-        opacity: 0.9;
-    }
-
-    /* Filter Section */
-    .filter-card {
-        background: #f8f9fa;
-        border-left: 4px solid #667eea;
-        padding: 25px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .filter-title {
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: #333;
-    }
-
-    .filter-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-        align-items: flex-end;
-    }
-
-    .filter-group label {
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 6px;
-        color: #555;
-    }
-
-    .filter-group select,
-    .filter-group input {
-        width: 100%;
-    }
-
-    .filter-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    .filter-buttons button,
-    .filter-buttons a {
-        flex: 1;
-        min-width: 100px;
-    }
-
-    /* Result Info */
-    .result-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .result-count {
-        font-weight: 600;
-        color: #333;
-    }
-
-    /* Table */
-    .prestasi-table {
-        font-size: 14px;
-    }
-
-    .prestasi-table thead {
-        background: #f8f9fa;
-        font-weight: 600;
-    }
-
-    .prestasi-table tbody tr {
-        border-bottom: 1px solid #dee2e6;
-        transition: background-color 0.2s;
-    }
-
-    .prestasi-table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .prestasi-table td {
-        padding: 12px;
-        vertical-align: middle;
-    }
-
-    /* Status Badges */
-    .badge-pending {
-        background: #fff3cd;
-        color: #856404;
-        padding: 6px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .badge-diterima {
-        background: #d4edda;
-        color: #155724;
-        padding: 6px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .badge-ditolak {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 6px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .badge-perbaikan {
-        background: #fed7aa;
-        color: #9a3412;
-        padding: 6px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .badge-kelas {
-        background: #e7f3ff;
-        color: #0066cc;
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    /* No Results */
-    .no-results {
-        text-align: center;
-        padding: 60px 20px;
-        color: #666;
-    }
-
-    .no-results i {
-        font-size: 48px;
-        color: #ccc;
-        margin-bottom: 15px;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .filter-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .filter-buttons {
-            flex-direction: column;
-        }
-
-        .stat-card {
-            margin-bottom: 15px;
-        }
-
-        .prestasi-table {
-            font-size: 12px;
-        }
-
-        .prestasi-table td {
-            padding: 8px;
-        }
-
-        .result-info {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-    }
-
-    /* Active Filter Tag */
-    .active-filter-tag {
-        display: inline-block;
-        background: #667eea;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        margin-right: 5px;
-    }
-
-    .active-filter-tag .close {
-        margin-left: 5px;
-        cursor: pointer;
-    }
-</style>
-
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h3 class="fw-bold mb-1">📊 Dashboard Verifikasi Prestasi</h3>
-        <p class="text-muted small mb-0">Kelola dan verifikasi prestasi siswa dari satu tempat</p>
-    </div>
+<div class="page-header">
+    <h1>Dashboard Kesiswaan</h1>
+    <p>Ringkasan verifikasi prestasi{% if tahun_ajaran_aktif %} tahun ajaran {{ tahun_ajaran_aktif.tahun_ajaran }}{% endif %}</p>
 </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3 col-sm-6 mb-3">
-        <div class="stat-card">
-            <i class="bi bi-hourglass-split" style="font-size: 24px;"></i>
-            <div class="stat-number">{{ prestasi_pending }}</div>
-            <div class="stat-label">Menunggu Verifikasi</div>
+<!-- ============ STAT CARDS ============ -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge info"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">Tahun Ajaran Aktif</div>
+            <div class="stat-value {% if tahun_ajaran_aktif %}small-text{% endif %}">
+                {% if tahun_ajaran_aktif %}{{ tahun_ajaran_aktif.tahun_ajaran }}{% else %}-{% endif %}
+            </div>
+            <div class="stat-sub">{% if tahun_ajaran_aktif %}sedang berjalan{% else %}belum ada yang aktif{% endif %}</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-3">
-        <div class="stat-card diterima">
-            <i class="bi bi-check-circle-fill" style="font-size: 24px;"></i>
-            <div class="stat-number">{{ prestasi_diterima }}</div>
-            <div class="stat-label">Diterima</div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Total Siswa</div>
+            <div class="stat-value">{{ total_siswa }}</div>
+            <div class="stat-sub">siswa aktif</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-3">
-        <div class="stat-card" style="border-left: 4px solid #f97316;">
-            <i class="bi bi-tools" style="font-size: 24px; color: #f97316;"></i>
-            <div class="stat-number">{{ prestasi_perbaikan }}</div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge success"><i class="bi bi-patch-check"></i></div>
+            <div class="stat-label">Terverifikasi</div>
+            <div class="stat-value">{{ ringkasan.diterima }}</div>
+            <div class="stat-sub">prestasi diterima</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">{{ ringkasan.pending }}</div>
+            <div class="stat-sub">{% if ringkasan.pending > 0 %}<span class="amber-txt">perlu ditinjau</span>{% else %}semua sudah diproses{% endif %}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge info"><i class="bi bi-tools"></i></div>
             <div class="stat-label">Perbaikan</div>
+            <div class="stat-value">{{ ringkasan.perbaikan }}</div>
+            <div class="stat-sub">menunggu revisi siswa</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-3">
-        <div class="stat-card ditolak">
-            <i class="bi bi-x-circle-fill" style="font-size: 24px;"></i>
-            <div class="stat-number">{{ prestasi_ditolak }}</div>
+    <div class="col-6 col-lg-4 col-xl-2">
+        <div class="card stat-card h-100">
+            <div class="stat-icon-badge danger"><i class="bi bi-x-circle"></i></div>
             <div class="stat-label">Ditolak</div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6 mb-3">
-        <div class="stat-card pending">
-            <i class="bi bi-file-text" style="font-size: 24px;"></i>
-            <div class="stat-number">{{ total_prestasi }}</div>
-            <div class="stat-label">Total Prestasi</div>
+            <div class="stat-value">{{ ringkasan.ditolak }}</div>
+            <div class="stat-sub">prestasi ditolak</div>
         </div>
     </div>
 </div>
 
-<!-- Filter Section -->
-<div class="filter-card">
-    <div class="filter-title">
-        <i class="bi bi-funnel"></i> Filter Verifikasi Prestasi
+<!-- ============ LOG AKTIVITAS (max 3) ============ -->
+<div class="card p-3 p-lg-4 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+            <div class="panel-title">Log Aktivitas Verifikasi</div>
+            <div class="panel-sub mb-0">3 proses verifikasi terbaru</div>
+        </div>
+        <a href="{% url 'kesiswaan_riwayat' %}" class="small fw-semibold text-dark">Lihat riwayat &rarr;</a>
     </div>
 
-    <form method="GET" class="form">
-        <div class="filter-grid">
-            <!-- Filter Status -->
-            <div class="filter-group">
-                <label for="filter_status">Status Verifikasi</label>
-                <select name="status" id="filter_status" class="form-select">
-                    {% for value, label in filter_options.status_choices %}
-                        <option value="{{ value }}" 
-                            {% if current_filters.status == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filter Kategori -->
-            <div class="filter-group">
-                <label for="filter_kategori">Kategori Prestasi</label>
-                <select name="kategori" id="filter_kategori" class="form-select">
-                    <option value="">-- Semua Kategori --</option>
-                    {% for value, label in filter_options.kategori_choices %}
-                        <option value="{{ value }}" 
-                            {% if current_filters.kategori == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filter Tingkat -->
-            <div class="filter-group">
-                <label for="filter_tingkat">Tingkat Prestasi</label>
-                <select name="tingkat" id="filter_tingkat" class="form-select">
-                    <option value="">-- Semua Tingkat --</option>
-                    {% for value, label in filter_options.tingkat_choices %}
-                        <option value="{{ value }}" 
-                            {% if current_filters.tingkat == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filter Kelas -->
-            <div class="filter-group">
-                <label for="filter_kelas">Kelas Siswa</label>
-                <select name="kelas" id="filter_kelas" class="form-select">
-                    <option value="">-- Semua Kelas --</option>
-                    {% for value, label in filter_options.kelas_options %}
-                        <option value="{{ value }}" 
-                            {% if current_filters.kelas == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Filter Nama Siswa -->
-            <div class="filter-group">
-                <label for="filter_nama">Nama Siswa</label>
-                <input type="text" name="nama" id="filter_nama" class="form-control" 
-                    placeholder="Cari nama..." value="{{ current_filters.nama }}">
-            </div>
-
-            <!-- Filter Tahun Ajaran -->
-            <div class="filter-group">
-                <label for="filter_tahun">Tahun Ajaran</label>
-                <select name="tahun" id="filter_tahun" class="form-select">
-                    <option value="">-- Semua Tahun --</option>
-                    {% for tahun in filter_options.tahun_ajaran_list %}
-                        <option value="{{ tahun }}" 
-                            {% if current_filters.tahun == tahun %}selected{% endif %}>
-                            {{ tahun }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+    {% for item in activity_log %}
+    <div class="activity-item">
+        <div class="activity-time">{{ item.waktu|date:"H:i" }}<div style="font-size:.6rem;">{{ item.waktu|date:"d M" }}</div></div>
+        <div class="activity-icon {{ item.status }}"><i class="bi {{ item.icon }}"></i></div>
+        <div class="flex-grow-1" style="min-width:0;">
+            <div class="activity-title">{{ item.judul }}</div>
+            <div class="activity-desc">{{ item.deskripsi }}</div>
         </div>
-
-        <!-- Filter Buttons -->
-        <div class="filter-buttons mt-3">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-search"></i> Terapkan Filter
-            </button>
-            <a href="{% url 'kesiswaan_dashboard' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-counterclockwise"></i> Reset
-            </a>
-            <a href="{% url 'kesiswaan_verifikasi_list' %}" class="btn btn-outline-info">
-                <i class="bi bi-list-check"></i> Antrean Pending
-            </a>
-        </div>
-    </form>
+    </div>
+    {% empty %}
+    <div class="empty-note">Belum ada aktivitas verifikasi.</div>
+    {% endfor %}
 </div>
 
-<!-- Active Filters Display -->
-{% if current_filters.status or current_filters.kategori or current_filters.tingkat or current_filters.kelas or current_filters.nama or current_filters.tahun %}
-    <div class="mb-3">
-        <strong>Filter Aktif:</strong>
-        {% if current_filters.status %}
-            <span class="active-filter-tag">Status: {{ current_filters.status }}</span>
-        {% endif %}
-        {% if current_filters.kategori %}
-            <span class="active-filter-tag">Kategori: {{ current_filters.kategori }}</span>
-        {% endif %}
-        {% if current_filters.tingkat %}
-            <span class="active-filter-tag">Tingkat: {{ current_filters.tingkat }}</span>
-        {% endif %}
-        {% if current_filters.kelas %}
-            <span class="active-filter-tag">Kelas: {{ current_filters.kelas }}</span>
-        {% endif %}
-        {% if current_filters.nama %}
-            <span class="active-filter-tag">Nama: {{ current_filters.nama }}</span>
-        {% endif %}
-        {% if current_filters.tahun %}
-            <span class="active-filter-tag">Tahun: {{ current_filters.tahun }}</span>
-        {% endif %}
-    </div>
-{% endif %}
-
-<!-- Result Info -->
-{% if current_filters.status or current_filters.kategori or current_filters.tingkat or current_filters.kelas or current_filters.nama or current_filters.tahun %}
-    <div class="result-info">
-        <span class="result-count">
-            ✅ Ditemukan <strong>{{ total_prestasi }}</strong> prestasi dengan filter yang dipilih
-        </span>
-        <a href="{% url 'kesiswaan_dashboard' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-x-circle"></i> Hapus Filter
-        </a>
-    </div>
-{% else %}
-    <div class="result-info">
-        <span class="result-count">📊 Total <strong>{{ total_prestasi }}</strong> prestasi</span>
-    </div>
-{% endif %}
-
-<!-- Prestasi List Table -->
-{% if prestasi_list %}
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 prestasi-table">
-                <thead>
-                    <tr>
-                        <th width="8%">#</th>
-                        <th width="15%">Siswa</th>
-                        <th width="20%">Prestasi</th>
-                        <th width="12%">Kategori</th>
-                        <th width="12%">Tingkat</th>
-                        <th width="10%">Kelas</th>
-                        <th width="12%">Status</th>
-                        <th width="11%" class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for prestasi in prestasi_list %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>
-                            <strong>{{ prestasi.siswa.nama }}</strong>
-                            <div class="text-muted small">{{ prestasi.siswa.nis }}</div>
-                        </td>
-                        <td>
-                            <small>{{ prestasi.nama_prestasi }}</small>
-                            <div class="text-muted small">
-                                {{ prestasi.tanggal_prestasi|date:"d M Y" }}
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border" style="font-size: 11px;">
-                                {{ prestasi.get_kategori_prestasi_display }}
-                            </span>
-                        </td>
-                        <td>{{ prestasi.tingkat_prestasi }}</td>
-                        <td>
-                            <span class="badge-kelas">{{ prestasi.siswa.kelas }}</span>
-                        </td>
-                        <td>
-                            {% if prestasi.status == 'pending' %}
-                                <span class="badge-pending">⏳ Pending</span>
-                            {% elif prestasi.status == 'diterima' %}
-                                <span class="badge-diterima">✅ Diterima</span>
-                            {% elif prestasi.status == 'perbaikan' %}
-                                <span class="badge-perbaikan">🔧 Perbaikan</span>
-                            {% elif prestasi.status == 'ditolak' %}
-                                <span class="badge-ditolak">❌ Ditolak</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <a href="{% url 'kesiswaan_verifikasi_detail' prestasi.id %}" 
-                                class="btn btn-sm btn-primary">
-                                <i class="bi bi-eye"></i> Tinjau
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pagination Info -->
-    <div class="mt-3 text-end">
-        <small class="text-muted">
-            Menampilkan {{ prestasi_list|length }} dari {{ total_prestasi }} prestasi
-        </small>
-    </div>
-
-{% else %}
-    <!-- No Results -->
-    <div class="card p-4">
-        <div class="no-results">
-            <i class="bi bi-inbox"></i>
-            <h5>Tidak Ada Prestasi</h5>
-            <p class="text-muted">
-                {% if current_filters.status or current_filters.kategori or current_filters.tingkat or current_filters.kelas or current_filters.nama or current_filters.tahun %}
-                    Tidak ditemukan prestasi dengan filter yang dipilih.
-                    <br>
-                    <a href="{% url 'kesiswaan_dashboard' %}" class="btn btn-sm btn-outline-primary mt-2">
-                        Reset Filter
-                    </a>
-                {% else %}
-                    Belum ada prestasi.
-                {% endif %}
-            </p>
-        </div>
-    </div>
-{% endif %}
-
-<!-- Info Box -->
-<div class="alert alert-info mt-4" role="alert">
-    <h6 class="alert-heading">💡 Tips Penggunaan</h6>
-    <ul class="mb-0">
-        <li>Gunakan <strong>Status</strong> untuk memfilter prestasi berdasarkan status verifikasi</li>
-        <li>Gunakan <strong>Kategori</strong> untuk melihat prestasi akademik atau non-akademik</li>
-        <li>Gunakan <strong>Tingkat</strong> untuk memfilter prestasi sesuai tingkat (Sekolah, Kota, Provinsi, dll)</li>
-        <li>Gunakan <strong>Kelas & Nama</strong> untuk mencari prestasi siswa tertentu</li>
-        <li>Kombinasikan beberapa filter untuk pencarian yang lebih spesifik</li>
-        <li>Klik tombol <strong>"Antrean Pending"</strong> untuk langsung ke prestasi yang belum diverifikasi</li>
-        <li>Klik <strong>"Tinjau"</strong> untuk membuka detail prestasi dan melakukan verifikasi</li>
-    </ul>
-</div>
+<!-- ============ TABEL PRESTASI (partial dipakai bersama halaman antrean) ============ -->
+{% include 'eprestasi/kesiswaan_portal/_tabel_prestasi.html' %}
 
 {% endblock %}

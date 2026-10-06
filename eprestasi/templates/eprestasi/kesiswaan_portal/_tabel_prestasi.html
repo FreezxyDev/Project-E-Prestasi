@@ -1,0 +1,294 @@
+<style>
+    .badge-status { font-size: .66rem; font-weight: 700; padding: .32rem .6rem; border-radius: 9999px; letter-spacing: .3px; display: inline-block; }
+    .badge-status.pending   { background: var(--warning-dim); color: var(--warning); }
+    .badge-status.diterima  { background: var(--success-dim); color: var(--success); }
+    .badge-status.perbaikan { background: var(--info-dim); color: var(--info); }
+    .badge-status.ditolak   { background: var(--danger-dim); color: var(--danger); }
+    .badge-kelas { background: var(--bg-card-2); border: 1px solid var(--border-soft); color: var(--text); border-radius: 9999px; font-size: .7rem; font-weight: 600; padding: .2rem .55rem; white-space: nowrap; }
+    .filter-panel-wide { width: 560px; max-width: 92vw; }
+    .prestasi-table td { font-size: .82rem; }
+</style>
+
+<div class="card mb-3">
+
+    <form method="get" class="js-filter-form">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        {% if not tampil_status_filter %}
+            <input type="hidden" name="status" value="{{ f.status }}">
+        {% endif %}
+
+        <div class="table-toolbar">
+            <div class="table-toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ f.q }}" class="form-control form-control-sm"
+                       placeholder="Cari siswa, NIS, prestasi, penyelenggara...">
+            </div>
+
+            {% if tampil_status_filter %}
+            <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.requestSubmit()">
+                <option value="">Semua Status</option>
+                {% for value, label in status_pilihan %}
+                    <option value="{{ value }}" {% if f.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <div class="dropdown">
+                <button type="button" class="filter-btn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="bi bi-funnel"></i> Filter
+                    {% if filter_lanjutan_count %}<span class="filter-count-badge">{{ filter_lanjutan_count }}</span>{% endif %}
+                </button>
+
+                <div class="dropdown-menu filter-panel filter-panel-wide">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label">Kategori</label>
+                            <select name="kategori" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.kategori_choices %}
+                                    <option value="{{ value }}" {% if f.kategori == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tingkat Prestasi</label>
+                            <select name="tingkat_prestasi" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.tingkat_prestasi_choices %}
+                                    <option value="{{ value }}" {% if f.tingkat_prestasi == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Jurusan</label>
+                            <select name="jurusan" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.jurusan_choices %}
+                                    <option value="{{ value }}" {% if f.jurusan == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Kelas</label>
+                            <select name="kelas" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.kelas_choices %}
+                                    <option value="{{ value }}" {% if f.kelas == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tingkat Siswa</label>
+                            <select name="tingkat_siswa" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.tingkat_siswa_choices %}
+                                    <option value="{{ value }}" {% if f.tingkat_siswa == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tahun Ajaran</label>
+                            <select name="tahun" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for id, label in opsi.tahun_list %}
+                                    <option value="{{ id }}" {% if f.tahun == id|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Puspresnas</label>
+                            <select name="puspresnas" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.puspresnas_choices %}
+                                    <option value="{{ value }}" {% if f.puspresnas == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Jenis Perbaikan</label>
+                            <select name="jenis_perbaikan" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.jenis_perbaikan_choices %}
+                                    <option value="{{ value }}" {% if f.jenis_perbaikan == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Verifikator</label>
+                            <select name="verifikator" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                <option value="saya" {% if f.verifikator == 'saya' %}selected{% endif %}>Saya</option>
+                                <option value="belum" {% if f.verifikator == 'belum' %}selected{% endif %}>Belum ada</option>
+                                {% for k in opsi.verifikator_list %}
+                                    <option value="{{ k.id }}" {% if f.verifikator == k.id|stringformat:"s" %}selected{% endif %}>{{ k.nama }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Prestasi (dari)</label>
+                            <input type="date" name="tanggal_dari" value="{{ f.tanggal_dari }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Prestasi (sampai)</label>
+                            <input type="date" name="tanggal_sampai" value="{{ f.tanggal_sampai }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Upload (dari)</label>
+                            <input type="date" name="upload_dari" value="{{ f.upload_dari }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Upload (sampai)</label>
+                            <input type="date" name="upload_sampai" value="{{ f.upload_sampai }}" class="form-control form-control-sm">
+                        </div>
+                        {% if tampil_verifikasi %}
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Verifikasi (dari)</label>
+                            <input type="date" name="verif_dari" value="{{ f.verif_dari }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Tgl. Verifikasi (sampai)</label>
+                            <input type="date" name="verif_sampai" value="{{ f.verif_sampai }}" class="form-control form-control-sm">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="filter-panel-footer">
+                        <a href="{{ request.path }}" class="clear-all-link js-nav-loading">Reset</a>
+                        <button type="submit" class="btn btn-primary btn-sm px-3">Terapkan</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-toolbar-meta">{{ page_obj.paginator.count }} {{ item_label }}</div>
+        </div>
+    </form>
+
+    {% if chips %}
+    <div class="active-filters pt-3">
+        {% for c in chips %}
+            <span class="filter-chip">{{ c.label }}
+                <a href="?{{ c.hapus_qs }}{% if c.hapus_qs %}&{% endif %}sort={{ sort }}" class="js-nav-loading" title="Hapus filter"><i class="bi bi-x-lg"></i></a>
+            </span>
+        {% endfor %}
+        <a href="{{ request.path }}" class="clear-all-link js-nav-loading">Hapus semua</a>
+    </div>
+    {% endif %}
+
+    <div class="data-region" data-skeleton-root>
+
+        <div class="skeleton-rows">
+            {% for i in "12345678" %}
+            <div class="skeleton-row">
+                <div class="skeleton-bar avatar"></div>
+                <div class="skeleton-bar line"></div>
+                <div class="skeleton-bar line"></div>
+                <div class="skeleton-bar line short"></div>
+                <div class="skeleton-bar line short"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="real-content">
+            {% if page_obj.object_list %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 prestasi-table">
+                    <thead>
+                        <tr>
+                            <th style="width:48px;">#</th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.siswa }}">Siswa <i class="bi {% if sort == 'siswa_asc' %}bi-arrow-up{% elif sort == 'siswa_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.prestasi }}">Prestasi <i class="bi {% if sort == 'prestasi_asc' %}bi-arrow-up{% elif sort == 'prestasi_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.kategori }}">Kategori <i class="bi {% if sort == 'kategori_asc' %}bi-arrow-up{% elif sort == 'kategori_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.tingkat }}">Tingkat <i class="bi {% if sort == 'tingkat_asc' %}bi-arrow-up{% elif sort == 'tingkat_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.kelas }}">Kelas <i class="bi {% if sort == 'kelas_asc' %}bi-arrow-up{% elif sort == 'kelas_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.upload }}">Diupload <i class="bi {% if sort == 'upload_asc' %}bi-arrow-up{% elif sort == 'upload_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.status }}">Status <i class="bi {% if sort == 'status_asc' %}bi-arrow-up{% elif sort == 'status_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            {% if tampil_verifikasi %}
+                            <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.verif }}">Diverifikasi <i class="bi {% if sort == 'verif_asc' %}bi-arrow-up{% elif sort == 'verif_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
+                            {% endif %}
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for p in page_obj %}
+                        <tr>
+                            <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ p.siswa.nama|default:"-" }}</div>
+                                <div class="text-muted" style="font-size:.7rem;">{{ p.siswa.nis }}</div>
+                            </td>
+                            <td>
+                                <div>{{ p.nama_prestasi }}</div>
+                                <div class="text-muted" style="font-size:.7rem;">{{ p.tanggal_prestasi|date:"d M Y" }}</div>
+                                {% if not p.siswa.profil_lengkap %}
+                                    <span class="badge-status pending mt-1">PROFIL BELUM LENGKAP</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.get_kategori_prestasi_display }}</td>
+                            <td>{{ p.tingkat_prestasi|capfirst }}</td>
+                            <td><span class="badge-kelas">{{ p.kelas_nama|default:"-" }}</span></td>
+                            <td>{{ p.tanggal_upload|date:"d M Y" }}</td>
+                            <td><span class="badge-status {{ p.status }}">{{ p.status|upper }}</span></td>
+                            {% if tampil_verifikasi %}
+                            <td>
+                                {% if p.tanggal_verifikasi %}
+                                    {{ p.tanggal_verifikasi|date:"d M Y" }}
+                                    <div class="text-muted" style="font-size:.7rem;">{% if p.kesiswaan %}{{ p.kesiswaan.nama|default:p.kesiswaan.nip }}{% endif %}</div>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td class="text-center">
+                                <a href="{% url 'kesiswaan_verifikasi_detail' p.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> {% if p.status == 'pending' %}Tinjau{% else %}Detail{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-footer">
+                <div>Menampilkan {{ page_obj.start_index }}-{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} {{ item_label }}</div>
+                {% if page_obj.paginator.num_pages > 1 %}
+                <div class="pg-pills">
+                    {% if page_obj.has_previous %}
+                        <a href="?{{ qs_tanpa_page }}{% if qs_tanpa_page %}&{% endif %}page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+                    {% else %}
+                        <span class="disabled"><i class="bi bi-chevron-left"></i></span>
+                    {% endif %}
+
+                    {% for p in page_range %}
+                        {% if p == page_obj.paginator.ELLIPSIS %}
+                            <span class="dots">&hellip;</span>
+                        {% elif p == page_obj.number %}
+                            <span class="active">{{ p }}</span>
+                        {% else %}
+                            <a href="?{{ qs_tanpa_page }}{% if qs_tanpa_page %}&{% endif %}page={{ p }}">{{ p }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?{{ qs_tanpa_page }}{% if qs_tanpa_page %}&{% endif %}page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+                    {% else %}
+                        <span class="disabled"><i class="bi bi-chevron-right"></i></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+                <h6>Tidak ada prestasi</h6>
+                <p>{% if chips %}Tidak ada data yang cocok dengan filter yang dipilih.{% else %}Belum ada prestasi pada tampilan ini.{% endif %}</p>
+                {% if chips %}
+                    <a href="{{ request.path }}" class="btn btn-outline-primary btn-sm js-nav-loading">Reset filter</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

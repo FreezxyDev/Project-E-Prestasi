@@ -4,8 +4,11 @@
 {% block content %}
 
 <div class="topbar">
-    <h4>Hasil Import Siswa</h4>
-    <a href="{% url 'siswa_list' %}" class="btn btn-sm btn-outline-secondary">Kembali ke Data Siswa</a>
+    <div>
+        <h4 class="mb-0">Hasil Import Siswa</h4>
+        {% if kelas_tujuan %}<div class="small text-muted">Kelas tujuan: <strong>{{ kelas_tujuan }}</strong> &middot; Tahun ajaran {{ tahun_import }}</div>{% endif %}
+    </div>
+    <a href="{{ kembali_url|default:'/siswa/' }}" class="btn btn-sm btn-outline-secondary">{{ kembali_label|default:'Kembali ke Data Siswa' }}</a>
 </div>
 
 <div class="row g-3 mb-3">

@@ -1,102 +1,262 @@
 {% extends 'eprestasi/siswa_portal/base.html' %}
-{% block title %}Lengkapi Profil{% endblock %}
+{% block title %}{% if wajib_diisi %}Lengkapi Profil{% else %}Pengaturan{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .readonly-box { background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: .5rem; padding: .5rem .75rem; color: var(--text); font-weight: 600; font-size: .85rem; min-height: 38px; }
+    .readonly-badge { display: inline-block; padding: .1rem .5rem; margin-left: .4rem; font-size: .66rem; font-weight: 600; background: var(--info-dim); color: var(--info); border-radius: 9999px; }
+    .field-error { color: var(--danger); font-size: .74rem; margin-top: .25rem; }
+
+    .profil-avatar { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto .9rem; display: flex; align-items: center; justify-content: center; background: var(--bg-card-2); border: 1px solid var(--border-soft); font-size: 1.7rem; font-weight: 800; color: var(--text); }
+    .role-badge { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
+    .profil-info { margin: 0; }
+    .profil-info .row-item { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--border-soft); font-size: .82rem; }
+    .profil-info dt { color: var(--text-muted); font-weight: 600; }
+    .profil-info dd { margin: 0; color: var(--text); text-align: right; }
+    .pw-field { position: relative; }
+    .pw-field .form-control { padding-right: 2.6rem; }
+    .pw-field .js-toggle-pw { position: absolute; right: .4rem; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--text-muted); padding: .25rem .5rem; line-height: 1; }
+    .pw-field .js-toggle-pw:hover { color: var(--text); }
+    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .78rem; color: var(--text-muted); background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
+    .info-note i { margin-top: .1rem; }
+    .pw-tips { font-size: .78rem; color: var(--text-muted); margin: 0; padding-left: 1.1rem; }
+    .qr-img { max-width: 170px; width: 100%; border: 1px solid var(--border-soft); border-radius: 12px; padding: .5rem; background: #fff; }
+    .link-box { font-size: .72rem; word-break: break-all; background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 8px; padding: .45rem .6rem; }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<style>
-    .readonly-box {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 8px 12px;
-        color: #495057;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    .readonly-badge {
-        display: inline-block;
-        padding: 2px 6px;
-        margin-left: 4px;
-        font-size: 0.7rem;
-        background-color: #e7f3ff;
-        color: #0c63e4;
-        border-radius: 3px;
-        font-weight: normal;
-    }
-</style>
-
 {% if wajib_diisi %}
-    <div class="alert alert-warning d-flex gap-2" style="max-width: 560px; margin: 0 auto 1rem auto;">
-        <i class="bi bi-exclamation-triangle fs-5"></i>
-        <div>
-            <strong>Lengkapi profil kamu dulu.</strong>
-            <div class="small">Sebelum bisa mengakses dashboard dan mengunggah prestasi, isi data kontak di bawah ini terlebih dahulu.</div>
+{# ================= MODE 1: PROFIL BELUM LENGKAP ================= #}
+<div class="alert alert-warning d-flex gap-2" style="max-width:560px; margin:0 auto 1rem auto;">
+    <i class="bi bi-exclamation-triangle fs-5"></i>
+    <div>
+        <strong>Lengkapi profil kamu dulu.</strong>
+        <div class="small">Sebelum bisa mengakses dashboard dan mengajukan prestasi, isi email, nomor telepon, dan alamat kamu.</div>
+    </div>
+</div>
+
+<div class="card p-4" style="max-width:560px; margin:0 auto;">
+    <h5 class="fw-bold mb-1">Lengkapi Profil</h5>
+    <p class="text-muted small mb-3">Data sekolah di bawah diisi admin dan tidak bisa kamu ubah.</p>
+
+    <div class="mb-3">
+        <label class="form-label small text-muted mb-1">NIS <span class="readonly-badge">Data Sekolah</span></label>
+        <div class="readonly-box">{{ siswa.nis }}</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label small text-muted mb-1">Nama Lengkap <span class="readonly-badge">Data Sekolah</span></label>
+        <div class="readonly-box">{{ siswa.nama|default:"-" }}</div>
+    </div>
+    <div class="row">
+        <div class="col-6 mb-3">
+            <label class="form-label small text-muted mb-1">Kelas <span class="readonly-badge">Data Sekolah</span></label>
+            <div class="readonly-box">{{ siswa.kelas|default:"-" }}</div>
+        </div>
+        <div class="col-6 mb-3">
+            <label class="form-label small text-muted mb-1">Jurusan <span class="readonly-badge">Data Sekolah</span></label>
+            <div class="readonly-box">{{ siswa.jurusan|default:"-" }}</div>
         </div>
     </div>
-{% endif %}
 
-<div class="card p-4" style="max-width: 560px; margin: 0 auto;">
-    <h5 class="fw-bold mb-1">{% if wajib_diisi %}Lengkapi Profil{% else %}Edit Profil{% endif %}</h5>
-    <p class="text-muted small mb-4">NIS: <strong>{{ siswa.nis }}</strong> &middot; Tingkat {{ siswa.tingkat }}</p>
+    <hr class="my-3">
 
-    <div class="alert alert-info small d-flex gap-2 mb-4">
-        <i class="bi bi-info-circle"></i>
-        <div>Data sekolah (Nama, Kelas, Jurusan) dikelola oleh Admin dan tidak dapat diubah. Hubungi admin jika ada kesalahan data.</div>
-    </div>
-
-    <form method="POST">
+    <form method="POST" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
-
-        <!-- DATA DARI ADMIN (DITAMPILKAN SEBAGAI READONLY TEKS) -->
+        {% for field in form %}
         <div class="mb-3">
-            <label class="form-label text-muted small mb-1">
-                Nama Lengkap <span class="readonly-badge">Data Admin</span>
-            </label>
-            <div class="readonly-box">{{ siswa.nama}}</div>
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
         </div>
-
-        <div class="row">
-            <div class="col-6 mb-3">
-                <label class="form-label text-muted small mb-1">
-                    Kelas <span class="readonly-badge">Data Admin</span>
-                </label>
-                <div class="readonly-box">{{ siswa.kelas }}</div>
-            </div>
-            <div class="col-6 mb-3">
-                <label class="form-label text-muted small mb-1">
-                    Jurusan <span class="readonly-badge">Data Admin</span>
-                </label>
-                <div class="readonly-box">{{ siswa.jurusan }}</div>
-            </div>
-        </div>
-
-        <hr class="my-4">
-
-        <!-- DATA YANG BOLEH DIISI / DIEDIT SISWA -->
-        <div class="mb-3">
-            <label class="form-label">Email <span class="text-muted small">(opsional)</span></label>
-            {{ form.email }}
-            {% if form.email.errors %}
-                <div class="text-danger small mt-1">{{ form.email.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">No. HP <span class="text-muted small">(opsional)</span></label>
-            {{ form.no_hp }}
-            {% if form.no_hp.errors %}
-                <div class="text-danger small mt-1">{{ form.no_hp.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary">Simpan Profil</button>
-            {% if not wajib_diisi %}
-                <a href="{% url 'siswa_dashboard' %}" class="btn btn-outline-secondary">Batal</a>
-            {% endif %}
-        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary mt-2">Simpan Profil</button>
     </form>
 </div>
 
+{% else %}
+{# ================= MODE 2: HALAMAN PENGATURAN ================= #}
+<div class="page-header">
+    <h1>Pengaturan</h1>
+    <p>Informasi profil, data kontak, QR portofolio, dan keamanan akun.</p>
+</div>
+
+<div class="row g-3">
+
+    <!-- INFORMASI PROFIL (read-only) -->
+    <div class="col-lg-4">
+        <div class="card p-3 h-100">
+            <div class="text-center">
+                <div class="profil-avatar">{{ siswa.nama|slice:":2"|upper }}</div>
+                <div class="fw-bold fs-5">{{ siswa.nama }}</div>
+                <div class="mt-1 mb-3">
+                    {% if siswa.status == 'aktif' %}<span class="badge role-badge">Siswa Aktif</span>
+                    {% else %}<span class="badge role-badge">{{ siswa.status|capfirst }}</span>{% endif %}
+                </div>
+            </div>
+
+            <dl class="profil-info">
+                <div class="row-item"><dt>NIS</dt><dd><code>{{ siswa.nis }}</code></dd></div>
+                <div class="row-item"><dt>Kelas</dt><dd>{{ siswa.kelas|default:"-" }}</dd></div>
+                <div class="row-item"><dt>Jurusan</dt><dd>{{ siswa.jurusan|default:"-" }}</dd></div>
+                <div class="row-item"><dt>Tingkat</dt><dd>{{ tingkat_romawi }}</dd></div>
+                <div class="row-item"><dt>Akun dibuat</dt><dd>{{ siswa.users.created_at|date:"d M Y" }}</dd></div>
+                <div class="row-item"><dt>Terakhir diperbarui</dt><dd>{{ siswa.users.updated_at|date:"d M Y, H:i" }}</dd></div>
+            </dl>
+
+            <div class="small text-muted mt-2">
+                <i class="bi bi-info-circle"></i> NIS, nama, kelas, dan jurusan diatur admin. Kelas otomatis berubah saat kamu naik tingkat.
+            </div>
+            <div class="info-note mt-3">
+                <i class="bi bi-shield-check"></i>
+                <div>Jika ada kesalahan pada data sekolah atau kamu lupa password saat ini, hubungi admin.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+
+        <!-- EDIT DATA KONTAK -->
+        <div class="card p-3 mb-3">
+            <div class="panel-title"><i class="bi bi-person-lines-fill"></i> Edit Data</div>
+            <div class="panel-sub">Perbarui email, nomor telepon, dan alamat kamu.</div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="profil">
+                {% if form.non_field_errors %}<div class="alert alert-danger small">{{ form.non_field_errors }}</div>{% endif %}
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% for e in form.email.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.no_hp.id_for_label }}">{{ form.no_hp.label }}</label>
+                        {{ form.no_hp }}
+                        {% for e in form.no_hp.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1" for="{{ form.alamat.id_for_label }}">{{ form.alamat.label }}</label>
+                        {{ form.alamat }}
+                        {% for e in form.alamat.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Simpan Data</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- BAGIKAN PRESTASI (QR) -->
+        <div class="card p-3 mb-3">
+            <div class="panel-title"><i class="bi bi-qr-code"></i> Bagikan Prestasi</div>
+            <div class="panel-sub">QR Code mengarah ke portofolio publik berisi prestasi kamu yang sudah diverifikasi.</div>
+
+            <div class="row g-3 align-items-center">
+                <div class="col-sm-4 text-center">
+                    {% if siswa.qr_code %}
+                        <img src="{{ siswa.qr_code.url }}" alt="QR Code portofolio" class="qr-img">
+                    {% else %}
+                        <div class="text-muted small"><i class="bi bi-qr-code fs-1 d-block mb-1"></i>Belum ada QR Code</div>
+                    {% endif %}
+                </div>
+                <div class="col-sm-8">
+                    <div class="small text-muted mb-1">Link portofolio kamu</div>
+                    <div class="link-box mb-3"><code>{{ url_portofolio }}</code></div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form method="POST" action="{% url 'siswa_qr_code' %}" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="profil">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                {% if siswa.qr_code %}<i class="bi bi-arrow-repeat"></i> Perbarui QR{% else %}<i class="bi bi-qr-code"></i> Buat QR Code{% endif %}
+                            </button>
+                        </form>
+                        <a href="{{ url_portofolio }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Lihat Portofolio</a>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSalinLink" data-link="{{ url_portofolio }}"><i class="bi bi-clipboard"></i> Salin Link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GANTI PASSWORD -->
+        <div class="card p-3">
+            <div class="panel-title"><i class="bi bi-shield-lock"></i> Ganti Password</div>
+            <div class="panel-sub">Gunakan password yang kuat dan tidak dipakai di layanan lain.</div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="password">
+                {% if form_password.non_field_errors %}<div class="alert alert-danger small">{{ form_password.non_field_errors }}</div>{% endif %}
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.password_lama.id_for_label }}">{{ form_password.password_lama.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.password_lama }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.password_lama.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.password_lama.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.password_baru.id_for_label }}">{{ form_password.password_baru.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.password_baru }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.password_baru.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.password_baru.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.konfirmasi_password.id_for_label }}">{{ form_password.konfirmasi_password.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.konfirmasi_password }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.konfirmasi_password.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.konfirmasi_password.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <ul class="pw-tips mt-3">
+                    <li>Minimal 6 karakter.</li>
+                    <li>Tidak boleh sama dengan NIS atau password saat ini.</li>
+                </ul>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Simpan Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.querySelectorAll('.js-toggle-pw').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector('i');
+            const tampil = input.type === 'password';
+            input.type = tampil ? 'text' : 'password';
+            icon.className = tampil ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+    const salin = document.getElementById('btnSalinLink');
+    if (salin) {
+        salin.addEventListener('click', function () {
+            navigator.clipboard.writeText(salin.dataset.link).then(function () {
+                salin.innerHTML = '<i class="bi bi-check2"></i> Tersalin';
+                setTimeout(function () { salin.innerHTML = '<i class="bi bi-clipboard"></i> Salin Link'; }, 1800);
+            });
+        });
+    }
+</script>
 {% endblock %}

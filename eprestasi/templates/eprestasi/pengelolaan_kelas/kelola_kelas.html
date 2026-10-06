@@ -1,0 +1,138 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Kelola Daftar Kelas{% endblock %}
+
+{% block content %}
+
+<div class="topbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="mb-0">Kelola Daftar Kelas</h4>
+    <a href="{% url 'pengelolaan_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-left"></i> Kembali ke Pengelolaan Kelas
+    </a>
+</div>
+
+{% if not daftar_tahun_ajaran %}
+    <div class="alert alert-warning">Belum ada data Tahun Ajaran.</div>
+{% else %}
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-4">
+            <label class="form-label small text-muted mb-1">Tahun Ajaran</label>
+            <select name="tahun_ajaran" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for ta in daftar_tahun_ajaran %}
+                    <option value="{{ ta.id }}" {% if tahun_ajaran_terpilih.id == ta.id %}selected{% endif %}>
+                        {{ ta.tahun_ajaran }}{% if ta.status == 'aktif' %} (Aktif){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="card p-3">
+            <div class="small text-muted fw-semibold mb-2">DAFTAR KELAS &mdash; {{ tahun_ajaran_terpilih.tahun_ajaran }}</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nama Kelas</th>
+                            <th>Jurusan</th>
+                            <th>Tingkat</th>
+                            <th>Jumlah Siswa</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for k in daftar_kelas %}
+                        <tr>
+                            <td class="fw-semibold">{{ k.nama_kelas }}</td>
+                            <td>{{ k.jurusan }}</td>
+                            <td>{{ k.tingkat_romawi }}</td>
+                            <td>{{ k.jumlah_siswa }}</td>
+                            <td class="text-end">
+                                <form method="POST" action="{% url 'hapus_kelas' k.id %}" class="d-inline"
+                                      onsubmit="return confirm('Hapus kelas {{ k.nama_kelas }}? Hanya bisa dihapus jika belum ada siswa di dalamnya.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" {% if k.jumlah_siswa > 0 %}disabled{% endif %}>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">Belum ada kelas untuk tahun ajaran ini.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="card p-3 mb-3">
+            <div class="small text-muted fw-semibold mb-2">TAMBAH SATU KELAS</div>
+            <form method="POST" action="{% url 'tambah_kelas' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+                <div class="mb-2">
+                    <label class="form-label small">Nama Kelas</label>
+                    {{ form_kelas.nama_kelas }}
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">Jurusan</label>
+                        {{ form_kelas.jurusan }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Tingkat</label>
+                        {{ form_kelas.tingkat }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Tambah Kelas</button>
+            </form>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <div class="small text-muted fw-semibold mb-2">BUAT KELAS MASSAL</div>
+            <p class="small text-muted">Contoh: Jurusan RPL, Tingkat X, Jumlah 2 &rarr; otomatis membuat "X RPL 1" dan "X RPL 2".</p>
+            <form method="POST" action="{% url 'buat_kelas_massal' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+                <div class="row g-2 mb-2">
+                    <div class="col-5">
+                        <label class="form-label small">Jurusan</label>
+                        {{ form_massal.jurusan }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">Tingkat</label>
+                        {{ form_massal.tingkat }}
+                    </div>
+                    <div class="col-3">
+                        <label class="form-label small">Jumlah</label>
+                        {{ form_massal.jumlah_kelas }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary w-100">Buat Kelas Massal</button>
+            </form>
+        </div>
+
+        <div class="card p-3">
+            <div class="small text-muted fw-semibold mb-2">SALIN DAFTAR KELAS</div>
+            <p class="small text-muted">Salin seluruh daftar kelas dari tahun ajaran lain ke tahun ajaran <strong>{{ tahun_ajaran_terpilih.tahun_ajaran }}</strong>.</p>
+            <form method="POST" action="{% url 'salin_kelas' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+                <div class="mb-2">
+                    {{ form_salin.tahun_ajaran_sumber }}
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">Salin Kelas</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

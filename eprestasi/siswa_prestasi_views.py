@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
+from django.core.paginator import Paginator
+from django.db.models import Q, Count
 
 from .models import Siswa, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi
 from .forms import PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm, PrestasiEditForm
@@ -58,14 +60,16 @@ def upload_prestasi(request):
                 tanggal_prestasi=data['tanggal_prestasi'],
                 penyelenggara=data['penyelenggara'],
                 tingkat_prestasi=data['tingkat_prestasi'],
+                wilayah_prestasi=data['wilayah_prestasi'],
                 deskripsi=data['deskripsi'],
                 kategori_prestasi=data['kategori_prestasi'],
                 status='pending',
-                # Puspresnas -- kode & dokumen dua-duanya opsional, siswa bisa isi
-                # salah satu atau dua-duanya.
+                # Puspresnas -- kode & dokumen dua-duanya opsional (di semua tingkat),
+                # siswa bisa isi salah satu atau dua-duanya.
                 kode_puspresnas=data.get('kode_puspresnas') or None,
                 dokumen_puspresnas=data.get('dokumen_puspresnas') or None,
-                jenis_wilayah_puspresnas=data.get('jenis_wilayah_puspresnas') or None,
+                # wilayah dokumen Puspresnas mengikuti wilayah prestasi
+                jenis_wilayah_puspresnas=data['wilayah_prestasi'] if data.get('dokumen_puspresnas') else None,
                 jenis_penyelenggara_puspresnas=data.get('jenis_penyelenggara_puspresnas') or None,
             )
 
@@ -86,20 +90,99 @@ def upload_prestasi(request):
     else:
         form = PrestasiUploadForm()
 
-    context = {'form': form, 'active_menu': 'prestasi'}
+    context = {'form': form, 'siswa': siswa, 'active_menu': 'pengajuan'}
     return render(request, 'eprestasi/siswa_portal/upload_prestasi.html', context)
+
+
+RIWAYAT_SORT = {
+    'tanggal_desc': ('-tanggal_upload', '-id'), 'tanggal_asc': ('tanggal_upload', 'id'),
+    'prestasi_asc': ('nama_prestasi', 'id'), 'prestasi_desc': ('-nama_prestasi', 'id'),
+    'tingkat_asc': ('tingkat_prestasi', 'id'), 'tingkat_desc': ('-tingkat_prestasi', 'id'),
+    'status_asc': ('status', '-tanggal_upload'), 'status_desc': ('-status', '-tanggal_upload'),
+}
+RIWAYAT_KOLOM = ['tanggal', 'prestasi', 'tingkat', 'status']
+RIWAYAT_PAGE_SIZE = 10
+STATUS_PILIHAN = [('pending', 'Pending'), ('diterima', 'Diterima'), ('perbaikan', 'Perbaikan'), ('ditolak', 'Ditolak')]
+KATEGORI_PILIHAN = [('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ('kejuaraan', 'Kejuaraan')]
+TINGKAT_PILIHAN = [('sekolah', 'Sekolah'), ('kabupaten/kota', 'Kabupaten/Kota'), ('provinsi', 'Provinsi'), ('nasional', 'Nasional'), ('internasional', 'Internasional')]
 
 
 @role_required('siswa')
 def prestasi_list(request):
+    """Halaman Riwayat: seluruh pengajuan prestasi siswa dengan filter, sorting, pagination."""
     siswa, redirect_response = _guard_siswa(request)
     if redirect_response:
         return redirect_response
 
+    g = request.GET
+    f = {k: g.get(k, '').strip() for k in ('q', 'status', 'kategori', 'tingkat', 'tahun')}
+    sort = g.get('sort', 'tanggal_desc')
+    if sort not in RIWAYAT_SORT:
+        sort = 'tanggal_desc'
+
+    dasar = Prestasi.objects.filter(siswa=siswa).select_related('tahun_ajaran')
+
+    # Kartu ringkasan: ikut filter selain status (sama seperti portal kesiswaan)
+    def terapkan(qs, abaikan_status=False):
+        if f['q']:
+            qs = qs.filter(Q(nama_prestasi__icontains=f['q']) | Q(penyelenggara__icontains=f['q']))
+        if f['status'] in dict(STATUS_PILIHAN) and not abaikan_status:
+            qs = qs.filter(status=f['status'])
+        if f['kategori'] in dict(KATEGORI_PILIHAN):
+            qs = qs.filter(kategori_prestasi=f['kategori'])
+        if f['tingkat'] in dict(TINGKAT_PILIHAN):
+            qs = qs.filter(tingkat_prestasi=f['tingkat'])
+        if f['tahun'].isdigit():
+            qs = qs.filter(tahun_ajaran_id=int(f['tahun']))
+        return qs
+
+    hitung = {r['status']: r['n'] for r in terapkan(dasar, True).values('status').annotate(n=Count('id'))}
+    statistik = {s: hitung.get(s, 0) for s, _ in STATUS_PILIHAN}
+    statistik['total'] = sum(statistik.values())
+
+    page_obj = Paginator(terapkan(dasar).order_by(*RIWAYAT_SORT[sort]), RIWAYAT_PAGE_SIZE).get_page(g.get('page'))
+    page_range = list(page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1))
+
+    qd = g.copy(); qd.pop('page', None)
+    qs_tanpa_page = qd.urlencode()
+    qd.pop('sort', None)
+    qs_tanpa_sort = qd.urlencode()
+    qd.pop('status', None)
+    # diakhiri '&' supaya template tinggal menambah status=...
+    qs_tanpa_status = (qd.urlencode() + '&') if qd else ''
+
+    tahun_list = list(Tahun_ajaran.objects.order_by('-id').values_list('id', 'tahun_ajaran'))
+    label = {
+        'q': lambda v: f'Cari: "{v}"',
+        'status': lambda v: f'Status: {dict(STATUS_PILIHAN).get(v, v)}',
+        'kategori': lambda v: f'Kategori: {dict(KATEGORI_PILIHAN).get(v, v)}',
+        'tingkat': lambda v: f'Tingkat: {dict(TINGKAT_PILIHAN).get(v, v)}',
+        'tahun': lambda v: f'Tahun ajaran: {dict((str(i), t) for i, t in tahun_list).get(v, v)}',
+    }
+    chips = []
+    for k in ('q', 'status', 'kategori', 'tingkat', 'tahun'):
+        if f[k]:
+            c = g.copy(); c.pop(k, None); c.pop('page', None)
+            chips.append({'label': label[k](f[k]), 'hapus_qs': c.urlencode()})
+
     context = {
-        'active_menu': 'prestasi',
+        'active_menu': 'riwayat',
         'siswa': siswa,
-        'prestasi_list': Prestasi.objects.filter(siswa=siswa).order_by('-id'),
+        'page_obj': page_obj,
+        'page_range': page_range,
+        'f': f,
+        'sort': sort,
+        'sort_toggle': {c: (f'{c}_desc' if sort == f'{c}_asc' else f'{c}_asc') for c in RIWAYAT_KOLOM},
+        'qs_tanpa_page': qs_tanpa_page,
+        'qs_tanpa_sort': qs_tanpa_sort,
+        'qs_tanpa_status': qs_tanpa_status,
+        'statistik': statistik,
+        'chips': chips,
+        'filter_count': sum(bool(f[k]) for k in ('kategori', 'tingkat', 'tahun')),
+        'status_pilihan': STATUS_PILIHAN,
+        'kategori_pilihan': KATEGORI_PILIHAN,
+        'tingkat_pilihan': TINGKAT_PILIHAN,
+        'tahun_list': tahun_list,
     }
     return render(request, 'eprestasi/siswa_portal/prestasi_list.html', context)
 
@@ -115,7 +198,7 @@ def prestasi_detail(request, prestasi_id):
     prestasi = get_object_or_404(Prestasi, id=prestasi_id, siswa=siswa)
 
     context = {
-        'active_menu': 'prestasi',
+        'active_menu': 'riwayat',
         'siswa': siswa,
         'prestasi': prestasi,
         'sertifikat_list': prestasi.sertifikat_set.all(),
@@ -227,6 +310,9 @@ def edit_prestasi_data(request, prestasi_id):
             prestasi.nama_prestasi = data['nama_prestasi']
             prestasi.kategori_prestasi = data['kategori_prestasi']
             prestasi.tingkat_prestasi = data['tingkat_prestasi']
+            prestasi.wilayah_prestasi = data['wilayah_prestasi']
+            if prestasi.dokumen_puspresnas:
+                prestasi.jenis_wilayah_puspresnas = data['wilayah_prestasi']
             prestasi.penyelenggara = data['penyelenggara']
             prestasi.tanggal_prestasi = data['tanggal_prestasi']
             prestasi.deskripsi = data['deskripsi']
@@ -244,13 +330,14 @@ def edit_prestasi_data(request, prestasi_id):
             'nama_prestasi': prestasi.nama_prestasi,
             'kategori_prestasi': prestasi.kategori_prestasi,
             'tingkat_prestasi': prestasi.tingkat_prestasi,
+            'wilayah_prestasi': prestasi.wilayah_prestasi,
             'penyelenggara': prestasi.penyelenggara,
             'tanggal_prestasi': prestasi.tanggal_prestasi,
             'deskripsi': prestasi.deskripsi,
         })
 
     context = {
-        'active_menu': 'prestasi',
+        'active_menu': 'riwayat',
         'siswa': siswa,
         'prestasi': prestasi,
         'form': form,

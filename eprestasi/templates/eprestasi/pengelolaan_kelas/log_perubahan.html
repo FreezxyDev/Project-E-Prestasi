@@ -1,0 +1,69 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Log Perubahan Kelas{% endblock %}
+
+{% block content %}
+
+<div class="topbar d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h4 class="mb-0">Riwayat Perubahan Kelas (Log Audit)</h4>
+    <a href="{% url 'pengelolaan_kelas' %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-left"></i> Kembali ke Pengelolaan Kelas
+    </a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">Tahun Ajaran</label>
+            <select name="tahun_ajaran" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Semua Tahun Ajaran</option>
+                {% for ta in daftar_tahun_ajaran %}
+                    <option value="{{ ta.id }}" {% if tahun_ajaran_id == ta.id|stringformat:"s" %}selected{% endif %}>{{ ta.tahun_ajaran }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-4">
+            <label class="form-label small text-muted mb-1">Cari NIS / Nama Siswa</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari NIS atau Nama...">
+        </div>
+        <div class="col-6 col-md-2">
+            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i> Cari</button>
+        </div>
+    </form>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>Siswa</th>
+                    <th>Kelas Sebelumnya</th>
+                    <th>Kelas Baru</th>
+                    <th>Tahun Ajaran</th>
+                    <th>Jenis Perubahan</th>
+                    <th>Diubah Oleh</th>
+                    <th>Alasan</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in daftar_log %}
+                <tr>
+                    <td>{{ log.waktu_perubahan|date:"d M Y H:i" }}</td>
+                    <td><a href="{% url 'riwayat_kelas_siswa' log.siswa.id %}">{{ log.siswa.nama|default:log.siswa.nis }}</a></td>
+                    <td>{{ log.kelas_sebelumnya.nama_kelas|default:"-" }}</td>
+                    <td>{{ log.kelas_baru.nama_kelas|default:"-" }}</td>
+                    <td>{{ log.tahun_ajaran.tahun_ajaran }}</td>
+                    <td>{{ log.get_jenis_perubahan_display }}</td>
+                    <td>{{ log.diubah_oleh.username|default:"-" }}</td>
+                    <td>{{ log.alasan_perubahan|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Belum ada catatan perubahan kelas.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

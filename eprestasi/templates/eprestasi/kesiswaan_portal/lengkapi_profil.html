@@ -1,73 +1,231 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
-{% block title %}Lengkapi Profil{% endblock %}
+{% block title %}{% if wajib_diisi %}Lengkapi Profil{% else %}Profil Saya{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .is-readonly { background-color: var(--bg-card-2) !important; cursor: not-allowed !important; color: var(--text-muted) !important; }
+    .readonly-badge { display: inline-block; padding: .1rem .5rem; margin-left: .4rem; font-size: .66rem; font-weight: 600; background: var(--info-dim); color: var(--info); border-radius: 9999px; }
+    .field-error { color: var(--danger); font-size: .74rem; margin-top: .25rem; }
+
+    .profil-avatar {
+        width: 84px; height: 84px; border-radius: 50%; margin: 0 auto .9rem;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--bg-card-2); border: 1px solid var(--border-soft);
+        font-size: 1.7rem; font-weight: 800; color: var(--text);
+    }
+    .role-badge { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
+    .profil-info { margin: 0; }
+    .profil-info .row-item { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--border-soft); font-size: .82rem; }
+    .profil-info dt { color: var(--text-muted); font-weight: 600; }
+    .profil-info dd { margin: 0; color: var(--text); text-align: right; }
+    .pw-field { position: relative; }
+    .pw-field .form-control { padding-right: 2.6rem; }
+    .pw-field .js-toggle-pw {
+        position: absolute; right: .4rem; top: 50%; transform: translateY(-50%);
+        border: 0; background: transparent; color: var(--text-muted); padding: .25rem .5rem; line-height: 1;
+    }
+    .pw-field .js-toggle-pw:hover { color: var(--text); }
+    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .78rem; color: var(--text-muted);
+                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
+    .info-note i { margin-top: .1rem; }
+    .pw-tips { font-size: .78rem; color: var(--text-muted); margin: 0; padding-left: 1.1rem; }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<style>
-    .is-readonly {
-        background-color: #f8f9fa !important;
-        cursor: not-allowed !important;
-    }
-    .readonly-badge {
-        display: inline-block;
-        padding: 2px 6px;
-        margin-left: 4px;
-        font-size: 0.75rem;
-        background-color: #e7f3ff;
-        color: #0c63e4;
-        border-radius: 3px;
-    }
-</style>
-
 {% if wajib_diisi %}
-    <div class="alert alert-warning d-flex gap-2">
-        <i class="bi bi-exclamation-triangle fs-5"></i>
-        <div>
-            <strong>Lengkapi profil kamu dulu.</strong>
-            <div class="small">Sebelum bisa masuk ke sistem verifikasi, isi nama dan jabatan kamu terlebih dahulu.</div>
-        </div>
+{# ================= MODE 1: PROFIL BELUM LENGKAP ================= #}
+<div class="alert alert-warning d-flex gap-2">
+    <i class="bi bi-exclamation-triangle fs-5"></i>
+    <div>
+        <strong>Lengkapi profil kamu dulu.</strong>
+        <div class="small">Sebelum bisa masuk ke sistem verifikasi, isi nama lengkap, jabatan, dan nomor telepon kamu terlebih dahulu.</div>
     </div>
-{% endif %}
+</div>
 
 <div class="card p-4" style="max-width: 480px; margin: 0 auto;">
-    <h5 class="fw-bold mb-1">{% if wajib_diisi %}Lengkapi Profil{% else %}Edit Profil{% endif %}</h5>
-    <p class="text-muted small mb-4">NIP: <strong>{{ kesiswaan.nip }}</strong></p>
+    <h5 class="fw-bold mb-1">Lengkapi Profil</h5>
+    <p class="text-muted small mb-4">Isi data diri kamu sebagai pengelola kesiswaan.</p>
 
-    {% if not wajib_diisi %}
-        <div class="alert alert-info small d-flex gap-2 mb-4">
-            <i class="bi bi-info-circle"></i>
-            <div>Nama tidak dapat diubah. Hubungi admin jika ada kesalahan data.</div>
-        </div>
-    {% endif %}
-
-    <form method="POST">
+    <form method="POST" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
 
         <div class="mb-3">
-            <label class="form-label">
-                Nama Lengkap
-                {% if not wajib_diisi %}
-                    <span class="readonly-badge">Data Sekolah</span>
-                {% endif %}
-            </label>
-            {{ form.nama }}
-            {{ form.nama.errors }}
+            <label class="form-label">NIP <span class="readonly-badge">Diisi Admin</span></label>
+            <input type="text" class="form-control is-readonly" value="{{ kesiswaan.nip }}" readonly disabled>
         </div>
 
+        {% for field in form %}
         <div class="mb-3">
-            <label class="form-label">Jabatan</label>
-            {{ form.jabatan }}
-            {{ form.jabatan.errors }}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
         </div>
+        {% endfor %}
 
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-primary">Simpan Profil</button>
-            {% if not wajib_diisi %}
-                <a href="{% url 'kesiswaan_dashboard' %}" class="btn btn-outline-secondary">Batal</a>
-            {% endif %}
-        </div>
+        <button type="submit" class="btn btn-primary mt-2">Simpan Profil</button>
     </form>
 </div>
 
+{% else %}
+{# ================= MODE 2: HALAMAN PROFIL (gaya profil admin) ================= #}
+<div class="page-header">
+    <h1>Profil Saya</h1>
+    <p>Informasi akun Anda dan pengaturan keamanan.</p>
+</div>
+
+<div class="row g-3">
+
+    <!-- INFO AKUN -->
+    <div class="col-lg-4">
+        <div class="card p-3 h-100">
+            <div class="text-center">
+                <div class="profil-avatar">{{ kesiswaan.nama|slice:":2"|upper }}</div>
+                <div class="fw-bold fs-5">{{ kesiswaan.nama }}</div>
+                <div class="mt-1 mb-3">
+                    <span class="badge role-badge">{{ kesiswaan.jabatan }}</span>
+                </div>
+            </div>
+
+            <dl class="profil-info">
+                <div class="row-item"><dt>NIP</dt><dd><code>{{ kesiswaan.nip }}</code></dd></div>
+                <div class="row-item"><dt>Jabatan</dt><dd>{{ kesiswaan.jabatan }}</dd></div>
+                <div class="row-item"><dt>Nomor Telepon</dt><dd>{{ kesiswaan.no_hp }}</dd></div>
+                <div class="row-item"><dt>Status</dt><dd>{{ kesiswaan.status|capfirst }}</dd></div>
+                <div class="row-item"><dt>Akun dibuat</dt><dd>{{ kesiswaan.user.created_at|date:"d M Y" }}</dd></div>
+                <div class="row-item"><dt>Terakhir diperbarui</dt><dd>{{ kesiswaan.user.updated_at|date:"d M Y, H:i" }}</dd></div>
+            </dl>
+
+            <div class="small text-muted mt-2">
+                <i class="bi bi-info-circle"></i> NIP tidak dapat diubah dari halaman ini.
+            </div>
+
+            <div class="info-note mt-3">
+                <i class="bi bi-shield-check"></i>
+                <div>Jika NIP salah atau kamu lupa password lama, hubungi admin untuk mengatur ulang akun.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+
+        <!-- DATA PROFIL -->
+        <div class="card p-3 mb-3">
+            <div class="panel-title"><i class="bi bi-person-lines-fill"></i> Data Profil</div>
+            <div class="panel-sub">Perbarui nama, jabatan, dan nomor telepon.</div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="profil">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1">NIP <span class="readonly-badge">Diisi Admin</span></label>
+                        <input type="text" class="form-control is-readonly" value="{{ kesiswaan.nip }}" readonly disabled>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1" for="{{ form.nama.id_for_label }}">{{ form.nama.label }}</label>
+                        {{ form.nama }}
+                        {% for e in form.nama.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.jabatan.id_for_label }}">{{ form.jabatan.label }}</label>
+                        {{ form.jabatan }}
+                        {% for e in form.jabatan.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form.no_hp.id_for_label }}">{{ form.no_hp.label }}</label>
+                        {{ form.no_hp }}
+                        {% for e in form.no_hp.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg"></i> Simpan Profil
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- GANTI PASSWORD -->
+        <div class="card p-3">
+            <div class="panel-title"><i class="bi bi-shield-lock"></i> Ganti Password</div>
+            <div class="panel-sub">Gunakan password yang kuat dan tidak dipakai di layanan lain.</div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="password">
+
+                {% if form_password.non_field_errors %}
+                    <div class="alert alert-danger small">{{ form_password.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.password_lama.id_for_label }}">{{ form_password.password_lama.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.password_lama }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.password_lama.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.password_lama.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.password_baru.id_for_label }}">{{ form_password.password_baru.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.password_baru }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.password_baru.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.password_baru.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted mb-1" for="{{ form_password.konfirmasi.id_for_label }}">{{ form_password.konfirmasi.label }}</label>
+                        <div class="pw-field">
+                            {{ form_password.konfirmasi }}
+                            <button type="button" class="js-toggle-pw" data-target="{{ form_password.konfirmasi.id_for_label }}" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        {% for e in form_password.konfirmasi.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <ul class="pw-tips mt-3">
+                    <li>Minimal 6 karakter.</li>
+                    <li>Tidak boleh sama dengan password saat ini.</li>
+                </ul>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg"></i> Simpan Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Tombol mata: tampil/sembunyikan isi kolom password.
+    document.querySelectorAll('.js-toggle-pw').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const input = document.getElementById(btn.dataset.target);
+            const icon = btn.querySelector('i');
+            const tampil = input.type === 'password';
+            input.type = tampil ? 'text' : 'password';
+            icon.className = tampil ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
 {% endblock %}

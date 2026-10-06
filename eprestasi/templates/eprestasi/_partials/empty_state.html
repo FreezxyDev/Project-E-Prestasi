@@ -1,0 +1,17 @@
+<div class="empty-state">
+    <div class="empty-icon"><i class="bi {{ empty_icon|default:'bi-inbox' }}"></i></div>
+    <h6>{{ empty_title|default:'Tidak ada data ditemukan' }}</h6>
+    <p>{{ empty_desc|default:'Belum ada data yang sesuai dengan filter atau pencarian.' }}</p>
+    <div class="d-flex justify-content-center gap-2">
+        {% if show_reset %}
+            <a href="{{ reset_url }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle"></i> Reset Filter
+            </a>
+        {% endif %}
+        {% if show_add %}
+            <a href="{{ add_url }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> {{ add_label|default:'Tambah Data' }}
+            </a>
+        {% endif %}
+    </div>
+</div>

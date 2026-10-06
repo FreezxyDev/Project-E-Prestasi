@@ -1,148 +1,197 @@
 {% extends 'eprestasi/siswa_portal/base.html' %}
 {% block title %}{{ prestasi.nama_prestasi }}{% endblock %}
+{% block extra_head %}{% include 'eprestasi/_partials/detail_prestasi_style.html' %}{% endblock %}
 
 {% block content %}
 
-<a href="{% url 'siswa_prestasi_list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+<a href="{% url 'siswa_prestasi_list' %}" class="dp-back">
     <i class="bi bi-arrow-left"></i> Kembali ke Prestasi Saya
 </a>
 
-<div class="card p-4 mb-3">
-    <div class="d-flex justify-content-between align-items-start mb-2">
-        <h4 class="fw-bold mb-0">{{ prestasi.nama_prestasi }}</h4>
+{# ================= HEADER ================= #}
+<div class="card dp-header">
+    <div class="dp-top">
+        <h4 class="dp-title">{{ prestasi.nama_prestasi }}</h4>
         {% if prestasi.status == 'diterima' %}
-            <span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill"></i> Diterima</span>
+            <span class="dp-pill diterima"><i class="bi bi-check-circle-fill"></i> Diterima</span>
         {% elif prestasi.status == 'perbaikan' %}
-            <span class="badge fs-6" style="background-color:#f97316;color:#fff;"><i class="bi bi-tools"></i> Perbaikan</span>
+            <span class="dp-pill perbaikan"><i class="bi bi-tools"></i> Perbaikan</span>
         {% elif prestasi.status == 'ditolak' %}
-            <span class="badge bg-danger fs-6"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
+            <span class="dp-pill ditolak"><i class="bi bi-x-circle-fill"></i> Ditolak</span>
         {% else %}
-            <span class="badge bg-warning text-dark fs-6">Pending</span>
+            <span class="dp-pill pending"><i class="bi bi-hourglass-split"></i> Pending</span>
         {% endif %}
     </div>
 
-    {% if prestasi.tampilkan_tag_puspresnas %}
-        <span class="badge mb-2" style="background-color:#00A868;color:#fff;width:fit-content;"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
-    {% endif %}
+    <div class="dp-tags">
+        <span class="dp-tag"><i class="bi bi-tag"></i> {{ prestasi.kategori_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.tingkat_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-geo-alt"></i> {{ prestasi.get_wilayah_prestasi_display }}</span>
+        {% if prestasi.tampilkan_tag_puspresnas %}
+            <span class="dp-tag puspresnas"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
+        {% endif %}
+    </div>
+
+    <div class="dp-meta">
+        <span><i class="bi bi-calendar-event"></i> {{ prestasi.tanggal_prestasi|date:"d M Y" }}</span>
+        <span><i class="bi bi-mortarboard"></i> TA {{ prestasi.tahun_ajaran.tahun_ajaran }}</span>
+        <span><i class="bi bi-cloud-arrow-up"></i> Diunggah {{ prestasi.tanggal_upload|date:"d M Y" }}</span>
+        {% if prestasi.tanggal_verifikasi %}
+            <span><i class="bi bi-patch-check"></i> Diverifikasi {{ prestasi.tanggal_verifikasi|date:"d M Y" }}</span>
+        {% endif %}
+    </div>
 
     {% if prestasi.status == 'perbaikan' %}
-        <div class="alert alert-warning d-flex gap-2 align-items-start mt-2 mb-0" style="background-color:#fff7ed;border-color:#fed7aa;color:#9a3412;">
-            <i class="bi bi-tools mt-1"></i>
+        <div class="dp-notice perbaikan">
+            <i class="bi bi-tools"></i>
             <div>
-                <div class="fw-bold small">
-                    Perlu perbaikan {% if prestasi.jenis_perbaikan == 'file' %}file sertifikat{% else %}data{% endif %}
-                </div>
-                <div class="small">{{ prestasi.catatan_perbaikan|linebreaksbr }}</div>
+                <div class="ttl">Perlu perbaikan {% if prestasi.jenis_perbaikan == 'file' %}file sertifikat{% else %}data{% endif %}</div>
+                <div class="txt">{{ prestasi.catatan_perbaikan|linebreaksbr }}</div>
+            </div>
+        </div>
+    {% elif prestasi.status == 'ditolak' %}
+        <div class="dp-notice ditolak">
+            <i class="bi bi-x-octagon"></i>
+            <div>
+                <div class="ttl">Alasan ditolak</div>
+                <div class="txt">{{ prestasi.alasan_penolakan|linebreaksbr }}</div>
             </div>
         </div>
     {% endif %}
-
-    <table class="table table-sm table-borderless mb-0 small mt-3">
-        <tr><td class="text-muted" style="width:180px;">Kategori</td><td>{{ prestasi.kategori_prestasi }}</td></tr>
-        <tr><td class="text-muted">Tingkat</td><td>{{ prestasi.tingkat_prestasi }}</td></tr>
-        <tr><td class="text-muted">Penyelenggara</td><td>{{ prestasi.penyelenggara }}</td></tr>
-        <tr><td class="text-muted">Tanggal</td><td>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</td></tr>
-        <tr><td class="text-muted">Tahun Ajaran</td><td>{{ prestasi.tahun_ajaran.tahun_ajaran }}</td></tr>
-        <tr><td class="text-muted align-top">Deskripsi</td><td>{{ prestasi.deskripsi|linebreaksbr }}</td></tr>
-        {% if prestasi.status == 'ditolak' %}
-            <tr><td class="text-muted align-top">Alasan Ditolak</td><td class="text-danger">{{ prestasi.alasan_penolakan|linebreaksbr }}</td></tr>
-        {% endif %}
-    </table>
-
-    {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
-        <hr>
-        <h6 class="fw-bold small mb-2"><i class="bi bi-award"></i> Puspresnas</h6>
-        <table class="table table-sm table-borderless mb-0 small">
-            {% if prestasi.kode_puspresnas %}
-                <tr><td class="text-muted" style="width:180px;">Kode Puspresnas</td><td>{{ prestasi.kode_puspresnas }}</td></tr>
-            {% endif %}
-            {% if prestasi.dokumen_puspresnas %}
-                <tr><td class="text-muted" style="width:180px;">Wilayah</td><td>{{ prestasi.get_jenis_wilayah_puspresnas_display }}</td></tr>
-                <tr><td class="text-muted">Jenis Penyelenggara</td><td>{{ prestasi.get_jenis_penyelenggara_puspresnas_display }}</td></tr>
-                <tr><td class="text-muted">Dokumen</td><td><a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank">Lihat Dokumen</a></td></tr>
-            {% endif %}
-        </table>
-    {% endif %}
-
-    {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'data' %}
-        <a href="{% url 'siswa_edit_prestasi_data' prestasi.id %}" class="btn btn-sm mt-3" style="background-color:#f97316;color:#fff;">
-            <i class="bi bi-pencil-square"></i> Perbaiki Data Sekarang
-        </a>
-    {% endif %}
-
-    {% if prestasi.status == 'pending' %}
-        <form method="POST" action="{% url 'siswa_hapus_prestasi' prestasi.id %}" class="mt-3"
-              onsubmit="return confirm('Hapus prestasi ini beserta seluruh bukti yang sudah diunggah?')">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i> Hapus Prestasi
-            </button>
-        </form>
-    {% endif %}
 </div>
 
-<div class="card p-4 mb-3">
-    <h6 class="fw-bold mb-3"><i class="bi bi-paperclip"></i> Sertifikat ({{ sertifikat_list|length }})</h6>
+<div class="row g-3">
+    {# ================= KOLOM UTAMA ================= #}
+    <div class="col-lg-8">
 
-    {% for s in sertifikat_list %}
-        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-            <div>
-                <a href="{{ s.file.url }}" target="_blank">Sertifikat #{{ s.pk }}</a>
-                <div class="text-muted small">{{ s.deskripsi }}</div>
-            </div>
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-info-circle"></i> Informasi Prestasi</h6>
+            <dl class="dp-info">
+                <div><dt>Kategori</dt><dd>{{ prestasi.kategori_prestasi|capfirst }}</dd></div>
+                <div><dt>Tingkat</dt><dd>{{ prestasi.tingkat_prestasi|capfirst }}</dd></div>
+                <div><dt>Wilayah</dt><dd>{{ prestasi.get_wilayah_prestasi_display }}</dd></div>
+                <div><dt>Tanggal Prestasi</dt><dd>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</dd></div>
+                <div class="full"><dt>Penyelenggara</dt><dd>{{ prestasi.penyelenggara }}</dd></div>
+            </dl>
+            <hr class="dp-divider">
+            <div class="dp-label">Deskripsi</div>
+            <p class="dp-desc">{{ prestasi.deskripsi|linebreaksbr }}</p>
         </div>
-    {% empty %}
-        <p class="text-muted small mb-0">
-            {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
-                File sertifikat lama sudah dihapus. Unggah file baru di bawah ini.
-            {% else %}
-                Belum ada file sertifikat.
-            {% endif %}
-        </p>
-    {% endfor %}
 
-    {% if prestasi.status == 'pending' or prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
-        <form method="POST" action="{% url 'siswa_tambah_sertifikat' prestasi.id %}" enctype="multipart/form-data" class="mt-3 border-top pt-3">
-            {% csrf_token %}
-            <label class="form-label small">
-                {% if prestasi.status == 'perbaikan' %}Unggah sertifikat pengganti{% else %}Tambah bukti sertifikat lain{% endif %}
-            </label>
-            {{ sertifikat_form.file }}
-            <input type="text" name="deskripsi" class="form-control form-control-sm mt-2" placeholder="Keterangan (opsional)">
-            <button type="submit" class="btn btn-sm mt-2 {% if prestasi.status == 'perbaikan' %}btn-warning{% else %}btn-outline-primary{% endif %}">
-                <i class="bi bi-plus-lg"></i> {% if prestasi.status == 'perbaikan' %}Kirim Ulang{% else %}Tambah{% endif %}
-            </button>
-        </form>
-    {% endif %}
-</div>
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-paperclip"></i> Sertifikat <span class="count">{{ sertifikat_list|length }}</span></h6>
 
-<div class="card p-4">
-    <h6 class="fw-bold mb-3"><i class="bi bi-images"></i> Dokumentasi ({{ dokumentasi_list|length }})</h6>
-
-    <div class="row g-2 mb-3">
-        {% for d in dokumentasi_list %}
-            <div class="col-4">
-                <a href="{{ d.foto.url }}" target="_blank">
-                    <img src="{{ d.foto.url }}" class="img-fluid rounded" alt="{{ d.caption }}">
+            {% for s in sertifikat_list %}
+                <a href="{{ s.file.url }}" target="_blank" class="dp-file">
+                    <span class="ico"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="info">
+                        <div class="nm">Sertifikat #{{ s.pk }}</div>
+                        <div class="ds">{{ s.deskripsi }}</div>
+                    </span>
+                    <i class="bi bi-box-arrow-up-right go"></i>
                 </a>
-                {% if d.caption %}<div class="text-muted small mt-1">{{ d.caption }}</div>{% endif %}
-            </div>
-        {% empty %}
-            <p class="text-muted small mb-0 ps-2">Belum ada foto dokumentasi.</p>
-        {% endfor %}
+            {% empty %}
+                <div class="dp-empty">
+                    <i class="bi bi-info-circle"></i>
+                    {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
+                        File sertifikat lama sudah dihapus. Unggah file baru di bawah ini.
+                    {% else %}
+                        Belum ada file sertifikat.
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            {% if prestasi.status == 'pending' or prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
+                <form method="POST" action="{% url 'siswa_tambah_sertifikat' prestasi.id %}" enctype="multipart/form-data" class="dp-addbox">
+                    {% csrf_token %}
+                    <label class="lbl">
+                        {% if prestasi.status == 'perbaikan' %}Unggah sertifikat pengganti{% else %}Tambah bukti sertifikat lain{% endif %}
+                    </label>
+                    {{ sertifikat_form.file }}
+                    <input type="text" name="deskripsi" class="form-control form-control-sm mt-2" placeholder="Keterangan (opsional)">
+                    <button type="submit" class="btn btn-sm mt-2 {% if prestasi.status == 'perbaikan' %}btn-warning{% else %}btn-primary{% endif %}">
+                        <i class="bi bi-plus-lg"></i> {% if prestasi.status == 'perbaikan' %}Kirim Ulang{% else %}Tambah{% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-images"></i> Dokumentasi <span class="count">{{ dokumentasi_list|length }}</span></h6>
+
+            {% if dokumentasi_list %}
+                <div class="dp-gallery">
+                    {% for d in dokumentasi_list %}
+                        <a href="{{ d.foto.url }}" target="_blank" class="dp-photo">
+                            <img src="{{ d.foto.url }}" alt="{{ d.caption|default:'Dokumentasi' }}">
+                            {% if d.caption %}<div class="cap">{{ d.caption }}</div>{% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="dp-empty"><i class="bi bi-info-circle"></i> Belum ada foto dokumentasi.</div>
+            {% endif %}
+
+            {% if prestasi.status == 'pending' %}
+                <form method="POST" action="{% url 'siswa_tambah_dokumentasi' prestasi.id %}" enctype="multipart/form-data" class="dp-addbox">
+                    {% csrf_token %}
+                    <label class="lbl">Tambah foto dokumentasi</label>
+                    {{ dokumentasi_form.foto }}
+                    <input type="text" name="caption" class="form-control form-control-sm mt-2" placeholder="Caption (opsional)">
+                    <button type="submit" class="btn btn-sm btn-primary mt-2">
+                        <i class="bi bi-plus-lg"></i> Tambah
+                    </button>
+                </form>
+            {% endif %}
+        </div>
     </div>
 
-    {% if prestasi.status == 'pending' %}
-        <form method="POST" action="{% url 'siswa_tambah_dokumentasi' prestasi.id %}" enctype="multipart/form-data" class="border-top pt-3">
-            {% csrf_token %}
-            <label class="form-label small">Tambah foto dokumentasi</label>
-            {{ dokumentasi_form.foto }}
-            <input type="text" name="caption" class="form-control form-control-sm mt-2" placeholder="Caption (opsional)">
-            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">
-                <i class="bi bi-plus-lg"></i> Tambah
-            </button>
-        </form>
-    {% endif %}
+    {# ================= KOLOM SAMPING ================= #}
+    <div class="col-lg-4">
+
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-award"></i> Puspresnas</h6>
+            {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
+                <dl class="dp-info" style="grid-template-columns:1fr;">
+                    {% if prestasi.kode_puspresnas %}
+                        <div><dt>Kode Puspresnas</dt><dd>{{ prestasi.kode_puspresnas }}</dd></div>
+                    {% endif %}
+                    {% if prestasi.dokumen_puspresnas %}
+                        <div><dt>Jenis Penyelenggara</dt><dd>{{ prestasi.get_jenis_penyelenggara_puspresnas_display|default:"-" }}</dd></div>
+                    {% endif %}
+                </dl>
+                {% if prestasi.dokumen_puspresnas %}
+                    <a href="{{ prestasi.dokumen_puspresnas.url }}" target="_blank" class="dp-file mt-3">
+                        <span class="ico"><i class="bi bi-file-earmark-check"></i></span>
+                        <span class="info"><div class="nm">Dokumen Puspresnas</div><div class="ds">Klik untuk membuka</div></span>
+                        <i class="bi bi-box-arrow-up-right go"></i>
+                    </a>
+                {% endif %}
+            {% else %}
+                <div class="dp-empty"><i class="bi bi-dash-circle"></i> Tidak ada kode atau dokumen Puspresnas.</div>
+            {% endif %}
+        </div>
+
+        {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'data' or prestasi.status == 'pending' %}
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-lightning-charge"></i> Aksi</h6>
+            {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'data' %}
+                <a href="{% url 'siswa_edit_prestasi_data' prestasi.id %}" class="btn w-100 mb-2" style="background-color:#f97316;color:#fff;font-weight:600;">
+                    <i class="bi bi-pencil-square"></i> Perbaiki Data Sekarang
+                </a>
+            {% endif %}
+            {% if prestasi.status == 'pending' %}
+                <form method="POST" action="{% url 'siswa_hapus_prestasi' prestasi.id %}"
+                      onsubmit="return confirm('Hapus prestasi ini beserta seluruh bukti yang sudah diunggah?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-trash"></i> Hapus Prestasi
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

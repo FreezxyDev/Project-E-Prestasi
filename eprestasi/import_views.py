@@ -10,12 +10,12 @@ from django.shortcuts import render, redirect
 
 from .decorators import role_required
 from .forms import ImportSiswaForm
-from .models import Siswa, Users
+from .models import Siswa, Users, Kelas
+from .kelas_utils import tahun_ajaran_aktif, tempatkan_ke_kelas
 from .views import _generate_username  # reuse -- jangan duplikat logic-nya di sini
 
 # Dipakai buat mencocokkan isi kolom Kelas/Jurusan di Excel (bebas huruf besar/kecil,
-# spasi nyasar di ujung) terhadap pilihan resmi di model Siswa.
-_KELAS_VALID = {label.strip().lower(): value for value, label in Siswa.KELAS_CHOICES}
+# spasi nyasar di ujung). Kelas dicocokkan dengan Kelas tahun ajaran AKTIF, jurusan dengan pilihan di model Siswa.
 _JURUSAN_VALID = {label.strip().lower(): value for value, label in Siswa.JURUSAN_CHOICES}
 
 # Karakter yang gampang ketuker (0/O, 1/l/I) sengaja dibuang dari kandidat
@@ -49,7 +49,8 @@ def download_template_siswa(request):
     # otomatis saat import, bukan bikin baris gagal).
     ws_ref = wb.create_sheet('Pilihan Kelas & Jurusan')
     ws_ref.append(['Kelas', 'Jurusan'])
-    kelas_list = [label for _, label in Siswa.KELAS_CHOICES]
+    tahun = tahun_ajaran_aktif()
+    kelas_list = list(Kelas.objects.filter(tahun_ajaran=tahun).order_by('jurusan', 'tingkat', 'nama_kelas').values_list('nama_kelas', flat=True)) if tahun else []
     jurusan_list = [label for _, label in Siswa.JURUSAN_CHOICES]
     for i in range(max(len(kelas_list), len(jurusan_list))):
         ws_ref.append([
@@ -108,6 +109,13 @@ def _proses_import_siswa(file_excel):
     except Exception:
         return {'berhasil': [], 'gagal': [], 'error_file': 'File tidak bisa dibaca. Pastikan formatnya .xlsx yang valid (bukan .xls atau .csv).'}
 
+    # Kelas yang valid = kelas yang dibuat admin untuk tahun ajaran AKTIF.
+    tahun_aktif = tahun_ajaran_aktif()
+    kelas_aktif = (
+        {k.nama_kelas.strip().lower(): k for k in Kelas.objects.filter(tahun_ajaran=tahun_aktif)}
+        if tahun_aktif else {}
+    )
+
     nis_dipakai_di_file = set()  # jaga-jaga ada NIS kembar DALAM 1 file yang sama
 
     for baris_ke, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
@@ -131,7 +139,7 @@ def _proses_import_siswa(file_excel):
         kelas_mentah = row[3] if len(row) > 3 else None
         jurusan_mentah = row[4] if len(row) > 4 else None
 
-        kelas_value, kelas_cocok = _cocokkan_pilihan(kelas_mentah, _KELAS_VALID)
+        kelas_obj, kelas_cocok = _cocokkan_pilihan(kelas_mentah, kelas_aktif)
         jurusan_value, jurusan_cocok = _cocokkan_pilihan(jurusan_mentah, _JURUSAN_VALID)
 
         if nis in nis_dipakai_di_file:
@@ -142,6 +150,16 @@ def _proses_import_siswa(file_excel):
             gagal.append({'baris': baris_ke, 'nis': nis, 'alasan': 'NIS sudah terdaftar di sistem'})
             continue
 
+        # Jurusan kelas harus sama dengan jurusan siswa. Kalau jurusan di file kosong,
+        # ikut jurusan kelas; kalau bentrok, kelas dikosongkan (akun tetap dibuat).
+        kelas_bentrok = False
+        if kelas_obj:
+            if not jurusan_value:
+                jurusan_value = kelas_obj.jurusan
+            elif jurusan_value != kelas_obj.jurusan:
+                kelas_bentrok = True
+                kelas_obj = None
+
         nis_dipakai_di_file.add(nis)
         password = password_dari_file or _buat_password_acak()
         username = _generate_username(nis)
@@ -151,20 +169,23 @@ def _proses_import_siswa(file_excel):
             password=make_password(password),
             role='siswa',
         )
-        Siswa.objects.create(
+        siswa_baru = Siswa.objects.create(
             users=user_account,
             nis=nis,
             status='aktif',
             nama=nama_dari_file,
-            kelas=kelas_value,
             jurusan=jurusan_value,
         )
+        if kelas_obj:
+            tempatkan_ke_kelas(siswa_baru, kelas_obj, None, alasan='Import Excel')
 
         # Catatan kalau Kelas/Jurusan di file tidak cocok pilihan resmi --
         # akun TETAP dibuat, kolom itu cuma dikosongkan (siswa isi manual nanti).
         catatan = []
         if kelas_mentah and not kelas_cocok:
-            catatan.append(f"Kelas '{kelas_mentah}' tidak dikenali, dikosongkan")
+            catatan.append(f"Kelas '{kelas_mentah}' tidak ada di tahun ajaran aktif, dikosongkan")
+        if kelas_bentrok:
+            catatan.append(f"Kelas '{kelas_mentah}' tidak sesuai jurusan '{jurusan_mentah}', dikosongkan")
         if jurusan_mentah and not jurusan_cocok:
             catatan.append(f"Jurusan '{jurusan_mentah}' tidak dikenali, dikosongkan")
 
@@ -174,7 +195,7 @@ def _proses_import_siswa(file_excel):
             'username': username,
             'password': password,
             'nama': nama_dari_file,
-            'kelas': kelas_value,
+            'kelas': kelas_obj.nama_kelas if kelas_obj else None,
             'jurusan': jurusan_value,
             'catatan': '; '.join(catatan),
         })
