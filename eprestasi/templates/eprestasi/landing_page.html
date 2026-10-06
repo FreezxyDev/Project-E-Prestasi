@@ -457,32 +457,56 @@ document.querySelectorAll('[data-count]').forEach(el=>{
   obs.observe(el);
 });
 
-// student search
-const siswaData=[
-  {nis:'12345678',nama:'Ahmad Rizky',kelas:'XII RPL 2',jurusan:'Rekayasa Perangkat Lunak',prestasi:8},
-  {nis:'12345679',nama:'Siti Nurhaliza',kelas:'XI DKV 1',jurusan:'Desain Komunikasi Visual',prestasi:5},
-  {nis:'12345680',nama:'Budi Santoso',kelas:'XII TJKT 1',jurusan:'Teknik Jaringan Komputer & Telekomunikasi',prestasi:12},
-  {nis:'12345681',nama:'Dewi Lestari',kelas:'X PM 2',jurusan:'Pemasaran',prestasi:3},
-];
+// student search -- data asli dari akun siswa (API: cari_siswa_api)
 const resultsEl=document.getElementById('results');
-function initials(n){return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+const searchInput=document.getElementById('search-input');
+const SEARCH_URL="{% url 'cari_siswa_api' %}";
+let searchTimer=null, searchSeq=0;
+
+function initials(n){return n.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase()||'?';}
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+function showMessage(text){resultsEl.innerHTML='';resultsEl.appendChild(el('div','empty',text));}
+
 function renderResults(list){
   resultsEl.innerHTML='';
-  if(!list.length){resultsEl.innerHTML='<div class="empty">Siswa tidak ditemukan.</div>';return;}
+  if(!list.length){showMessage('Siswa tidak ditemukan.');return;}
   list.forEach(s=>{
-    const card=document.createElement('div');
-    card.className='s-card';
-    card.innerHTML=`<div class="avatar">${initials(s.nama)}</div><h4>${s.nama}</h4><div class="meta">NIS: ${s.nis}</div><div class="meta">${s.kelas}</div><div class="meta">${s.jurusan}</div><div class="count">${s.prestasi} Prestasi</div><a class="go" href="#">Lihat Portofolio →</a>`;
+    // textContent (bukan innerHTML) supaya nama dari database tidak bisa menyisipkan HTML.
+    const card=el('div','s-card');
+    card.appendChild(el('div','avatar',initials(s.nama)));
+    card.appendChild(el('h4','',s.nama));
+    card.appendChild(el('div','meta','NIS: '+s.nis));
+    card.appendChild(el('div','meta',s.kelas+(s.alumni?' (Alumni)':'')));
+    card.appendChild(el('div','meta',s.jurusan));
+    card.appendChild(el('div','count',s.prestasi+' Prestasi'));
+    const go=el('a','go','Lihat Portofolio →');
+    go.href=s.url;
+    card.appendChild(go);
     resultsEl.appendChild(card);
   });
 }
-function doSearch(){
-  const q=document.getElementById('search-input').value.trim().toLowerCase();
+
+async function doSearch(){
+  const q=searchInput.value.trim();
   if(!q){resultsEl.innerHTML='';return;}
-  renderResults(siswaData.filter(s=>s.nis.includes(q)||s.nama.toLowerCase().includes(q)));
+  if(q.length<3){showMessage('Ketik minimal 3 karakter untuk mencari.');return;}
+  const seq=++searchSeq;           // abaikan respons lama kalau ada pencarian yang lebih baru
+  showMessage('Mencari...');
+  try{
+    const res=await fetch(SEARCH_URL+'?q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error(res.status);
+    const data=await res.json();
+    if(seq!==searchSeq) return;
+    renderResults(data.results);
+  }catch(err){
+    if(seq!==searchSeq) return;
+    showMessage('Pencarian sedang bermasalah. Coba lagi sebentar lagi.');
+  }
 }
 document.getElementById('search-btn').onclick=doSearch;
-document.getElementById('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+// Cari otomatis sambil mengetik (jeda 350 ms)
+searchInput.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,350);});
 </script>
 </body>
 </html>

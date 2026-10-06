@@ -1,8 +1,10 @@
 from django import forms
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
 import json
@@ -17,6 +19,43 @@ from .kelas_utils import tempatkan_ke_kelas, kelas_siswa_aktif
 def landing_page(request):
     """Halaman landing page (awal) aplikasi e-prestasi."""
     return render(request, 'eprestasi/landing_page.html')
+
+
+def cari_siswa_api(request):
+    """
+    API PUBLIK untuk section "Cari Siswa" di landing page (tanpa login).
+    Mencari akun siswa sungguhan berdasarkan NIS atau nama, lalu mengembalikan
+    link ke halaman portofolio publik mereka.
+
+    Sengaja hanya mengembalikan data yang memang sudah tampil di portofolio
+    publik (NIS, nama, kelas, jurusan, jumlah prestasi terverifikasi) -- tidak ada
+    email/no HP/alamat. Query minimal 3 karakter dan hasil dibatasi, supaya
+    daftar siswa tidak bisa diambil sekaligus lewat pencarian satu huruf.
+    """
+    q = request.GET.get('q', '').strip()
+    if len(q) < 3:
+        return JsonResponse({'results': [], 'terlalu_pendek': True})
+
+    siswa_qs = (
+        Siswa.objects
+        .filter(status__in=['aktif', 'alumni'])
+        .filter(Q(nis__icontains=q) | Q(nama__icontains=q))
+        .annotate(total_prestasi=Count('prestasi', filter=Q(prestasi__status='diterima')))
+        .order_by('nama', 'nis')[:12]
+    )
+    results = [
+        {
+            'nis': s.nis,
+            'nama': s.nama or s.nis,
+            'kelas': s.kelas or '-',
+            'jurusan': s.jurusan or '-',
+            'alumni': s.status == 'alumni',
+            'prestasi': s.total_prestasi,
+            'url': reverse('portofolio_publik', args=[s.nis]),
+        }
+        for s in siswa_qs
+    ]
+    return JsonResponse({'results': results, 'terlalu_pendek': False})
 
 
 def _generate_username(identifier):

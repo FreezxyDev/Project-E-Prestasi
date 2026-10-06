@@ -13,6 +13,7 @@ from . import kelulusan_views
 urlpatterns = [
     # Autentikasi
     path('',views.landing_page, name='landing_page'),
+    path('api/cari-siswa/', views.cari_siswa_api, name='cari_siswa_api'),
     path('login/', auth_views.login_view, name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
 
