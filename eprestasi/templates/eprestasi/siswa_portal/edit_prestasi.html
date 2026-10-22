@@ -7,11 +7,11 @@
     <i class="bi bi-arrow-left"></i> Kembali
 </a>
 
-<div class="card p-4" style="max-width: 640px;">
-    <h4 class="fw-bold mb-1"><i class="bi bi-tools" style="color:#f97316;"></i> Perbaiki Data Prestasi</h4>
+<div class="card p-4 form-narrow-xl">
+    <h4 class="fw-bold mb-1"><i class="bi bi-tools icon-perbaikan"></i> Perbaiki Data Prestasi</h4>
     <p class="text-muted small mb-3">Perbaiki data sesuai catatan kesiswaan, lalu kirim ulang untuk diverifikasi.</p>
 
-    <div class="alert mb-4" style="background-color:#fff7ed;border-color:#fed7aa;color:#9a3412;">
+    <div class="alert alert-perbaikan mb-4">
         <div class="fw-bold small mb-1"><i class="bi bi-chat-left-text"></i> Catatan dari Kesiswaan</div>
         <div class="small">{{ prestasi.catatan_perbaikan|linebreaksbr }}</div>
     </div>
@@ -64,7 +64,7 @@
             {{ form.deskripsi.errors }}
         </div>
 
-        <button type="submit" class="btn" style="background-color:#f97316;color:#fff;">
+        <button type="submit" class="btn btn-perbaikan">
             <i class="bi bi-send"></i> Simpan &amp; Kirim Ulang untuk Verifikasi
         </button>
     </form>

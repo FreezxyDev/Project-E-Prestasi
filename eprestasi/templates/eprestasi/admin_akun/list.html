@@ -1,22 +1,7 @@
 {% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-admin-list{% endblock %}
 {% block title %}Kelola Admin{% endblock %}
 
-{% block extra_head %}
-<style>
-    .admin-avatar {
-        width: 34px; height: 34px; border-radius: 50%; flex: none;
-        display: inline-flex; align-items: center; justify-content: center;
-        background: var(--bg-card-2); border: 1px solid var(--border-soft);
-        color: var(--text); font-size: .72rem; font-weight: 700;
-    }
-    .admin-avatar.super { background: #f3e8ff; border-color: #e9d5ff; color: #7c3aed; }
-    .role-badge-super { background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff; font-weight: 600; }
-    .role-badge-admin { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
-    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .8rem; color: var(--text-muted);
-                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
-    .info-note i { color: var(--info, #1d4ed8); margin-top: .1rem; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -38,7 +23,7 @@
     <div class="table-toolbar">
         <div>
             <div class="panel-title mb-0">Daftar Akun Admin</div>
-            <div class="table-toolbar-meta" style="margin-left:0;">{{ admin_list|length }} akun terdaftar</div>
+            <div class="table-toolbar-meta ml-0">{{ admin_list|length }} akun terdaftar</div>
         </div>
         <a href="{% url 'tambah_admin' %}" class="btn btn-primary btn-sm ms-auto">
             <i class="bi bi-plus-lg"></i> Tambah Admin
@@ -49,7 +34,7 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th style="width:60px;">No</th>
+                    <th class="col-w-60">No</th>
                     <th>Akun</th>
                     <th>Role</th>
                     <th>Dibuat</th>

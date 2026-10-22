@@ -1,393 +1,190 @@
 <!doctype html>
 {% load static %}
-<html lang="id" class="h-full">
+<html lang="id">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - E-Prestasi SMKN 11 Bandung</title>
 
-    <!-- Google Fonts: Poppins & Bootstrap Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-        rel="stylesheet"
-    />
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Gambar latar dimuat dari Cloudinary: percepat koneksi -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
 
-    <!-- Tailwind CSS CDN — palet achromatic ala Mobbin -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-        theme: {
-            extend: {
-            fontFamily: {
-            sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-            },
-            colors: {
-            canvas: "#ffffff",
-            mist: "#f2f2f2",
-            fog: "#ededed",
-            graphite: "#707070",
-            ash: "#adadad",
-            ink: {
-                DEFAULT: "#141414",
-                card: "#ffffff",
-            },
-            },
-        },
-        },
-    };
-    </script>
+    <!-- Seluruh desain ada di css/design.css -->
+    <link rel="stylesheet" href="{% static 'css/design.css' %}" />
+</head>
+<body class="page-login">
+  <div class="login-layout">
 
-    <style>
-    .glass-slider {
-        background: rgba(20, 20, 20, 0.55);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-      }
-      .fitur-track {
-        transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
-      }
-    </style>
-  </head>
-  <body
-    class="h-full bg-canvas text-ink font-sans antialiased"
-  >
-    <div class="min-h-screen flex flex-col lg:flex-row">
-      <!-- ==================== PANEL KIRI (SPLIT VISUAL) ==================== -->
-      <div
-        class="relative lg:w-7/12 xl:w-2/3 hidden lg:flex flex-col justify-between p-12 overflow-hidden bg-[#12303f] text-white"
-      >
-        <!-- Background Image -->
-        <div class="absolute inset-0 z-0">
-          <img
-            src="https://res.cloudinary.com/yt2nmoa9/image/upload/v1791249015/smkn11-bandung_plql4k.png"
-            alt="Gedung SMKN 11 Bandung"
-            class="w-full h-full object-cover object-center scale-105"
-          />
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-[#08161e]/95 via-[#08161e]/75 to-[#08161e]/30"
-          ></div>
-        </div>
-
-        <!-- Top Branding -->
-        <div class="relative z-10 flex items-center justify-between">
-          <div>
-            <h1
-              class="text-3xl font-extrabold tracking-tight text-white drop-shadow-md"
-            >
-              E-Prestasi
-            </h1>
-            <span
-              class="text-xs font-semibold tracking-[3px] uppercase text-white opacity-90 drop-shadow"
-              >Show Your Pride</span
-            >
-          </div>
-          <span
-            class="px-3 py-1 text-xs font-semibold rounded-full bg-white/10 backdrop-blur border border-white/20 text-white"
-          >
-            SMKN 11 Bandung
-          </span>
-        </div>
-
-        <!-- Slider Fitur -->
-        <div class="relative z-10 max-w-xl space-y-6">
-          <p class="text-slate-200 text-sm leading-relaxed drop-shadow">
-            Simpan, kelola, dan tampilkan portofolio prestasimu secara digital.
-          </p>
-
-          <div class="glass-slider rounded-2xl p-6 shadow-2xl">
-            <div class="overflow-hidden">
-              <div class="fitur-track flex" id="fiturTrack">
-                <!-- Slide 1 -->
-                <div
-                  class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
-                >
-                  <div
-                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
-                  >
-                    <i class="bi bi-cloud-arrow-up"></i>
-                  </div>
-                  <div>
-                    <h4 class="font-bold text-white text-base">
-                      Upload Sertifikat Digital
-                    </h4>
-                    <p class="text-xs text-slate-200 mt-0.5 leading-relaxed">
-                      Siswa dapat mengunggah sertifikat dan dokumentasi prestasi
-                      kapan saja.
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Slide 2 -->
-                <div
-                  class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
-                >
-                  <div
-                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
-                  >
-                    <i class="bi bi-patch-check"></i>
-                  </div>
-                  <div>
-                    <h4 class="font-bold text-white text-base">
-                      Verifikasi oleh Kesiswaan
-                    </h4>
-                    <p class="text-xs text-slate-200 mt-0.5 leading-relaxed">
-                      Setiap prestasi yang diunggah akan diverifikasi oleh pihak
-                      kesiswaan sebelum diterima.
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Slide 3 -->
-                <div
-                  class="w-full shrink-0 flex items-center gap-4 min-h-[90px]"
-                >
-                  <div
-                    class="w-11 h-11 rounded-2xl bg-white/15 text-white flex items-center justify-center text-xl shrink-0"
-                  >
-                    <i class="bi bi-mortarboard"></i>
-                  </div>
-                  <div>
-                    <h4 class="font-bold text-white text-base">
-                      Naik Kelas Otomatis
-                    </h4>
-                    <p class="text-xs text-slate-200 mt-0.5 leading-relaxed">
-                      Tingkat siswa naik otomatis mengikuti tahun ajaran, hingga
-                      status alumni.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Indicator Dots -->
-            <div
-              class="flex items-center justify-center gap-2 pt-3 mt-3 border-t border-white/10"
-              id="fiturNav"
-            >
-              <button
-                type="button"
-                class="fitur-dot w-5 h-2 rounded-full bg-white transition-all duration-300"
-                data-index="0"
-                aria-label="Slide 1"
-              ></button>
-              <button
-                type="button"
-                class="fitur-dot w-2 h-2 rounded-full bg-white/30 transition-all duration-300 hover:bg-white/50"
-                data-index="1"
-                aria-label="Slide 2"
-              ></button>
-              <button
-                type="button"
-                class="fitur-dot w-2 h-2 rounded-full bg-white/30 transition-all duration-300 hover:bg-white/50"
-                data-index="2"
-                aria-label="Slide 3"
-              ></button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer Panel Kiri -->
-        <div class="relative z-10 text-xs text-slate-400">
-          &copy; SMKN 11 Bandung. All rights reserved.
-        </div>
+    <!-- ==================== PANEL KIRI (FOTO SEKOLAH) ==================== -->
+    <div class="login-hero">
+      <div class="login-hero-bg">
+        <img
+          src="https://res.cloudinary.com/yt2nmoa9/image/upload/f_auto,q_auto,w_1920/v1791249015/smkn11-bandung_plql4k.png"
+          alt="Gedung SMKN 11 Bandung"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <div class="login-hero-overlay"></div>
       </div>
 
-      <!-- ==================== PANEL KANAN (FORM LOGIN) ==================== -->
-      <div
-        class="w-full lg:w-5/12 xl:w-1/3 flex flex-col justify-between p-6 sm:p-12 bg-white transition-colors duration-300 relative"
-      >
-        <!-- Branding (mobile only) -->
-        <div class="flex justify-between items-center w-full">
-          <div class="lg:hidden">
-            <h1 class="text-2xl font-extrabold text-ink">
-              E-Prestasi
-            </h1>
-            <span
-              class="text-[10px] font-semibold tracking-wider uppercase text-ink"
-              >SMKN 11 Bandung</span
-            >
-          </div>
+      <div class="login-hero-top">
+        <div>
+          <h1>E-Prestasi</h1>
+          <span class="login-hero-sub">Show Your Pride</span>
         </div>
+        <span class="login-tag">SMKN 11 Bandung</span>
+      </div>
 
-        <!-- Card Login Container -->
-        <div class="w-full max-w-md mx-auto my-auto py-8">
-          <div
-            class="bg-white p-8 rounded-2xl border border-fog space-y-6 transition-all"
-          >
-            <!-- Heading -->
-            <div>
-              <h4
-                class="text-2xl font-extrabold text-ink tracking-tight"
-              >
-                Masuk
-              </h4>
-              <p class="text-xs text-slate-500 mt-1">
-                Masukkan username / NIS / NIP dan password kamu.
-              </p>
-            </div>
+      <div class="login-hero-bottom">
+        <p class="login-tagline">Simpan, kelola, dan tampilkan portofolio prestasimu secara digital.</p>
 
-            <!-- Django Messages Alert -->
-            {% if messages %}
-            <div class="space-y-2">
-              {% for message in messages %}
-              <div
-                class="p-3.5 rounded-2xl text-xs flex items-center gap-2.5 border {% if message.tags == 'error' %} bg-red-50 border-red-200 text-red-600 {% else %} bg-blue-50 border-blue-200 text-ink {% endif %}"
-              >
-                <i class="bi bi-exclamation-circle-fill text-base shrink-0"></i>
-                <span>{{ message }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% endif %}
-
-            <!-- Form Element -->
-            <form method="POST" class="space-y-4">
-              {% csrf_token %}
-
-              <!-- Input Username -->
-              <div class="space-y-1.5">
-                <label
-                  class="block text-xs font-semibold text-ink"
-                >
-                  Username / NIS / NIP
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Masukkan ID pengguna"
-                  required
-                  autofocus
-                  class="w-full px-4 py-2.5 bg-mist border border-transparent rounded-full text-sm text-ink placeholder-ash focus:outline-none focus:border-ink focus:bg-white focus:ring-1 focus:ring-ink transition-all"
-                />
-              </div>
-
-              <!-- Input Password -->
-              <div class="space-y-1.5">
-                <label
-                  class="block text-xs font-semibold text-ink"
-                >
-                  Password
-                </label>
-                <div class="relative">
-                  <input
-                    type="password"
-                    name="password"
-                    id="password-input"
-                    placeholder="Masukkan password"
-                    required
-                    class="w-full pl-4 pr-10 py-2.5 bg-mist border border-transparent rounded-full text-sm text-ink placeholder-ash focus:outline-none focus:border-ink focus:bg-white focus:ring-1 focus:ring-ink transition-all"
-                  />
-                  <button
-                    type="button"
-                    id="toggle-password"
-                    aria-label="Tampilkan password"
-                    tabindex="-1"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-graphite hover:text-ink:text-sky transition-colors"
-                  >
-                    <i class="bi bi-eye text-lg" id="toggle-password-icon"></i>
-                  </button>
+        <div class="glass-slider">
+          <div class="fitur-viewport">
+            <div class="fitur-track" id="fiturTrack">
+              <div class="fitur-slide">
+                <div class="fitur-ic"><i class="bi bi-cloud-arrow-up"></i></div>
+                <div>
+                  <h4>Upload Sertifikat Digital</h4>
+                  <p>Siswa dapat mengunggah sertifikat dan dokumentasi prestasi kapan saja.</p>
                 </div>
               </div>
+              <div class="fitur-slide">
+                <div class="fitur-ic"><i class="bi bi-patch-check"></i></div>
+                <div>
+                  <h4>Verifikasi oleh Kesiswaan</h4>
+                  <p>Setiap prestasi yang diunggah akan diverifikasi oleh pihak kesiswaan sebelum diterima.</p>
+                </div>
+              </div>
+              <div class="fitur-slide">
+                <div class="fitur-ic"><i class="bi bi-mortarboard"></i></div>
+                <div>
+                  <h4>Naik Kelas Otomatis</h4>
+                  <p>Tingkat siswa naik otomatis mengikuti tahun ajaran, hingga status alumni.</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-              <!-- Submit Button -->
-              <button
-                type="submit"
-                class="w-full py-3 px-4 bg-ink hover:bg-black text-white font-semibold rounded-full transition-all duration-200 active:scale-[0.99] text-sm mt-2"
-              >
-                Masuk
-              </button>
-
-              <!-- Kembali ke halaman awal -->
-              <a
-                href="{% url 'landing_page' %}"
-                class="w-full py-3 px-4 flex items-center justify-center gap-2 border border-fog hover:bg-mist text-ink font-semibold rounded-full transition-all duration-200 text-sm"
-              >
-                <i class="bi bi-arrow-left"></i>
-                Kembali ke Halaman Awal
-              </a>
-            </form>
+          <div class="fitur-nav" id="fiturNav">
+            <button type="button" class="fitur-dot active" data-index="0" aria-label="Slide 1"></button>
+            <button type="button" class="fitur-dot" data-index="1" aria-label="Slide 2"></button>
+            <button type="button" class="fitur-dot" data-index="2" aria-label="Slide 3"></button>
           </div>
         </div>
 
-        <!-- Footer Info Kanan -->
-        <div class="text-center text-xs text-slate-500">
-          Butuh bantuan? Kontak Tim Kesiswaan / Administrator.
-        </div>
+        <div class="login-copy">&copy; SMKN 11 Bandung. All rights reserved.</div>
       </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-      // 1. Toggle Visibility Password
-      document
-        .getElementById("toggle-password")
-        .addEventListener("click", () => {
-          const input = document.getElementById("password-input");
-          const icon = document.getElementById("toggle-password-icon");
-          const isPassword = input.type === "password";
+    <!-- ==================== PANEL KANAN (FORM LOGIN) ==================== -->
+    <div class="login-panel">
+      <div class="login-mobile-brand">
+        <h1>E-Prestasi</h1>
+        <span>SMKN 11 Bandung</span>
+      </div>
 
-          input.type = isPassword ? "text" : "password";
-          icon.classList.toggle("bi-eye", !isPassword);
-          icon.classList.toggle("bi-eye-slash", isPassword);
+      <div class="login-card-wrap">
+        <div class="login-card">
+          <div class="login-card-head">
+            <div class="login-logo"><i class="bi bi-trophy"></i></div>
+            <div>
+              <h4>Masuk</h4>
+              <p>Masukkan username / NIS / NIP dan password kamu.</p>
+            </div>
+          </div>
+
+          {% if messages %}
+          <div class="login-messages" role="alert">
+            {% for message in messages %}
+            <div class="login-alert {% if message.tags == 'error' %}is-error{% endif %}">
+              <i class="bi bi-exclamation-circle-fill"></i>
+              <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form method="POST" class="login-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="username-input">Username / NIS / NIP</label>
+              <input type="text" name="username" id="username-input" class="input-pill"
+                placeholder="Masukkan ID pengguna" autocomplete="username" required autofocus />
+            </div>
+
+            <div class="form-group">
+              <label for="password-input">Password</label>
+              <div class="password-wrap">
+                <input type="password" name="password" id="password-input" class="input-pill has-toggle"
+                  placeholder="Masukkan password" autocomplete="current-password" required />
+                <button type="button" id="toggle-password" class="password-toggle"
+                  aria-label="Tampilkan password" tabindex="-1">
+                  <i class="bi bi-eye" id="toggle-password-icon"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+
+            <a href="{% url 'landing_page' %}" class="btn btn-outline btn-block">
+              <i class="bi bi-arrow-left"></i>
+              Kembali ke Halaman Awal
+            </a>
+          </form>
+        </div>
+      </div>
+
+      <div class="login-help">Butuh bantuan? Kontak Tim Kesiswaan / Administrator.</div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Toggle visibilitas password
+    document.getElementById("toggle-password").addEventListener("click", () => {
+      const input = document.getElementById("password-input");
+      const icon = document.getElementById("toggle-password-icon");
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      icon.classList.toggle("bi-eye", !isPassword);
+      icon.classList.toggle("bi-eye-slash", isPassword);
+    });
+
+    // 2. Slider fitur panel kiri
+    (function () {
+      const track = document.getElementById("fiturTrack");
+      const dots = document.querySelectorAll("#fiturNav .fitur-dot");
+      const total = dots.length;
+      let current = 0, timer;
+
+      function goTo(index) {
+        current = (index + total) % total;
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dots.forEach((dot, idx) => dot.classList.toggle("active", idx === current));
+      }
+      function startAuto() { timer = setInterval(() => goTo(current + 1), 4000); }
+      function stopAuto() { clearInterval(timer); }
+
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          goTo(parseInt(dot.dataset.index, 10));
+          stopAuto();
+          startAuto();
         });
+      });
 
-      // 3. Slider Fitur Left Panel
-      (function () {
-        const track = document.getElementById("fiturTrack");
-        const dots = document.querySelectorAll("#fiturNav .fitur-dot");
-        const total = dots.length;
-        let current = 0,
-          timer;
-
-        function goTo(index) {
-          current = (index + total) % total;
-          track.style.transform = `translateX(-${current * 100}%)`;
-
-          dots.forEach((dot, idx) => {
-            if (idx === current) {
-              dot.className =
-                "fitur-dot w-5 h-2 rounded-full bg-white transition-all duration-300";
-            } else {
-              dot.className =
-                "fitur-dot w-2 h-2 rounded-full bg-white/30 transition-all duration-300 hover:bg-white/50";
-            }
-          });
-        }
-
-        function next() {
-          goTo(current + 1);
-        }
-        function startAuto() {
-          timer = setInterval(next, 4000);
-        }
-        function stopAuto() {
-          clearInterval(timer);
-        }
-
-        dots.forEach((dot) => {
-          dot.addEventListener("click", () => {
-            goTo(parseInt(dot.dataset.index, 10));
-            stopAuto();
-            startAuto();
-          });
-        });
-
-        const sliderContainer = document.querySelector(".glass-slider");
-        if (sliderContainer) {
-          sliderContainer.addEventListener("mouseenter", stopAuto);
-          sliderContainer.addEventListener("mouseleave", startAuto);
-        }
-
-        goTo(0);
-        startAuto();
-      })();
-    </script>
-  </body>
+      const slider = document.querySelector(".glass-slider");
+      if (slider) {
+        slider.addEventListener("mouseenter", stopAuto);
+        slider.addEventListener("mouseleave", startAuto);
+      }
+      goTo(0);
+      startAuto();
+    })();
+  </script>
+</body>
 </html>

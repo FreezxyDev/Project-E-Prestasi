@@ -7,8 +7,8 @@ from .models import (
 
 @admin.register(Users)
 class UsersAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'role', 'created_at')
-    list_filter = ('role',)
+    list_display = ('id', 'username', 'role', 'npsn', 'created_at')
+    list_filter = ('role', 'npsn')
     search_fields = ('username',)
 
 

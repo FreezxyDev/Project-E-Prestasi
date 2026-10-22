@@ -1,36 +1,7 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block body_class %}pg-kes-profil{% endblock %}
 {% block title %}{% if wajib_diisi %}Lengkapi Profil{% else %}Profil Saya{% endif %}{% endblock %}
 
-{% block extra_head %}
-<style>
-    .is-readonly { background-color: var(--bg-card-2) !important; cursor: not-allowed !important; color: var(--text-muted) !important; }
-    .readonly-badge { display: inline-block; padding: .1rem .5rem; margin-left: .4rem; font-size: .66rem; font-weight: 600; background: var(--info-dim); color: var(--info); border-radius: 9999px; }
-    .field-error { color: var(--danger); font-size: .74rem; margin-top: .25rem; }
-
-    .profil-avatar {
-        width: 84px; height: 84px; border-radius: 50%; margin: 0 auto .9rem;
-        display: flex; align-items: center; justify-content: center;
-        background: var(--bg-card-2); border: 1px solid var(--border-soft);
-        font-size: 1.7rem; font-weight: 800; color: var(--text);
-    }
-    .role-badge { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
-    .profil-info { margin: 0; }
-    .profil-info .row-item { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--border-soft); font-size: .82rem; }
-    .profil-info dt { color: var(--text-muted); font-weight: 600; }
-    .profil-info dd { margin: 0; color: var(--text); text-align: right; }
-    .pw-field { position: relative; }
-    .pw-field .form-control { padding-right: 2.6rem; }
-    .pw-field .js-toggle-pw {
-        position: absolute; right: .4rem; top: 50%; transform: translateY(-50%);
-        border: 0; background: transparent; color: var(--text-muted); padding: .25rem .5rem; line-height: 1;
-    }
-    .pw-field .js-toggle-pw:hover { color: var(--text); }
-    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .78rem; color: var(--text-muted);
-                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
-    .info-note i { margin-top: .1rem; }
-    .pw-tips { font-size: .78rem; color: var(--text-muted); margin: 0; padding-left: 1.1rem; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -44,7 +15,7 @@
     </div>
 </div>
 
-<div class="card p-4" style="max-width: 480px; margin: 0 auto;">
+<div class="card p-4 form-narrow-sm mx-auto">
     <h5 class="fw-bold mb-1">Lengkapi Profil</h5>
     <p class="text-muted small mb-4">Isi data diri kamu sebagai pengelola kesiswaan.</p>
 

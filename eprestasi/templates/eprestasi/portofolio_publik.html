@@ -1,5 +1,6 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,92 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-    :root {
-        --ink: #141414; --muted: #707070; --dim: #adadad;
-        --line: #ededed; --soft: #f5f5f5; --bg: #fafafa;
-        --success: #15803d; --success-dim: rgba(21,128,61,.1);
-        --puspresnas: #007a4d; --puspresnas-dim: rgba(0,168,104,.1);
-    }
-    * { box-sizing: border-box; }
-    body { background: var(--bg); color: var(--ink); font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: .9rem; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { max-width: 800px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-
-    /* ---------- Toolbar (tidak ikut tercetak) ---------- */
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: .75rem; flex-wrap: wrap; }
-    .toolbar .brand { font-weight: 700; letter-spacing: -.01em; display: flex; align-items: center; gap: .5rem; }
-    .toolbar .brand i { font-size: 1.1rem; }
-    .btn-dl { background: var(--ink); color: #fff; border: 0; border-radius: 9999px; padding: .5rem 1.1rem; font-weight: 600; font-size: .85rem; display: inline-flex; align-items: center; gap: .45rem; }
-    .btn-dl:hover { background: #000; color: #fff; }
-
-    /* ---------- Lembar portofolio ---------- */
-    .sheet { background: #fff; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
-
-    .profile { display: flex; align-items: center; gap: 1.25rem; padding: 1.75rem; border-bottom: 1px solid var(--line); }
-    .avatar { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 3px solid var(--soft); flex-shrink: 0; }
-    .avatar.ph { background: var(--soft); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; color: var(--muted); }
-    .profile .nm { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; margin: 0; }
-    .profile .sub { color: var(--muted); margin-top: .35rem; }
-    .profile .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; }
-    .chip { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 500; padding: .2rem .65rem; border-radius: 9999px; background: var(--soft); border: 1px solid var(--line); }
-
-    /* ---------- Ringkasan ---------- */
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
-    .stat { padding: 1.1rem 1rem; text-align: center; border-right: 1px solid var(--line); }
-    .stat:last-child { border-right: 0; }
-    .stat .n { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-    .stat .l { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: .25rem; font-weight: 600; }
-
-    /* ---------- Daftar prestasi ---------- */
-    .body { padding: 1.5rem 1.75rem 1.75rem; }
-    .sec-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 1.1rem; }
-    .year { display: flex; align-items: center; gap: .75rem; margin: 1.4rem 0 .9rem; break-after: avoid; page-break-after: avoid; }
-    .year:first-of-type { margin-top: 0; }
-    .year span { font-weight: 700; font-size: 1rem; }
-    .year::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-
-    .item { display: flex; gap: .9rem; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: 14px; margin-bottom: .7rem; break-inside: avoid; page-break-inside: avoid; }
-    .item .tick { width: 34px; height: 34px; border-radius: 50%; background: var(--success-dim); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.05rem; }
-    .item .main { flex: 1; min-width: 0; }
-    .item .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .45rem; }
-    .tag { font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: .15rem .55rem; border-radius: 9999px; background: var(--soft); color: var(--ink); border: 1px solid var(--line); }
-    .tag.tinggi { background: var(--ink); color: #fff; border-color: var(--ink); }
-    .tag.pus { background: var(--puspresnas-dim); color: var(--puspresnas); border-color: rgba(0,168,104,.25); }
-    .item h6 { font-weight: 700; font-size: 1rem; margin: 0 0 .35rem; line-height: 1.35; }
-    .item .meta { display: flex; flex-wrap: wrap; gap: .2rem 1.1rem; color: var(--muted); font-size: .8rem; }
-    .item .meta span { display: inline-flex; align-items: center; gap: .35rem; }
-
-    .empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; border: 1px dashed var(--line); border-radius: 14px; }
-
-    .foot { text-align: center; color: var(--dim); font-size: .75rem; padding: 1rem 1.75rem 1.4rem; border-top: 1px solid var(--line); }
-    .foot .url { word-break: break-all; }
-
-    @media (max-width: 575.98px) {
-        .page { padding: 1rem .75rem 2rem; }
-        .profile { flex-direction: column; text-align: center; padding: 1.4rem 1.1rem; }
-        .profile .chips { justify-content: center; }
-        .stats { grid-template-columns: repeat(2, 1fr); }
-        .stat:nth-child(2) { border-right: 0; }
-        .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-        .body { padding: 1.2rem 1rem 1.3rem; }
-    }
-
-    /* ---------- Cetak / simpan PDF ---------- */
-    @page { size: A4; margin: 14mm 12mm; }
-    @media print {
-        body { background: #fff; font-size: 10.5pt; }
-        .no-print { display: none !important; }
-        .page { max-width: none; padding: 0; }
-        .sheet { border: 0; border-radius: 0; overflow: visible; }
-        .profile { padding: 0 0 1rem; }
-        .body { padding: 1.1rem 0 0; }
-        .foot { padding: 1rem 0 0; }
-        .item { border-color: #d9d9d9; }
-        .avatar { width: 72px; height: 72px; }
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/design.css' %}">
 </head>
-<body>
+<body class="page-portfolio">
 
 <div class="page">
 

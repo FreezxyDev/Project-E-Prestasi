@@ -1,34 +1,7 @@
 {% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-admin-profil{% endblock %}
 {% block title %}Profil Admin{% endblock %}
 
-{% block extra_head %}
-<style>
-    .profil-avatar {
-        width: 84px; height: 84px; border-radius: 50%; margin: 0 auto .9rem;
-        display: flex; align-items: center; justify-content: center;
-        background: var(--bg-card-2); border: 1px solid var(--border-soft);
-        font-size: 1.7rem; font-weight: 800; color: var(--text);
-    }
-    .profil-avatar.super { background: #f3e8ff; border-color: #e9d5ff; color: #7c3aed; }
-    .role-badge-super { background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff; font-weight: 600; }
-    .role-badge-admin { background: var(--bg-card-2); color: var(--text-muted); border: 1px solid var(--border-soft); font-weight: 600; }
-    .profil-info { margin: 0; }
-    .profil-info .row-item { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-top: 1px solid var(--border-soft); font-size: .82rem; }
-    .profil-info dt { color: var(--text-muted); font-weight: 600; }
-    .profil-info dd { margin: 0; color: var(--text); text-align: right; }
-    .pw-field { position: relative; }
-    .pw-field .form-control { padding-right: 2.6rem; }
-    .pw-field .js-toggle-pw {
-        position: absolute; right: .4rem; top: 50%; transform: translateY(-50%);
-        border: 0; background: transparent; color: var(--text-muted); padding: .25rem .5rem; line-height: 1;
-    }
-    .pw-field .js-toggle-pw:hover { color: var(--text); }
-    .info-note { display: flex; gap: .6rem; align-items: flex-start; font-size: .78rem; color: var(--text-muted);
-                 background: var(--bg-card-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: .7rem .9rem; }
-    .info-note i { margin-top: .1rem; }
-    .pw-tips { font-size: .78rem; color: var(--text-muted); margin: 0; padding-left: 1.1rem; }
-</style>
-{% endblock %}
 
 {% block content %}
 

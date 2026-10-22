@@ -1,249 +1,53 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>e-Prestasi — Show Your Pride</title>
+<title>E-Prestasi — Show Your Pride</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-<style>
-:root{
-  /* Mobbin-style achromatic tokens */
-  --bg:#ffffff; --bg2:#f2f2f2; --card:#ffffff; --accent:#141414; --accent2:#707070;
-  --text:#141414; --text2:#707070; --muted:#adadad; --border:#ededed;
-  --warn:#b45309; --err:#b91c1c;
-  --mono:'Inter','Inter Variable',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-}
-
-*{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;scroll-padding-top:70px;}
-body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6;overflow-x:hidden;}
-img,svg{max-width:100%;display:block;}
-a{color:inherit;text-decoration:none;}
-.wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
-::selection{background:var(--accent);color:#ffffff;}
-
-/* ===== NAV ===== */
-#nav{position:fixed;top:0;left:0;right:0;z-index:100;border-bottom:1px solid transparent;transition:background .3s,border-color .3s;padding-top:env(safe-area-inset-top,0px);}
-#nav.on{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-color:var(--border);}
-.nav-in{display:flex;align-items:center;justify-content:space-between;height:76px;}
-.brand{display:flex;flex-direction:column;line-height:1.1;}
-.brand b{font-size:1.15rem;font-weight:700;letter-spacing:.02em;}
-.brand span{font-size:.65rem;color:var(--text2);letter-spacing:.14em;margin-top:3px;}
-.nav-links{display:flex;gap:34px;list-style:none;}
-.nav-links a{font-size:.88rem;color:var(--text2);position:relative;padding-bottom:8px;transition:color .2s;font-weight:500;}
-.nav-links a:hover,.nav-links a.active{color:var(--text);}
-.nav-links a.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);}
-.btn{font-family:var(--mono);font-size:.88rem;font-weight:600;border-radius:9999px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;}
-.btn-primary{background:var(--accent);color:#ffffff;border:1px solid var(--accent);padding:12px 22px;}
-.btn-primary:hover{background:#3a3a3a;border-color:#3a3a3a;}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);padding:12px 22px;}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
-.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:6px;}
-.hamburger span{width:22px;height:2px;background:var(--text);}
-
-/* ===== HERO ===== */
-#hero{position:relative;min-height:100vh;display:flex;align-items:center;padding-top:76px;overflow:hidden;}
-.hero-bg{position:absolute;inset:0;z-index:0;
-  background:
-    radial-gradient(ellipse 60% 50% at 78% 30%,rgba(20,20,20,.05),transparent 60%),
-    linear-gradient(180deg,#ffffff 0%,#f7f7f7 55%,#ffffff 100%);
-}
-.hero-grid{position:absolute;inset:0;z-index:0;opacity:.5;
-  background-image:linear-gradient(rgba(20,20,20,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(20,20,20,.05) 1px,transparent 1px);
-  background-size:56px 56px;
-  mask-image:radial-gradient(ellipse 70% 60% at 65% 40%,#000 20%,transparent 75%);
-}
-.hero-lines{position:absolute;right:-5%;top:0;bottom:0;width:60%;z-index:0;opacity:.55;}
-.hero-in{position:relative;z-index:1;max-width:680px;}
-.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.82rem;font-weight:600;letter-spacing:.16em;color:var(--accent);margin-bottom:22px;}
-.eyebrow::before{content:"";width:26px;height:1px;background:var(--accent);}
-
-/* H1: Desktop 64px, Mobile 40px, weight 700, line-height 1.05 */
-h1.headline{font-size:clamp(40px, 5.2vw, 64px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-bottom:24px;}
-.headline em{font-style:normal;color:var(--accent);}
-
-/* Hero Subtitle: Desktop 20px, Mobile 16-18px */
-.hero-sub{font-size:clamp(16px, 1.8vw, 20px);line-height:1.55;color:var(--text2);max-width:540px;margin-bottom:38px;}
-.hero-cta{display:flex;gap:14px;margin-bottom:64px;flex-wrap:wrap;}
-.stat-row{display:flex;gap:48px;flex-wrap:wrap;}
-.stat-row .n{font-size:1.8rem;font-weight:700;color:var(--text);}
-.stat-row .l{font-size:.78rem;color:var(--text2);letter-spacing:.04em;margin-top:2px;}
-.stat-row div{border-left:1px solid var(--border);padding-left:16px;}
-
-/* ===== SECTION GENERIC ===== */
-section{padding:100px 0;position:relative;}
-.s-head{margin-bottom:52px;max-width:680px;}
-.s-tag{font-size:.82rem;font-weight:600;color:var(--accent);letter-spacing:.14em;margin-bottom:14px;}
-
-/* H2: Desktop 40px, Mobile 28-34px, weight 700 */
-.s-title{font-size:clamp(28px, 3.5vw, 40px);font-weight:700;line-height:1.2;letter-spacing:-.01em;}
-
-/* Supporting Subtitle: Desktop 20px, Mobile 16-18px */
-.s-sub{color:var(--text2);margin-top:16px;font-size:clamp(16px, 1.8vw, 20px);line-height:1.55;max-width:620px;}
-
-/* ===== SEARCH ===== */
-#cari{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.search-box{display:flex;gap:0;max-width:640px;border:1px solid var(--border);border-radius:9999px;overflow:hidden;background:var(--card);}
-.search-box input{flex:1;background:transparent;border:0;color:var(--text);font-family:var(--mono);font-size:1rem;padding:16px 18px;outline:0;}
-.search-box input::placeholder{color:var(--muted);}
-.search-box button{background:var(--accent);color:#ffffff;border:0;padding:0 26px;font-family:var(--mono);font-weight:600;cursor:pointer;font-size:.9rem;}
-#results{margin-top:32px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
-.s-card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:22px;transition:border-color .2s,transform .2s;}
-.s-card:hover{border-color:var(--accent);transform:translateY(-2px);}
-.avatar{width:46px;height:46px;border-radius:12px;background:var(--accent);color:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;margin-bottom:16px;}
-
-/* Card Title (H3 Equivalent): Desktop 24px, Mobile 20px, weight 600 */
-.s-card h4, .feat-card h4, .ach-card h4, .flow-step h4{
-  font-size:clamp(20px, 2vw, 24px);font-weight:600;line-height:1.3;margin-bottom:10px;
-}
-.s-card .meta{font-size:.84rem;color:var(--text2);margin-bottom:3px;}
-.s-card .count{font-size:.88rem;color:var(--accent);font-weight:600;margin:12px 0;}
-.s-card .go{font-size:.84rem;color:var(--text2);display:inline-flex;gap:6px;}
-.empty{color:var(--muted);font-size:.95rem;padding:20px 0;}
-
-/* ===== ABOUT ===== */
-.about-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:start;}
-.about-big{font-size:clamp(22px, 2.8vw, 32px);font-weight:700;line-height:1.35;}
-.about-big .g{color:var(--accent);}
-.about-right p{color:var(--text2);font-size:16px;line-height:1.6;margin-bottom:28px;}
-.about-stats{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
-.about-stats div{border-top:1px solid var(--border);padding-top:12px;}
-.about-stats .n{font-size:1.6rem;font-weight:700;}
-.about-stats .l{font-size:.78rem;color:var(--text2);margin-top:4px;}
-
-/* ===== WORKFLOW ===== */
-.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
-.flow-step{padding:0 20px 0 0;position:relative;}
-.flow-step:not(:last-child)::after{content:"";position:absolute;top:20px;right:0;width:100%;height:1px;background:var(--border);}
-.flow-num{font-size:.88rem;font-weight:600;color:var(--accent);margin-bottom:18px;}
-.flow-step p{font-size:15px;color:var(--text2);line-height:1.55;}
-
-/* ===== FEATURES ===== */
-.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.feat-card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:28px;transition:border-color .2s;}
-.feat-card:hover{border-color:var(--accent);}
-.feat-card .ic{width:32px;height:32px;margin-bottom:18px;color:var(--accent);}
-.feat-card p{font-size:15px;color:var(--text2);line-height:1.55;}
-
-/* ===== ACHIEVEMENT ===== */
-#showcase{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.ach-card{border:1px solid var(--border);background:var(--card);border-radius:16px;padding:28px;}
-.badge{display:inline-block;font-size:.72rem;color:var(--accent);border:1px solid var(--border);padding:4px 10px;border-radius:9999px;letter-spacing:.06em;margin-bottom:18px;}
-.ach-card .comp{font-size:.95rem;color:var(--text2);margin-bottom:20px;}
-.ach-foot{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:14px;}
-
-/* ===== STATS WIDE ===== */
-#stats-wide{background:var(--bg);}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:left;}
-.stats-grid .n{font-size:clamp(36px, 4.5vw, 52px);font-weight:700;color:var(--accent);}
-.stats-grid .l{font-size:.84rem;color:var(--text2);margin-top:8px;letter-spacing:.04em;}
-
-/* ===== CONTACT ===== */
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;}
-.c-info p{color:var(--text2);font-size:16px;line-height:1.6;margin-bottom:28px;max-width:420px;}
-.c-row{border-top:1px solid var(--border);padding:16px 0;}
-.c-row .l{font-size:.75rem;color:var(--muted);letter-spacing:.08em;margin-bottom:6px;font-weight:600;}
-.c-row .v{font-size:.95rem;}
-.field{margin-bottom:16px;}
-.field label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:8px;}
-.field input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.92rem;padding:12px 16px;border-radius:9999px;outline:0;}
-.field textarea{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.92rem;padding:12px 14px;border-radius:16px;outline:0;}
-.field input:focus,.field textarea:focus{border-color:var(--accent);}
-.field textarea{resize:vertical;min-height:100px;}
-.map-box{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card);margin-bottom:28px;position:relative;}
-.map-box svg{width:100%;height:220px;display:block;}
-.map-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;}
-.map-pin .dot{width:16px;height:16px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);box-shadow:0 0 0 4px rgba(20,20,20,.12);}
-.map-link{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);font-size:.82rem;color:var(--text2);}
-.map-link a{color:var(--accent);font-weight:600;}
-
-/* ===== FOOTER ===== */
-footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 28px;}
-.f-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:28px;margin-bottom:40px;}
-.f-nav{display:flex;gap:26px;flex-wrap:wrap;list-style:none;}
-.f-nav a{font-size:.88rem;color:var(--text2);}
-.f-nav a:hover{color:var(--accent);}
-.f-bottom{border-top:1px solid var(--border);padding-top:22px;font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;}
-.f-contact{margin-bottom:34px;padding-bottom:34px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:28px;justify-content:space-between;}
-.f-addr{font-size:.88rem;color:var(--text2);max-width:360px;line-height:1.6;}
-.f-addr .l{font-size:.72rem;color:var(--muted);letter-spacing:.08em;margin-bottom:8px;font-weight:600;}
-.f-addr a{color:var(--text2);}
-.f-social{display:flex;gap:12px;align-items:flex-start;}
-.f-social a{width:38px;height:38px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:border-color .2s,color .2s;}
-.f-social a:hover{border-color:var(--accent);color:var(--accent);}
-.f-social svg{width:18px;height:18px;}
-
-/* ===== ANIM ===== */
-.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s;}
-.reveal.show{opacity:1;transform:none;}
-
-/* ===== RESPONSIVE ===== */
-@media(max-width:900px){
-  body{font-size:15px;}
-  .nav-links{display:none;}
-  .hamburger{display:flex;}
-  .about-grid,.contact-grid{grid-template-columns:1fr;}
-  .flow{grid-template-columns:1fr;gap:36px;}
-  .flow-step:not(:last-child)::after{display:none;}
-  .feat-grid{grid-template-columns:1fr;}
-  .ach-grid{grid-template-columns:1fr;}
-  .stats-grid{grid-template-columns:1fr 1fr;}
-  section{padding:64px 0;}
-}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important;}}
-</style>
+<link rel="stylesheet" href="{% static 'css/design.css' %}">
 </head>
-<body>
+<body class="page-landing">
 
 <nav id="nav">
   <div class="wrap nav-in">
-    <div class="brand"><b>e-Prestasi</b><span>Show Your Pride</span></div>
+    <div class="brand"><b>E-Prestasi</b><span>Show Your Pride</span></div>
     <ul class="nav-links">
       <li><a href="#hero" class="active">Beranda</a></li>
-      <li><a href="#tentang">Tentang e-Prestasi</a></li>
+      <li><a href="#tentang">Tentang E-Prestasi</a></li>
       <li><a href="#alur">Alur Kerja</a></li>
       <li><a href="#fitur">Fitur</a></li>
       <li><a href="#cari">Cari Siswa</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
-    <div style="display:flex;align-items:center;gap:14px;">
+    <div class="nav-actions">
       <a href="{% url "login" %}" class="btn btn-primary">Masuk</a>
       <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
     </div>
   </div>
-  <ul class="nav-links" id="mobile-nav" style="display:none;flex-direction:column;padding:16px 24px 24px;gap:16px;border-top:1px solid var(--border);">
+  <ul class="nav-links" id="mobile-nav">
     <li><a href="#hero">Beranda</a></li>
-    <li><a href="#tentang">Tentang e-Prestasi</a></li>
+    <li><a href="#tentang">Tentang E-Prestasi</a></li>
     <li><a href="#alur">Alur Kerja</a></li>
     <li><a href="#fitur">Fitur</a></li>
     <li><a href="#cari">Cari Siswa</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-</nav>
+</nav>  
 
 <section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-  <svg class="hero-lines" viewBox="0 0 600 800" xmlns="http://www.w3.org/2000/svg">
-    <g stroke="var(--accent)" stroke-width="1" fill="none" opacity="0.45">
-      <path d="M60 40 L60 220 L260 220 L260 400"/>
-      <path d="M420 0 L420 160 L560 160 L560 500"/>
-      <path d="M180 500 L180 640 L400 640 L400 800"/>
-      <circle cx="260" cy="400" r="4" fill="var(--accent)" stroke="none"/>
-      <circle cx="560" cy="500" r="4" fill="var(--accent)" stroke="none"/>
-      <circle cx="400" cy="640" r="4" fill="var(--accent)" stroke="none"/>
-      <circle cx="60" cy="220" r="3" fill="var(--accent)" stroke="none"/>
-    </g>
-  </svg>
+  <!-- Background gambar dipasang di sini menggunakan tag static Django -->
+  <div class="hero-bg" style="background-image: url('{% static '/smkn11-bandung.jpg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+  <div class="hero-overlay"></div>
   <div class="wrap hero-in">
     <div class="eyebrow">SMKN 11 BANDUNG</div>
     <h1 class="headline">Showcase Your<br>Achievement.</h1>
     <p class="hero-sub">Ruang digital untuk mencatat, memverifikasi, dan menunjukkan perjalanan prestasi siswa.</p>
     <div class="hero-cta">
-      <a href="#showcase" class="btn btn-primary">Jelajahi Prestasi →</a>
+      <a href="#cari" class="btn btn-primary">Jelajahi Prestasi →</a>
       <a href="#cari" class="btn btn-outline">Cari Siswa</a>
     </div>
     <div class="stat-row">
@@ -254,12 +58,12 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
   </div>
 </section>
 
-<section id="cari">
+<section id="cari" class="band">
   <div class="wrap">
     <div class="s-head reveal">
       <div class="s-tag">PENCARIAN SISWA</div>
       <h2 class="s-title">Cari Siswa</h2>
-      <p class="s-sub">Temukan profil siswa SMKN 11 Bandung yang telah terdaftar di e-Prestasi.</p>
+      <p class="s-sub">Temukan profil siswa SMKN 11 Bandung yang terdaftar di E-Prestasi.</p>
     </div>
     <div class="search-box reveal">
       <input id="search-input" type="text" placeholder="Masukkan NIS atau nama siswa...">
@@ -273,7 +77,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
   <div class="wrap about-grid">
     <div class="reveal">
       <div class="s-tag">DIGITAL ACHIEVEMENT PLATFORM</div>
-      <div class="about-big">e-Prestasi adalah platform portofolio digital yang membantu siswa <span class="g">mendokumentasikan</span> dan menampilkan pencapaian mereka secara terstruktur.</div>
+      <div class="about-big">E-Prestasi adalah platform portofolio digital yang membantu siswa <span class="g">mendokumentasikan</span> dan menampilkan pencapaian mereka secara terstruktur.</div>
     </div>
     <div class="about-right reveal">
       <p>Setiap prestasi yang diunggah siswa melewati proses verifikasi oleh pihak kesiswaan sebelum tampil di portofolio publik, sehingga data yang ditampilkan sekolah dapat dipertanggungjawabkan.</p>
@@ -287,7 +91,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
   </div>
 </section>
 
-<section id="alur" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+<section id="alur" class="band">
   <div class="wrap">
     <div class="s-head reveal">
       <div class="s-tag">PROSES</div>
@@ -320,20 +124,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
   </div>
 </section>
 
-<section id="showcase">
-  <div class="wrap">
-    <div class="s-head reveal">
-      <div class="s-tag">SOROTAN</div>
-      <h2 class="s-title">Achievement Showcase</h2>
-    </div>
-    <div class="ach-grid">
-      <div class="ach-card reveal"><div class="badge">TINGKAT NASIONAL</div><h4>Juara 1</h4><div class="comp">Web Development Competition</div><div class="ach-foot"><span>2026</span><span>XII RPL 2</span></div></div>
-      <div class="ach-card reveal"><div class="badge">TINGKAT PROVINSI</div><h4>Juara 2</h4><div class="comp">Lomba UI/UX Design</div><div class="ach-foot"><span>2026</span><span>XI DKV 1</span></div></div>
-      <div class="ach-card reveal"><div class="badge">TINGKAT KOTA</div><h4>Finalis</h4><div class="comp">IT Competition</div><div class="ach-foot"><span>2026</span><span>XII TJKT 1</span></div></div>
-    </div>
-  </div>
-</section>
-
 <section id="stats-wide">
   <div class="wrap">
     <div class="stats-grid">
@@ -349,24 +139,24 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
   <div class="wrap contact-grid">
     <div class="c-info reveal">
       <div class="s-tag">HUBUNGI KAMI</div>
-      <h2 class="s-title" style="margin-bottom:16px;">Have questions about e-Prestasi?</h2>
+      <h2 class="s-title mb">Have questions about E-Prestasi?</h2>
       <p>Tim kesiswaan SMKN 11 Bandung siap membantu pertanyaan seputar pendaftaran akun, verifikasi prestasi, maupun portofolio siswa.</p>
       <div class="c-row"><div class="l">EMAIL</div><div class="v">kesiswaan@smkn11bandung.sch.id</div></div>
       <div class="c-row"><div class="l">TELEPON</div><div class="v"><a href="tel:+622266652442">+62 22 6652442</a></div></div>
       <div class="c-row"><div class="l">ALAMAT</div><div class="v">Jl. Raya Cilember, RT.01/RW.04, Sukaraja, Kec. Cicendo, Kota Bandung, Jawa Barat 40153</div></div>
       <div class="c-row"><div class="l">JAM LAYANAN</div><div class="v">Senin – Jumat, 07.00 – 15.00 WIB</div></div>
 
-      <div class="map-box" style="margin-top:24px;">
+      <div class="map-box">
         <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
-          <rect width="400" height="220" fill="var(--card)"/>
-          <g stroke="var(--border)" stroke-width="1">
+          <rect class="map-bg" width="400" height="220"/>
+          <g class="map-grid">
             <path d="M0 40H400M0 90H400M0 140H400M0 190H400"/>
             <path d="M60 0V220M140 0V220M240 0V220M330 0V220"/>
           </g>
-          <path d="M0 96 C120 60,180 150,240 118 C300 88,340 130,400 100" stroke="var(--accent2)" stroke-width="3" fill="none" opacity=".55"/>
-          <path d="M0 150 C90 170,160 128,240 150 C300 166,350 150,400 160" stroke="var(--accent2)" stroke-width="2" fill="none" opacity=".4"/>
+          <path class="map-river w3" d="M0 96 C120 60,180 150,240 118 C300 88,340 130,400 100"/>
+          <path class="map-river w2" d="M0 150 C90 170,160 128,240 150 C300 166,350 150,400 160"/>
         </svg>
-        <div class="map-pin" style="left:52%;top:46%;">
+        <div class="map-pin">
           <div class="dot"></div>
         </div>
         <div class="map-link">
@@ -375,12 +165,12 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
         </div>
       </div>
     </div>
-    <form class="reveal" onsubmit="event.preventDefault();this.reset();document.getElementById('sent-msg').style.display='block';">
+    <form class="reveal" onsubmit="event.preventDefault();this.reset();document.getElementById('sent-msg').classList.add('show');">
       <div class="field"><label>Nama</label><input type="text" required></div>
       <div class="field"><label>Email</label><input type="email" required></div>
       <div class="field"><label>Pesan</label><textarea required></textarea></div>
-      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Kirim Pesan</button>
-      <p id="sent-msg" style="display:none;color:var(--accent);font-size:.85rem;margin-top:12px;font-weight:600;">Pesan terkirim. Terima kasih.</p>
+      <button type="submit" class="btn btn-primary btn-block">Kirim Pesan</button>
+      <p id="sent-msg" class="sent-msg">Pesan terkirim. Terima kasih.</p>
     </form>
   </div>
 </section>
@@ -388,7 +178,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
 <footer>
   <div class="wrap">
     <div class="f-top">
-      <div class="brand"><b>e-Prestasi</b><span style="margin-top:8px;">Integrated Portfolio of Student Achievement</span></div>
+      <div class="brand"><b>E-Prestasi</b><span class="brand-tag-lg">Integrated Portfolio of Student Achievement</span></div>
       <ul class="f-nav">
         <li><a href="#hero">Beranda</a></li>
         <li><a href="#tentang">Tentang</a></li>
@@ -412,22 +202,19 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 0 2
       </div>
     </div>
     <div class="f-bottom">
-      <span>© 2026 e-Prestasi — SMKN 11 Bandung</span>
+      <span>© 2026 E-Prestasi — SMKN 11 Bandung</span>
     </div>
   </div>
 </footer>
 
 <script>
-// navbar bg on scroll
 const nav=document.getElementById('nav');
 addEventListener('scroll',()=>nav.classList.toggle('on',scrollY>40));
 
-// mobile menu
 const ham=document.getElementById('hamburger'),mnav=document.getElementById('mobile-nav');
-ham.onclick=()=>{mnav.style.display=mnav.style.display==='flex'?'none':'flex';};
-mnav.querySelectorAll('a').forEach(a=>a.onclick=()=>mnav.style.display='none');
+ham.onclick=()=>mnav.classList.toggle('open');
+mnav.querySelectorAll('a').forEach(a=>a.onclick=()=>mnav.classList.remove('open'));
 
-// active link on scroll
 const links=[...document.querySelectorAll('.nav-links a')];
 const secs=['hero','tentang','alur','fitur','cari','contact'].map(id=>document.getElementById(id));
 secs.forEach(s=>{ 
@@ -440,11 +227,9 @@ secs.forEach(s=>{
   } 
 });
 
-// reveal on scroll
 const revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');revealObs.unobserve(e.target);}}),{threshold:.15});
 document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
 
-// count-up
 document.querySelectorAll('[data-count]').forEach(el=>{
   const target=+el.dataset.count;
   const obs=new IntersectionObserver(es=>es.forEach(e=>{
@@ -457,7 +242,6 @@ document.querySelectorAll('[data-count]').forEach(el=>{
   obs.observe(el);
 });
 
-// student search -- data asli dari akun siswa (API: cari_siswa_api)
 const resultsEl=document.getElementById('results');
 const searchInput=document.getElementById('search-input');
 const SEARCH_URL="{% url 'cari_siswa_api' %}";
@@ -471,7 +255,6 @@ function renderResults(list){
   resultsEl.innerHTML='';
   if(!list.length){showMessage('Siswa tidak ditemukan.');return;}
   list.forEach(s=>{
-    // textContent (bukan innerHTML) supaya nama dari database tidak bisa menyisipkan HTML.
     const card=el('div','s-card');
     card.appendChild(el('div','avatar',initials(s.nama)));
     card.appendChild(el('h4','',s.nama));
@@ -490,7 +273,7 @@ async function doSearch(){
   const q=searchInput.value.trim();
   if(!q){resultsEl.innerHTML='';return;}
   if(q.length<3){showMessage('Ketik minimal 3 karakter untuk mencari.');return;}
-  const seq=++searchSeq;           // abaikan respons lama kalau ada pencarian yang lebih baru
+  const seq=++searchSeq;          
   showMessage('Mencari...');
   try{
     const res=await fetch(SEARCH_URL+'?q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
@@ -501,11 +284,10 @@ async function doSearch(){
   }catch(err){
     if(seq!==searchSeq) return;
     showMessage('Pencarian sedang bermasalah. Coba lagi sebentar lagi.');
-  }
+    }
 }
 document.getElementById('search-btn').onclick=doSearch;
 searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
-// Cari otomatis sambil mengetik (jeda 350 ms)
 searchInput.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,350);});
 </script>
 </body>

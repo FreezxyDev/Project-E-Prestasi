@@ -1,42 +1,7 @@
 {% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-kelas{% endblock %}
 {% block title %}Pengelolaan Kelas{% endblock %}
 
-{% block extra_head %}
-<style>
-    .qa-btn { display: inline-flex; align-items: center; gap: .45rem; background: var(--bg-card-2); border: 1px solid var(--border-soft); color: var(--text); border-radius: 9999px; padding: .5rem .9rem; font-size: .78rem; font-weight: 500; transition: border-color .15s, background .15s; }
-    .qa-btn:hover { border-color: var(--accent); background: var(--accent-dim); color: var(--text); }
-
-    .widget-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; margin-bottom: .6rem; }
-    .nis-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; min-height: 128px; resize: vertical; }
-
-    .chip-list { display: flex; flex-wrap: wrap; gap: .35rem; }
-    .chip { display: inline-flex; align-items: center; gap: .3rem; border-radius: 9999px; padding: .22rem .6rem; font-size: .72rem; font-weight: 600; border: 1px solid var(--border-soft); background: var(--bg-card-2); color: var(--text); }
-    .chip.ok { background: var(--success-dim); color: var(--success); border-color: rgba(21,128,61,.2); }
-    .chip.warn { background: var(--warning-dim); color: var(--warning); border-color: rgba(180,83,9,.2); }
-    .chip.bad { background: var(--danger-dim); color: var(--danger); border-color: rgba(185,28,28,.2); }
-    .chip button { border: 0; background: transparent; color: inherit; padding: 0; line-height: 1; opacity: .7; }
-    .chip button:hover { opacity: 1; }
-
-    .result-box { border: 1px solid var(--border-soft); border-radius: 12px; padding: .7rem .85rem; margin-top: .75rem; font-size: .78rem; display: none; }
-    .result-box.show { display: block; }
-    .result-line { display: flex; gap: .5rem; align-items: flex-start; margin-bottom: .4rem; }
-    .result-line:last-child { margin-bottom: 0; }
-    .result-line .lbl { min-width: 128px; font-weight: 600; color: var(--text-muted); }
-
-    .picked-wrap { max-height: 190px; overflow: auto; }
-    .empty-soft { color: var(--text-dim); font-size: .8rem; padding: .9rem 0; text-align: center; }
-
-    .kelas-count { display: inline-flex; gap: .35rem; align-items: center; border: 1px solid var(--border-soft); background: var(--bg-card-2); border-radius: 9999px; padding: .25rem .7rem; font-size: .74rem; }
-    .kelas-count strong { font-weight: 800; }
-
-    .row-picked td { background: var(--accent-dim) !important; }
-    .modal-body .table td, .modal-body .table th { font-size: .8rem; }
-    .st-pindah { color: var(--success); font-weight: 700; }
-    .st-lewati { color: var(--warning); font-weight: 700; }
-    .sticky-head thead th { position: sticky; top: 0; background: var(--bg-card); z-index: 1; }
-    .table-scroll { max-height: 520px; overflow: auto; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -141,8 +106,8 @@
 
                 <div class="result-box" id="hasilNis" aria-live="polite">
                     <div class="result-line"><span class="lbl">Cocok &amp; dicentang</span><div class="chip-list" id="hasilCocok"></div></div>
-                    <div class="result-line" id="barisBukanAktif" style="display:none;"><span class="lbl">Bukan siswa aktif</span><div class="chip-list" id="hasilBukanAktif"></div></div>
-                    <div class="result-line" id="barisTidakAda" style="display:none;"><span class="lbl">Tidak ditemukan</span><div class="chip-list" id="hasilTidakAda"></div></div>
+                    <div class="result-line" id="barisBukanAktif"><span class="lbl">Bukan siswa aktif</span><div class="chip-list" id="hasilBukanAktif"></div></div>
+                    <div class="result-line" id="barisTidakAda"><span class="lbl">Tidak ditemukan</span><div class="chip-list" id="hasilTidakAda"></div></div>
                 </div>
             </div>
         </div>
@@ -192,7 +157,7 @@
                     <i class="bi bi-list-check"></i> Tinjau Pemindahan
                 </button>
             </div>
-            <div class="col-12" id="wrapperModeManualXii" style="display:none;">
+            <div class="col-12" id="wrapperModeManualXii">
                 <div class="form-check border rounded-3 p-2 ps-4">
                     <input class="form-check-input" type="checkbox" id="cbModeManualXii" onclick="toggleModeManualXii()">
                     <label class="form-check-label small" for="cbModeManualXii">
@@ -205,7 +170,7 @@
 
     <!-- ============ TABEL SISWA ============ -->
     <div class="card mb-3">
-        <div class="table-toolbar" style="display:block;">
+        <div class="table-toolbar is-block">
             <div class="row g-2 align-items-end" id="toolbarFilter">
                 <div class="col-6 col-md-3">
                     <label class="form-label small text-muted mb-1">Tahun Ajaran</label>
@@ -259,7 +224,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width:40px;"><input type="checkbox" class="form-check-input" id="cbSemua" title="Centang semua yang tampil"></th>
+                        <th class="col-w-40"><input type="checkbox" class="form-check-input" id="cbSemua" title="Centang semua yang tampil"></th>
                         <th>NIS</th>
                         <th>Nama</th>
                         <th>Tingkat</th>
@@ -346,7 +311,7 @@
 <!-- ============ MODAL KONFIRMASI ============ -->
 <div class="modal fade" id="modalKonfirmasi" tabindex="-1" aria-labelledby="judulModal" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
-        <div class="modal-content" style="border-radius:16px;">
+        <div class="modal-content">
             <div class="modal-header">
                 <div>
                     <h6 class="modal-title fw-bold" id="judulModal">Konfirmasi Pemindahan Siswa</h6>

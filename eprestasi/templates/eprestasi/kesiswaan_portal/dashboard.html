@@ -1,28 +1,7 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
+{% block body_class %}pg-kes-dashboard{% endblock %}
 {% block title %}Dashboard Kesiswaan{% endblock %}
 
-{% block extra_head %}
-<style>
-    .stat-card .stat-value.small-text { font-size: 1.15rem; line-height: 1.3; }
-    .stat-card .stat-sub .amber-txt { color: var(--warning); font-weight: 600; }
-
-    /* ---- Activity log ---- */
-    .activity-item { display: flex; gap: .85rem; padding: .85rem 0; border-bottom: 1px solid var(--border-soft); }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-time { color: var(--text-dim); font-size: .68rem; width: 46px; flex-shrink: 0; padding-top: .15rem; }
-    .activity-icon {
-        width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center; font-size: .8rem;
-        background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border);
-    }
-    .activity-icon.success { background: var(--success-dim); color: var(--success); border-color: rgba(21,128,61,.2); }
-    .activity-icon.danger { background: var(--danger-dim); color: var(--danger); border-color: rgba(185,28,28,.2); }
-    .activity-icon.pending { background: var(--warning-dim); color: var(--warning); border-color: rgba(180,83,9,.2); }
-    .activity-title { color: var(--text); font-size: .8rem; font-weight: 600; margin-bottom: .1rem; }
-    .activity-desc { color: var(--text-muted); font-size: .74rem; }
-    .empty-note { color: var(--text-dim); font-size: .78rem; padding: 1rem 0; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -97,9 +76,9 @@
 
     {% for item in activity_log %}
     <div class="activity-item">
-        <div class="activity-time">{{ item.waktu|date:"H:i" }}<div style="font-size:.6rem;">{{ item.waktu|date:"d M" }}</div></div>
+        <div class="activity-time">{{ item.waktu|date:"H:i" }}<div class="time-date">{{ item.waktu|date:"d M" }}</div></div>
         <div class="activity-icon {{ item.status }}"><i class="bi {{ item.icon }}"></i></div>
-        <div class="flex-grow-1" style="min-width:0;">
+        <div class="flex-grow-1 min-w-0">
             <div class="activity-title">{{ item.judul }}</div>
             <div class="activity-desc">{{ item.deskripsi }}</div>
         </div>

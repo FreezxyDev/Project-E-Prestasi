@@ -1,27 +1,8 @@
 {% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-tahun-ajaran{% endblock %}
 {% load eprestasi_extras %}
 {% block title %}Tahun Ajaran{% endblock %}
 
-{% block extra_head %}
-<style>
-    .quick-add-card .form-control, .quick-add-card .form-select { font-size: .82rem; }
-    .chart-legend { display: flex; flex-direction: column; gap: .55rem; margin-top: .25rem; }
-    .chart-legend .leg-row { display: flex; align-items: center; gap: .55rem; font-size: .78rem; }
-    .chart-legend .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-    .chart-legend .leg-label { color: var(--text-muted); flex: 1; }
-    .chart-legend .leg-val { font-weight: 700; color: var(--text); }
-    .donut-wrap { position: relative; max-width: 190px; margin: 0 auto; }
-    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .donut-center .n { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1; }
-    .donut-center .t { font-size: .62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; margin-top: .2rem; }
-    .sortable-th a { color: inherit; display: inline-flex; align-items: center; gap: .3rem; }
-    .sortable-th a:hover { color: var(--accent); }
-    .stat-mini { border: 1px solid var(--border-soft); border-radius: 10px; padding: .8rem 1rem; }
-    .stat-mini .v { font-size: 1.5rem; font-weight: 800; line-height: 1; color: var(--text); }
-    .stat-mini .l { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; font-weight: 600; margin-top: .3rem; }
-    .pie-wrap { position: relative; max-width: 220px; margin: 0 auto; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -56,10 +37,10 @@
             <div class="stat-icon-badge amber"><i class="bi bi-calendar3"></i></div>
             <div class="stat-label">TAHUN AJARAN AKTIF</div>
             {% if tahun_ajaran_aktif %}
-                <div class="stat-value" style="font-size:1.35rem;">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
+                <div class="stat-value stat-value-md">{{ tahun_ajaran_aktif.tahun_ajaran }}</div>
                 <div class="stat-sub"><span class="amber-txt">Sedang berjalan</span></div>
             {% else %}
-                <div class="stat-value" style="font-size:1.1rem;">Belum diatur</div>
+                <div class="stat-value stat-value-sm">Belum diatur</div>
                 <div class="stat-sub">Aktifkan salah satu di tabel bawah</div>
             {% endif %}
         </div>
@@ -101,10 +82,10 @@
                     </div>
                 </div>
                 <div class="chart-legend">
-                    <div class="leg-row"><span class="dot" style="background:#00d084;"></span><span class="leg-label">Diterima</span><span class="leg-val">{{ statistik_prestasi.diterima }}</span></div>
-                    <div class="leg-row"><span class="dot" style="background:#f5a623;"></span><span class="leg-label">Pending</span><span class="leg-val">{{ statistik_prestasi.pending }}</span></div>
-                    <div class="leg-row"><span class="dot" style="background:#4f8fd4;"></span><span class="leg-label">Perbaikan</span><span class="leg-val">{{ statistik_prestasi.perbaikan }}</span></div>
-                    <div class="leg-row"><span class="dot" style="background:#ef4444;"></span><span class="leg-label">Ditolak</span><span class="leg-val">{{ statistik_prestasi.ditolak }}</span></div>
+                    <div class="leg-row"><span class="dot dot-diterima"></span><span class="leg-label">Diterima</span><span class="leg-val">{{ statistik_prestasi.diterima }}</span></div>
+                    <div class="leg-row"><span class="dot dot-pending"></span><span class="leg-label">Pending</span><span class="leg-val">{{ statistik_prestasi.pending }}</span></div>
+                    <div class="leg-row"><span class="dot dot-perbaikan"></span><span class="leg-label">Perbaikan</span><span class="leg-val">{{ statistik_prestasi.perbaikan }}</span></div>
+                    <div class="leg-row"><span class="dot dot-ditolak"></span><span class="leg-label">Ditolak</span><span class="leg-val">{{ statistik_prestasi.ditolak }}</span></div>
                 </div>
             {% else %}
                 <div class="text-muted small text-center py-4">Belum ada data prestasi untuk ditampilkan.</div>
@@ -148,7 +129,7 @@
             <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
                    placeholder="Cari tahun ajaran... contoh 2024/2025">
         </div>
-        <select name="sort" class="form-select form-select-sm" style="width:auto;" onchange="this.form.requestSubmit()">
+        <select name="sort" class="form-select form-select-sm w-auto" onchange="this.form.requestSubmit()">
             <option value="terbaru" {% if sort == 'terbaru' %}selected{% endif %}>Terbaru Ditambahkan</option>
             <option value="terlama" {% if sort == 'terlama' %}selected{% endif %}>Terlama Ditambahkan</option>
             <option value="nama_asc" {% if sort == 'nama_asc' %}selected{% endif %}>Nama (A-Z)</option>
@@ -300,6 +281,8 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+    Chart.defaults.color = cssVar('--color-ash-text');
+    Chart.defaults.font.family = 'Inter';
     // ---- Diagram status prestasi (kartu atas) ----
     {% if statistik_prestasi.total > 0 %}
     new Chart(document.getElementById('chartStatusPrestasi'), {
@@ -308,7 +291,7 @@
             labels: ['Diterima', 'Pending', 'Perbaikan', 'Ditolak'],
             datasets: [{
                 data: [{{ statistik_prestasi.diterima }}, {{ statistik_prestasi.pending }}, {{ statistik_prestasi.perbaikan }}, {{ statistik_prestasi.ditolak }}],
-                backgroundColor: ['#00d084', '#f5a623', '#4f8fd4', '#ef4444'],
+                backgroundColor: [cssVar('--chart-1'), cssVar('--chart-2'), cssVar('--chart-3'), cssVar('--chart-4')],
                 borderWidth: 0,
             }]
         },
@@ -318,7 +301,7 @@
 
     // ---- Modal "Lihat Statistik" per tahun ajaran ----
     (function () {
-        const WARNA = ['#4f8fd4', '#00d084', '#f5a623', '#ef4444', '#8b5cf6', '#14b8a6', '#9ca3af'];
+        const WARNA = [1,2,3,4,5,6,7].map(n => cssVar('--chart-' + n));
         const modalEl = document.getElementById('modalStatistik');
         const modal = new bootstrap.Modal(modalEl);
         const $ = (id) => document.getElementById(id);

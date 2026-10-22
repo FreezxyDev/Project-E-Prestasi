@@ -1,13 +1,3 @@
-<style>
-    .badge-status { font-size: .66rem; font-weight: 700; padding: .32rem .6rem; border-radius: 9999px; letter-spacing: .3px; display: inline-block; }
-    .badge-status.pending   { background: var(--warning-dim); color: var(--warning); }
-    .badge-status.diterima  { background: var(--success-dim); color: var(--success); }
-    .badge-status.perbaikan { background: var(--info-dim); color: var(--info); }
-    .badge-status.ditolak   { background: var(--danger-dim); color: var(--danger); }
-    .badge-kelas { background: var(--bg-card-2); border: 1px solid var(--border-soft); color: var(--text); border-radius: 9999px; font-size: .7rem; font-weight: 600; padding: .2rem .55rem; white-space: nowrap; }
-    .filter-panel-wide { width: 560px; max-width: 92vw; }
-    .prestasi-table td { font-size: .82rem; }
-</style>
 
 <div class="card mb-3">
 
@@ -25,7 +15,7 @@
             </div>
 
             {% if tampil_status_filter %}
-            <select name="status" class="form-select form-select-sm" style="width:auto;" onchange="this.form.requestSubmit()">
+            <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.requestSubmit()">
                 <option value="">Semua Status</option>
                 {% for value, label in status_pilihan %}
                     <option value="{{ value }}" {% if f.status == value %}selected{% endif %}>{{ label }}</option>
@@ -195,7 +185,7 @@
                 <table class="table table-hover align-middle mb-0 prestasi-table">
                     <thead>
                         <tr>
-                            <th style="width:48px;">#</th>
+                            <th class="col-w-48">#</th>
                             <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.siswa }}">Siswa <i class="bi {% if sort == 'siswa_asc' %}bi-arrow-up{% elif sort == 'siswa_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
                             <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.prestasi }}">Prestasi <i class="bi {% if sort == 'prestasi_asc' %}bi-arrow-up{% elif sort == 'prestasi_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
                             <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.kategori }}">Kategori <i class="bi {% if sort == 'kategori_asc' %}bi-arrow-up{% elif sort == 'kategori_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
@@ -215,11 +205,11 @@
                             <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                             <td>
                                 <div class="fw-semibold">{{ p.siswa.nama|default:"-" }}</div>
-                                <div class="text-muted" style="font-size:.7rem;">{{ p.siswa.nis }}</div>
+                                <div class="text-muted cell-sub">{{ p.siswa.nis }}</div>
                             </td>
                             <td>
                                 <div>{{ p.nama_prestasi }}</div>
-                                <div class="text-muted" style="font-size:.7rem;">{{ p.tanggal_prestasi|date:"d M Y" }}</div>
+                                <div class="text-muted cell-sub">{{ p.tanggal_prestasi|date:"d M Y" }}</div>
                                 {% if not p.siswa.profil_lengkap %}
                                     <span class="badge-status pending mt-1">PROFIL BELUM LENGKAP</span>
                                 {% endif %}
@@ -233,7 +223,7 @@
                             <td>
                                 {% if p.tanggal_verifikasi %}
                                     {{ p.tanggal_verifikasi|date:"d M Y" }}
-                                    <div class="text-muted" style="font-size:.7rem;">{% if p.kesiswaan %}{{ p.kesiswaan.nama|default:p.kesiswaan.nip }}{% endif %}</div>
+                                    <div class="text-muted cell-sub">{% if p.kesiswaan %}{{ p.kesiswaan.nama|default:p.kesiswaan.nip }}{% endif %}</div>
                                 {% else %}
                                     <span class="text-muted">-</span>
                                 {% endif %}

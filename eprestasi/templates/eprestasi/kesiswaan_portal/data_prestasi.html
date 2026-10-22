@@ -14,7 +14,7 @@
 
     <div class="d-flex align-items-center gap-2">
         <label class="small fw-semibold text-muted mb-0" for="pilihTahun">Tahun Ajaran</label>
-        <select id="pilihTahun" class="form-select form-select-sm" style="width:auto; border-radius:9999px;"
+        <select id="pilihTahun" class="form-select form-select-sm w-auto"
                 onchange="location.href=this.value">
             <option value="?{{ qs_tanpa_tahun }}{% if qs_tanpa_tahun %}&{% endif %}tahun=" {% if not f.tahun %}selected{% endif %}>Semua tahun</option>
             {% for id, label in opsi.tahun_list %}

@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import check_password
 from django.db import transaction
 from django.utils import timezone
 
-from .models import Users, Siswa, Kesiswaan, LoginAttempt
+from .models import Users, Siswa, Kesiswaan, LoginAttempt, NPSN_SMKN_11_BANDUNG
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +158,18 @@ def login_view(request):
 
         # Login berhasil -> hapus catatan gagal untuk kunci ini.
         LoginAttempt.objects.filter(kunci=kunci).delete()
+
+        # 3b. Validasi keanggotaan: NPSN akun harus NPSN SMKN 11 Bandung.
+        #     Dicek SETELAH password benar supaya tidak membocorkan apakah
+        #     sebuah akun ada atau tidak.
+        if not user.anggota_sekolah_valid:
+            logger.warning('Login ditolak (NPSN tidak cocok): user_id=%s npsn=%r', user.id, user.npsn)
+            messages.error(
+                request,
+                'Akun ini tidak terdaftar sebagai anggota SMKN 11 Bandung (NPSN tidak valid). '
+                'Hubungi admin sekolah.'
+            )
+            return render(request, 'eprestasi/login.html')
 
         # =========================================================
         # CARI NAMA LENGKAP DARI TABEL PROFIL BERDASARKAN ROLE

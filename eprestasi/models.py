@@ -2,10 +2,16 @@ from django.db import models
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
 
+# NPSN (Nomor Pokok Sekolah Nasional) SMKN 11 Bandung. Disimpan di setiap akun
+# user sebagai penanda/validasi bahwa akun tersebut anggota SMKN 11 Bandung.
+NPSN_SMKN_11_BANDUNG = '20219175'
+
+
 # Create your models here
 class Users(models.Model):
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=100)
+    npsn = models.CharField(max_length=8, default=NPSN_SMKN_11_BANDUNG)
     role = models.CharField(max_length=100, choices=[
         ('super_admin', 'super_admin'),
         ('admin', 'admin'),
@@ -20,6 +26,11 @@ class Users(models.Model):
         
     def __str__(self):
         return self.username
+
+    @property
+    def anggota_sekolah_valid(self):
+        """True kalau NPSN akun cocok dengan NPSN SMKN 11 Bandung."""
+        return (self.npsn or '').strip() == NPSN_SMKN_11_BANDUNG
     
 class Siswa(models.Model):
     users = models.ForeignKey(Users, on_delete=models.CASCADE)

@@ -1,100 +1,7 @@
 {% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-dashboard{% endblock %}
 {% block title %}Dashboard{% endblock %}
 
-{% block extra_head %}
-<style>
-    .page-header { margin-bottom: 1.5rem; }
-    .page-header h1 {
-        font-size: 1.45rem; font-weight: 800; color: var(--text);
-        letter-spacing: .2px; margin-bottom: .25rem;
-    }
-    .page-header p { color: var(--text-muted); font-size: .82rem; margin: 0; }
-
-    /* ---- Stat cards ---- */
-    .stat-card { padding: 1.1rem 1.2rem; position: relative; overflow: hidden; }
-    .stat-card .stat-icon-badge {
-        position: absolute; top: 1rem; right: 1rem;
-        width: 30px; height: 30px; border-radius: 7px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: .85rem;
-        background: var(--accent-dim); color: var(--accent);
-        border: 1px solid var(--border);
-    }
-    .stat-card .stat-icon-badge.amber { background: rgba(245,166,35,.12); color: var(--warning); border-color: rgba(245,166,35,.25); }
-    .stat-card .stat-label { color: var(--text-muted); font-size: .72rem; letter-spacing: .3px; margin-bottom: .5rem; }
-    .stat-card .stat-value { color: var(--text); font-size: 1.7rem; font-weight: 800; line-height: 1; margin-bottom: .5rem; }
-    .stat-card .stat-sub { font-size: .7rem; color: var(--text-muted); }
-    .stat-card .stat-sub .accent-txt { color: var(--accent); font-weight: 600; }
-    .stat-card .stat-sub .amber-txt { color: var(--warning); font-weight: 600; }
-
-    /* ---- Chart card ---- */
-    .panel-title { color: var(--text); font-size: .92rem; font-weight: 700; margin-bottom: .1rem; }
-    .panel-sub { color: var(--text-muted); font-size: .72rem; margin-bottom: 1.1rem; }
-    .chart-card canvas { max-height: 230px; }
-
-    /* ---- System status ---- */
-    .status-row {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: .6rem 0; border-bottom: 1px solid var(--border-soft);
-        font-size: .78rem;
-    }
-    .status-row:last-child { border-bottom: none; }
-    .status-row .status-name { display: flex; align-items: center; gap: .55rem; color: var(--text); }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .status-dot.ok { background: var(--accent); }
-    .status-dot.warn { background: var(--warning); }
-    .status-dot.down { background: var(--danger); }
-    .status-val { font-size: .68rem; font-weight: 600; letter-spacing: .2px; }
-    .status-val.ok { color: var(--accent); }
-    .status-val.warn { color: var(--warning); }
-    .status-val.down { color: var(--danger); }
-
-    /* ---- Activity log ---- */
-    .activity-item { display: flex; gap: .85rem; padding: .85rem 0; border-bottom: 1px solid var(--border-soft); }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-time { color: var(--text-dim); font-size: .68rem; width: 46px; flex-shrink: 0; padding-top: .15rem; }
-    .activity-icon {
-        width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center; font-size: .8rem;
-        background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border);
-    }
-    .activity-icon.danger { background: rgba(239,68,68,.1); color: var(--danger); border-color: rgba(239,68,68,.2); }
-    .activity-icon.pending { background: rgba(245,166,35,.1); color: var(--warning); border-color: rgba(245,166,35,.2); }
-    .activity-icon.info { background: var(--bg-card-2); color: var(--text-muted); border-color: var(--border-soft); }
-    .activity-title { color: var(--text); font-size: .8rem; font-weight: 600; margin-bottom: .1rem; }
-    .activity-desc { color: var(--text-muted); font-size: .74rem; }
-    .empty-note { color: var(--text-dim); font-size: .78rem; padding: 1rem 0; }
-
-    /* ---- Quick actions ---- */
-    .qa-btn {
-        display: inline-flex; align-items: center; gap: .45rem;
-        background: var(--bg-card-2); border: 1px solid var(--border-soft);
-        color: var(--text); border-radius: 8px;
-        padding: .55rem .9rem; font-size: .78rem; font-weight: 500;
-        transition: border-color .15s, background .15s, color .15s;
-    }
-    .qa-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-
-    /* ---- Recent users table ---- */
-    .badge-status { font-size: .66rem; font-weight: 700; padding: .32rem .55rem; border-radius: 5px; letter-spacing: .3px; }
-    .badge-status.active { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--border); }
-    .badge-status.inactive { background: rgba(111,143,128,.12); color: var(--text-muted); border: 1px solid var(--border-soft); }
-    .row-avatar {
-        width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim);
-        color: var(--accent); font-size: .62rem; font-weight: 700;
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .view-all-link { color: var(--accent); font-size: .76rem; font-weight: 600; }
-    .view-all-link:hover { color: #000000; }
-
-    @media (max-width: 576px) {
-        .table-responsive-stack thead { display: none; }
-        .table-responsive-stack tr { display: block; border-bottom: 1px solid var(--border-soft); padding: .6rem 0; }
-        .table-responsive-stack td { display: flex; justify-content: space-between; border: none !important; padding: .3rem 0; }
-        .table-responsive-stack td::before { content: attr(data-label); color: var(--text-muted); font-size: .68rem; text-transform: uppercase; }
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -196,7 +103,7 @@
         <div class="activity-icon {% if item.status == 'danger' %}danger{% elif item.status == 'pending' %}pending{% elif item.status == 'info' %}info{% endif %}">
             <i class="bi {{ item.icon }}"></i>
         </div>
-        <div class="flex-grow-1" style="min-width:0;">
+        <div class="flex-grow-1 min-w-0">
             <div class="activity-title">{{ item.judul }}</div>
             <div class="activity-desc">{{ item.deskripsi }}</div>
         </div>
@@ -246,8 +153,8 @@
                         <div class="d-flex align-items-center gap-2">
                             <div class="row-avatar">{{ s.nama|default:s.nis|slice:":2"|upper }}</div>
                             <div>
-                                <div style="font-weight:600;">{{ s.nama|default:"(belum diisi)" }}</div>
-                                <div style="font-size:.68rem; color:var(--text-muted);">{{ s.nis }}</div>
+                                <div class="cell-name">{{ s.nama|default:"(belum diisi)" }}</div>
+                                <div class="cell-sub">{{ s.nis }}</div>
                             </div>
                         </div>
                     </td>
@@ -278,10 +185,12 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+    Chart.defaults.color = cssVar('--color-ash-text');
+    Chart.defaults.font.family = 'Inter';
     const ctxAktivitas = document.getElementById('chartAktivitas');
     const gradient = ctxAktivitas.getContext('2d').createLinearGradient(0, 0, 0, 230);
-    gradient.addColorStop(0, 'rgba(20, 20, 20, .18)');
-    gradient.addColorStop(1, 'rgba(20, 20, 20, 0)');
+    gradient.addColorStop(0, cssVar('--chart-fill'));
+    gradient.addColorStop(1, cssVar('--chart-fill-end'));
 
     new Chart(ctxAktivitas, {
         type: 'line',
@@ -289,13 +198,13 @@
             labels: {{ aktivitas_labels|safe }},
             datasets: [{
                 data: {{ aktivitas_data|safe }},
-                borderColor: '#141414',
+                borderColor: cssVar('--chart-line'),
                 backgroundColor: gradient,
                 fill: true,
                 tension: .35,
                 pointRadius: 3,
-                pointBackgroundColor: '#141414',
-                pointBorderColor: '#ffffff',
+                pointBackgroundColor: cssVar('--chart-line'),
+                pointBorderColor: cssVar('--color-graphite-card'),
                 pointBorderWidth: 2,
                 borderWidth: 2
             }]
@@ -305,11 +214,11 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { precision: 0, color: '#707070', font: { family: 'Inter', size: 10 } },
-                    grid: { color: 'rgba(20,20,20,.06)' }
+                    ticks: { precision: 0, color: cssVar('--color-ash-text'), font: { family: 'Inter', size: 10 } },
+                    grid: { color: cssVar('--color-hairline') }
                 },
                 x: {
-                    ticks: { color: '#707070', font: { family: 'Inter', size: 10 } },
+                    ticks: { color: cssVar('--color-ash-text'), font: { family: 'Inter', size: 10 } },
                     grid: { display: false }
                 }
             }

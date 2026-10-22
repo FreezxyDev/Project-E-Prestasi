@@ -1,17 +1,7 @@
 {% extends 'eprestasi/siswa_portal/base.html' %}
+{% block body_class %}pg-siswa-riwayat{% endblock %}
 {% block title %}Riwayat{% endblock %}
 
-{% block extra_head %}
-<style>
-    .badge-status { font-size: .66rem; font-weight: 700; padding: .32rem .6rem; border-radius: 9999px; letter-spacing: .3px; display: inline-block; }
-    .badge-status.pending   { background: var(--warning-dim); color: var(--warning); }
-    .badge-status.diterima  { background: var(--success-dim); color: var(--success); }
-    .badge-status.perbaikan { background: var(--info-dim); color: var(--info); }
-    .badge-status.ditolak   { background: var(--danger-dim); color: var(--danger); }
-    .filter-panel-md { width: 380px; max-width: 92vw; }
-    .riwayat-table td { font-size: .82rem; }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -125,7 +115,7 @@
                 <table class="table table-hover align-middle mb-0 riwayat-table">
                     <thead>
                         <tr>
-                            <th style="width:48px;">#</th>
+                            <th class="col-w-48">#</th>
                             <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.prestasi }}">Prestasi <i class="bi {% if sort == 'prestasi_asc' %}bi-arrow-up{% elif sort == 'prestasi_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
                             <th>Kategori</th>
                             <th class="sortable-th"><a href="?{{ qs_tanpa_sort }}{% if qs_tanpa_sort %}&{% endif %}sort={{ sort_toggle.tingkat }}">Tingkat <i class="bi {% if sort == 'tingkat_asc' %}bi-arrow-up{% elif sort == 'tingkat_desc' %}bi-arrow-down{% else %}bi-arrow-down-up{% endif %}"></i></a></th>
@@ -141,9 +131,9 @@
                             <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                             <td>
                                 <div class="fw-semibold">{{ p.nama_prestasi }}</div>
-                                <div class="text-muted" style="font-size:.7rem;">{{ p.penyelenggara }} &middot; {{ p.tanggal_prestasi|date:"d M Y" }}</div>
+                                <div class="text-muted cell-sub">{{ p.penyelenggara }} &middot; {{ p.tanggal_prestasi|date:"d M Y" }}</div>
                                 {% if p.status == 'perbaikan' %}
-                                    <div style="font-size:.7rem; color:var(--info);"><i class="bi bi-tools"></i> Perbaikan {% if p.jenis_perbaikan == 'file' %}file{% else %}data{% endif %}</div>
+                                    <div class="cell-sub text-info-soft"><i class="bi bi-tools"></i> Perbaikan {% if p.jenis_perbaikan == 'file' %}file{% else %}data{% endif %}</div>
                                 {% endif %}
                             </td>
                             <td>{{ p.get_kategori_prestasi_display|capfirst }}</td>

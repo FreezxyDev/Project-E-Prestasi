@@ -1,6 +1,5 @@
 {% extends 'eprestasi/kesiswaan_portal/base.html' %}
 {% block title %}{{ prestasi.nama_prestasi }}{% endblock %}
-{% block extra_head %}{% include 'eprestasi/_partials/detail_prestasi_style.html' %}{% endblock %}
 
 {% block content %}
 
@@ -124,7 +123,7 @@
                 </div>
             </div>
             <hr class="dp-divider">
-            <dl class="dp-info" style="grid-template-columns:1fr 1fr;">
+            <dl class="dp-info cols-2">
                 <div><dt>Kelas</dt><dd>{{ prestasi.siswa.kelas|default:"-" }}</dd></div>
                 <div><dt>Jurusan</dt><dd>{{ prestasi.siswa.jurusan|default:"-" }}</dd></div>
             </dl>
@@ -133,7 +132,7 @@
         <div class="card dp-card">
             <h6 class="dp-card-title"><i class="bi bi-award"></i> Puspresnas</h6>
             {% if prestasi.kode_puspresnas or prestasi.dokumen_puspresnas %}
-                <dl class="dp-info" style="grid-template-columns:1fr;">
+                <dl class="dp-info cols-1">
                     {% if prestasi.kode_puspresnas %}
                         <div><dt>Kode Puspresnas</dt><dd>{{ prestasi.kode_puspresnas }}</dd></div>
                     {% endif %}
@@ -167,7 +166,7 @@
                     </label>
                     <label class="opsi-keputusan" data-opsi="perbaikan">
                         <input type="radio" name="keputusan" value="perbaikan" required>
-                        <i class="bi bi-tools" style="color:#f97316;"></i> Perbaiki
+                        <i class="bi bi-tools icon-perbaikan"></i> Perbaiki
                     </label>
                     <label class="opsi-keputusan" data-opsi="ditolak">
                         <input type="radio" name="keputusan" value="ditolak" required>
@@ -176,13 +175,13 @@
                 </div>
                 {{ form.keputusan.errors }}
 
-                <div class="mb-3 blok-perbaikan" style="display:none;">
+                <div class="mb-3 blok-perbaikan">
                     <label class="form-label small fw-semibold">Jenis Perbaikan</label>
                     <div class="d-grid gap-2 mb-3">
-                        <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                        <label class="d-flex align-items-center gap-2 cursor-pointer">
                             <input type="radio" name="jenis_perbaikan" value="data"> Perbaikan Data
                         </label>
-                        <label class="d-flex align-items-start gap-2" style="cursor:pointer;">
+                        <label class="d-flex align-items-start gap-2 cursor-pointer">
                             <input type="radio" name="jenis_perbaikan" value="file" class="mt-1">
                             <span>Perbaikan File<br><span class="text-muted small">File sertifikat lama akan dihapus</span></span>
                         </label>
@@ -194,7 +193,7 @@
                     {{ form.catatan_perbaikan.errors }}
                 </div>
 
-                <div class="mb-3 blok-tolak" style="display:none;">
+                <div class="mb-3 blok-tolak">
                     <label class="form-label small fw-semibold">Alasan Penolakan <span class="text-muted fw-normal">(wajib diisi, file sertifikat akan dihapus)</span></label>
                     {{ form.alasan_penolakan }}
                     {{ form.alasan_penolakan.errors }}
