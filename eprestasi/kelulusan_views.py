@@ -78,7 +78,7 @@ def kelulusan_alumni(request):
     if tab not in ('kelulusan', 'alumni'):
         tab = 'kelulusan'
 
-    kelas_xii_qs = Siswa.objects.filter(tingkat=12)
+    kelas_xii_qs = Siswa.objects.filter(tingkat=12).exclude(status='keluar')
     statistik = {
         'total_xii': kelas_xii_qs.count(),
         'siap_diproses': kelas_xii_qs.filter(status='aktif', status_kelulusan='belum_diproses').count(),
@@ -113,7 +113,7 @@ def _build_kelulusan_context(request):
     if sort not in SORT_KELULUSAN:
         sort = DEFAULT_SORT_KELULUSAN
 
-    siswa_qs = Siswa.objects.filter(tingkat=12).select_related('users')
+    siswa_qs = Siswa.objects.filter(tingkat=12).exclude(status='keluar').select_related('users')
     siswa_qs = _annotate_tahun_ajaran(siswa_qs)
 
     if q:
@@ -245,7 +245,7 @@ def proses_kelulusan(request):
         messages.error(request, 'Pilih minimal satu siswa yang akan diproses kelulusannya.')
         return _kembali_ke_kelulusan(request)
 
-    siswa_terpilih = Siswa.objects.filter(id__in=siswa_ids, tingkat=12)
+    siswa_terpilih = Siswa.objects.filter(id__in=siswa_ids, tingkat=12).exclude(status='keluar')
     hari_ini = timezone.localdate()
     nama_terproses = list(siswa_terpilih.values_list('nama', flat=True))
     jumlah = siswa_terpilih.update(status_kelulusan='lulus', status='alumni', tanggal_kelulusan=hari_ini)
@@ -281,7 +281,7 @@ def tandai_tidak_lulus(request):
         messages.error(request, 'Pilih minimal satu siswa terlebih dahulu.')
         return _kembali_ke_kelulusan(request)
 
-    siswa_terpilih = Siswa.objects.filter(id__in=siswa_ids, tingkat=12)
+    siswa_terpilih = Siswa.objects.filter(id__in=siswa_ids, tingkat=12).exclude(status='keluar')
     nama_terproses = list(siswa_terpilih.values_list('nama', flat=True))
     jumlah = siswa_terpilih.update(status_kelulusan='tidak_lulus')
 

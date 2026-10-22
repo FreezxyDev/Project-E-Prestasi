@@ -11,7 +11,9 @@ NPSN_SMKN_11_BANDUNG = '20219175'
 class Users(models.Model):
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=100)
-    npsn = models.CharField(max_length=8, default=NPSN_SMKN_11_BANDUNG)
+    # NPSN terisi = akun terafiliasi dengan SMKN 11 Bandung. Dikosongkan (string kosong)
+    # saat siswa keluar/dikeluarkan -> akun tidak bisa login, tapi data & portofolio tetap ada.
+    npsn = models.CharField(max_length=8, default=NPSN_SMKN_11_BANDUNG, blank=True)
     role = models.CharField(max_length=100, choices=[
         ('super_admin', 'super_admin'),
         ('admin', 'admin'),
@@ -40,8 +42,21 @@ class Siswa(models.Model):
         ('aktif', 'aktif'),
         ('nonaktif', 'nonaktif'),
         ('alumni', 'alumni'),
+        ('keluar', 'keluar'),
     ], default='aktif')
     nama = models.CharField(max_length=100, blank=True, default='')
+
+    # ── Siswa keluar / dikeluarkan ───────────────────────────────────────
+    # Saat status = 'keluar', NPSN di akun (Users.npsn) dikosongkan sehingga login
+    # ditolak ("tidak terafiliasi dengan SMKN 11 Bandung"). Data siswa, prestasi, dan
+    # portofolio publik TIDAK dihapus.
+    JENIS_KELUAR_CHOICES = [
+        ('mengundurkan_diri', 'Keluar / Mengundurkan diri'),
+        ('dikeluarkan', 'Dikeluarkan'),
+    ]
+    jenis_keluar = models.CharField(max_length=20, choices=JENIS_KELUAR_CHOICES, blank=True, null=True)
+    tanggal_keluar = models.DateField(null=True, blank=True)
+    keterangan_keluar = models.TextField(blank=True, default='')
     # Kelas saat ini (disinkronkan dari RiwayatKelas tahun ajaran aktif). Sengaja tanpa
     # choices: daftar kelas dibuat admin per tahun ajaran di model Kelas.
     kelas = models.CharField(max_length=100, blank=True, null=True)
@@ -220,6 +235,8 @@ class LogAktivitas(models.Model):
         ('siswa_ditempatkan_kelas', 'Siswa ditempatkan ke kelas'),
         ('kelulusan_diproses', 'Kelulusan diproses'),
         ('password_direset', 'Password direset'),
+        ('siswa_keluar', 'Siswa keluar / dikeluarkan'),
+        ('siswa_dipulihkan', 'Siswa dipulihkan'),
     ]
     MODUL_CHOICES = [
         ('siswa', 'Siswa'),
@@ -340,7 +357,10 @@ class Kelas(models.Model):
 
     @property
     def jumlah_siswa(self):
-        return self.riwayat_kelas.count()
+        # Kalau queryset memakai .annotate(jumlah_siswa_hitung=Count('riwayat_kelas')),
+        # pakai angka itu (tanpa query tambahan per kelas). Kalau tidak, hitung langsung.
+        hitung = getattr(self, 'jumlah_siswa_hitung', None)
+        return hitung if hitung is not None else self.riwayat_kelas.count()
 
 
 class RiwayatKelas(models.Model):

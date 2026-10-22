@@ -16,6 +16,22 @@
         </p>
     {% endif %}
 
+    {% if mode == 'edit' and siswa.status == 'keluar' %}
+        <div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong>{% if siswa.jenis_keluar == 'dikeluarkan' %}Siswa dikeluarkan{% else %}Siswa keluar{% endif %}</strong>
+                {% if siswa.tanggal_keluar %}per {{ siswa.tanggal_keluar|date:"d M Y" }}{% endif %}.
+                Akun berstatus siswa nonaktif: masih bisa login, tapi hanya untuk melihat portofolio dan QR Code (tidak bisa upload prestasi).
+                {% if siswa.keterangan_keluar %}<div class="small text-muted">{{ siswa.keterangan_keluar }}</div>{% endif %}
+            </div>
+            <button type="submit" form="pulihkanFormEdit" class="btn btn-sm btn-outline-success"
+                    onclick="return confirm('Pulihkan siswa ini menjadi aktif? Akses penuh dipulihkan.')">
+                <i class="bi bi-arrow-counterclockwise"></i> Pulihkan
+            </button>
+        </div>
+        <form method="POST" action="{% url 'pulihkan_siswa' siswa.id %}" id="pulihkanFormEdit" class="d-none">{% csrf_token %}</form>
+    {% endif %}
+
     <form method="POST">
         {% csrf_token %}
         {{ form.non_field_errors }}
@@ -59,7 +75,7 @@
                         {{ form.tingkat.errors }}
                     </div>
                 {% endif %}
-                {% if form.status %}
+                {% if form.status and siswa.status != 'keluar' %}
                     <div class="col-6 mb-3">
                         <label class="form-label">Status</label>
                         {{ form.status }}

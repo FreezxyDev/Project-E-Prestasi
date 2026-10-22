@@ -9,6 +9,7 @@ from . import kesiswaan_views
 from . import import_views
 from . import kelas_views
 from . import kelulusan_views
+from . import siswa_keluar_views
 
 urlpatterns = [
     # Autentikasi
@@ -57,6 +58,8 @@ urlpatterns = [
     path('siswa/tambah/', views.Create_siswa, name='tambah_siswa'),
     path('siswa/edit/<int:siswa_id>/', views.Update_siswa, name='update_siswa'),
     path('siswa/hapus/<int:siswa_id>/', views.delete_siswa, name='delete_siswa'),
+    path('siswa/keluarkan/<int:siswa_id>/', siswa_keluar_views.keluarkan_siswa, name='keluarkan_siswa'),
+    path('siswa/pulihkan/<int:siswa_id>/', siswa_keluar_views.pulihkan_siswa, name='pulihkan_siswa'),
 
     # Import Excel siswa
     path('siswa/import/', import_views.import_siswa, name='siswa_import'),

@@ -33,7 +33,19 @@
         </div>
     </div>
 
-    {% if not wajib_diisi %}
+    {% if siswa.status == 'keluar' %}
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-label">PORTOFOLIO</div>
+            <a href="{% url 'siswa_qr_code' %}" class="nav-link active">
+                <i class="bi bi-qr-code"></i><span>QR Code Portofolio</span>
+            </a>
+            <a href="{% url 'portofolio_publik' siswa.nis %}" target="_blank" class="nav-link">
+                <i class="bi bi-person-lines-fill"></i><span>Lihat Portofolio</span>
+            </a>
+        </div>
+    </nav>
+    {% elif not wajib_diisi %}
     <nav class="sidebar-nav">
         <div class="nav-section">
             <div class="nav-label">OVERVIEW</div>
@@ -64,7 +76,7 @@
     {% endif %}
 
     <div class="sidebar-footer">
-        {% if not wajib_diisi %}
+        {% if not wajib_diisi and siswa.status != 'keluar' %}
         <a href="{% url 'siswa_lengkapi_profil' %}" class="sidebar-user" title="Profil saya">
         {% else %}
         <div class="sidebar-user">
@@ -72,9 +84,9 @@
             <div class="user-avatar">{{ request.session.nama|default:request.session.username|slice:":2"|upper }}</div>
             <div class="user-meta">
                 <div class="user-name">{{ request.session.nama|default:request.session.username }}</div>
-                <div class="user-role">Siswa</div>
+                <div class="user-role">{% if siswa.status == 'keluar' %}Siswa Nonaktif{% else %}Siswa{% endif %}</div>
             </div>
-        {% if not wajib_diisi %}</a>{% else %}</div>{% endif %}
+        {% if not wajib_diisi and siswa.status != 'keluar' %}</a>{% else %}</div>{% endif %}
         <a href="{% url 'logout' %}" class="logout-link">
             <i class="bi bi-box-arrow-right"></i><span>Keluar</span>
         </a>
@@ -93,7 +105,7 @@
             {% endif %}
         </div>
         <div class="topnav-actions">
-{% if not wajib_diisi %}
+{% if not wajib_diisi and siswa.status != 'keluar' %}
 {% if siswa.bisa_edit %}<a href="{% url 'siswa_upload_prestasi' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>Ajukan Prestasi</span></a>{% endif %}
 <div class="dropdown">
     <button class="icon-btn" type="button" title="Notifikasi" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -138,6 +150,17 @@
     </div>
 
     <div class="main-content">
+
+        {% if siswa.status == 'keluar' %}
+            <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+                <i class="bi bi-person-slash fs-5"></i>
+                <div>
+                    <strong>Akun Siswa Nonaktif.</strong>
+                    Kamu sudah tidak terdaftar sebagai siswa aktif SMKN 11 Bandung, jadi tidak bisa lagi mengajukan
+                    prestasi. Kamu masih bisa melihat portofolio dan membuat QR Code-nya di halaman ini.
+                </div>
+            </div>
+        {% endif %}
 
         {% if messages %}
             {% for message in messages %}

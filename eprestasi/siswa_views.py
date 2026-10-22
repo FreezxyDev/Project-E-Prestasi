@@ -165,7 +165,7 @@ def notif_tandai_semua(request):
     return redirect('siswa_dashboard')
 
 
-@role_required('siswa')
+@role_required('siswa', allow_nonaktif=True)
 def qr_code_view(request):
     """
     QR code menyimpan link ke halaman portofolio PUBLIK siswa (portofolio_publik,

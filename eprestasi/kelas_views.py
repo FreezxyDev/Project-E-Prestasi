@@ -415,7 +415,11 @@ def kelola_kelas(request):
 
     daftar_kelas = []
     if tahun_ajaran_terpilih:
-        daftar_kelas = Kelas.objects.filter(tahun_ajaran=tahun_ajaran_terpilih).order_by('jurusan', 'tingkat', 'nama_kelas')
+        daftar_kelas = (
+            Kelas.objects.filter(tahun_ajaran=tahun_ajaran_terpilih)
+            .annotate(jumlah_siswa_hitung=Count('riwayat_kelas'))   # 1 query, bukan 2 per kelas
+            .order_by('jurusan', 'tingkat', 'nama_kelas')
+        )
 
     context = {
         'active_menu': 'pengelolaan_kelas',

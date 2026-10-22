@@ -92,6 +92,8 @@ def siswa_list(request):
         'total_aktif': Siswa.objects.filter(status='aktif').count(),
         'total_tidak_aktif': Siswa.objects.filter(status='nonaktif').count(),
         'total_alumni': Siswa.objects.filter(status='alumni').count(),
+        'total_keluar': Siswa.objects.filter(status='keluar').count(),
+        'jenis_keluar_choices': Siswa.JENIS_KELUAR_CHOICES,
         'tahun_ajaran_aktif': ta_aktif.tahun_ajaran if ta_aktif else None,
     }
     return render(request, 'eprestasi/siswa/list.html', context)  # sesuaikan path template

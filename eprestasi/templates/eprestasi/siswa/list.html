@@ -8,7 +8,7 @@
 <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
     <div>
         <h1>Kelola User</h1>
-        <p>Manajemen data siswa aktif, nonaktif, dan alumni.</p>
+        <p>Manajemen data siswa aktif, nonaktif, alumni, dan siswa yang sudah keluar.</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{% url 'siswa_import' %}" class="btn btn-outline-primary btn-sm">
@@ -87,6 +87,11 @@
         <li class="nav-item">
             <a class="nav-link js-nav-loading {% if status_filter == 'alumni' %}active{% endif %}" href="?{% url_replace status='alumni' %}">
                 Alumni <span class="tab-count">{{ total_alumni }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link js-nav-loading {% if status_filter == 'keluar' %}active{% endif %}" href="?{% url_replace status='keluar' %}">
+                Keluar <span class="tab-count">{{ total_keluar }}</span>
             </a>
         </li>
     </ul>
@@ -222,6 +227,11 @@
                                 <span class="badge badge-aktif">Aktif</span>
                             {% elif siswa.status == 'alumni' %}
                                 <span class="badge badge-alumni">Alumni</span>
+                            {% elif siswa.status == 'keluar' %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary"
+                                      title="{{ siswa.get_jenis_keluar_display|default:'' }}{% if siswa.tanggal_keluar %} - {{ siswa.tanggal_keluar|date:'d M Y' }}{% endif %}">
+                                    {% if siswa.jenis_keluar == 'dikeluarkan' %}Dikeluarkan{% else %}Keluar{% endif %}
+                                </span>
                             {% else %}
                                 <span class="badge bg-danger-subtle text-danger border border-danger">Nonaktif</span>
                             {% endif %}
@@ -240,6 +250,19 @@
                             <a href="{% url 'update_siswa' siswa.id %}" class="btn btn-sm btn-outline-primary" title="Edit Data">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            {% if siswa.status == 'keluar' %}
+                                <button type="submit" form="pulihkanForm{{ siswa.id }}" class="btn btn-sm btn-outline-success" title="Pulihkan Siswa"
+                                        onclick="return confirm('Pulihkan {{ siswa.nama|escapejs }} ({{ siswa.nis }}) menjadi siswa aktif? Akses penuh dipulihkan.')">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            {% elif siswa.status != 'alumni' %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" title="Keluarkan Siswa"
+                                        data-bs-toggle="modal" data-bs-target="#modalKeluar"
+                                        data-action="{% url 'keluarkan_siswa' siswa.id %}"
+                                        data-nama="{{ siswa.nama|default:siswa.nis }} ({{ siswa.nis }})">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                </button>
+                            {% endif %}
                             <button type="submit" form="deleteForm{{ siswa.id }}" class="btn btn-sm btn-outline-danger" title="Hapus Data"
                                     onclick="return confirm('Yakin ingin menghapus akun {{ siswa.nama|escapejs }} ({{ siswa.nis }})?')">
                                 <i class="bi bi-trash"></i>
@@ -271,5 +294,62 @@
     {% csrf_token %}
 </form>
 {% endfor %}
+{% for siswa in page_obj %}{% if siswa.status == 'keluar' %}
+<form method="POST" action="{% url 'pulihkan_siswa' siswa.id %}" id="pulihkanForm{{ siswa.id }}" class="d-none">
+    {% csrf_token %}
+</form>
+{% endif %}{% endfor %}
 
+<!-- Modal: siswa keluar / dikeluarkan -->
+<div class="modal fade" id="modalKeluar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content" id="formKeluar">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title">Siswa Keluar / Dikeluarkan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Siswa: <strong id="keluarNama">-</strong></p>
+                <div class="alert alert-warning small">
+                    NPSN akun akan dicabut dan siswa menjadi <strong>siswa nonaktif</strong>: masih bisa login, tapi
+                    hanya untuk melihat portofolio dan membuat QR Code. Siswa tidak bisa lagi mengajukan prestasi.
+                    Prestasi dan portofolio publik tetap ada. Admin bisa memulihkannya kapan saja.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Jenis</label>
+                    <select name="jenis_keluar" class="form-select" required>
+                        <option value="">-- Pilih --</option>
+                        {% for kode, label in jenis_keluar_choices %}
+                            <option value="{{ kode }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tanggal keluar</label>
+                    <input type="date" name="tanggal_keluar" class="form-control">
+                    <div class="form-text">Kosongkan untuk memakai tanggal hari ini.</div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label">Keterangan (opsional)</label>
+                    <textarea name="keterangan_keluar" class="form-control" rows="2" placeholder="Mis. pindah sekolah, SK nomor ..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-warning">Keluarkan Siswa</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('modalKeluar').addEventListener('show.bs.modal', function (e) {
+    var tombol = e.relatedTarget;
+    document.getElementById('formKeluar').action = tombol.getAttribute('data-action');
+    document.getElementById('keluarNama').textContent = tombol.getAttribute('data-nama');
+});
+</script>
 {% endblock %}

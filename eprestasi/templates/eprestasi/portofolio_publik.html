@@ -39,6 +39,9 @@
                     <span class="chip"><i class="bi bi-person-badge"></i> NIS {{ siswa.nis }}</span>
                     <span class="chip"><i class="bi bi-mortarboard"></i> {{ siswa.kelas|default:"-" }}</span>
                     <span class="chip"><i class="bi bi-building"></i> {{ siswa.jurusan|default:"-" }}</span>
+                    {% if siswa.status == 'keluar' %}
+                        <span class="chip"><i class="bi bi-info-circle"></i> Bukan lagi siswa SMKN 11 Bandung</span>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -162,12 +162,18 @@ def login_view(request):
         # 3b. Validasi keanggotaan: NPSN akun harus NPSN SMKN 11 Bandung.
         #     Dicek SETELAH password benar supaya tidak membocorkan apakah
         #     sebuah akun ada atau tidak.
-        if not user.anggota_sekolah_valid:
+        #     Pengecualian: siswa NONAKTIF (keluar/dikeluarkan) tetap boleh login,
+        #     tapi hanya untuk melihat QR Code & portofolio (dibatasi di decorators.py).
+        siswa_nonaktif = (
+            user.role == 'siswa'
+            and Siswa.objects.filter(users=user, status='keluar').exists()
+        )
+        if not user.anggota_sekolah_valid and not siswa_nonaktif:
             logger.warning('Login ditolak (NPSN tidak cocok): user_id=%s npsn=%r', user.id, user.npsn)
             messages.error(
                 request,
-                'Akun ini tidak terdaftar sebagai anggota SMKN 11 Bandung (NPSN tidak valid). '
-                'Hubungi admin sekolah.'
+                'Akun ini tidak terafiliasi dengan SMKN 11 Bandung. '
+                'Hubungi admin sekolah jika ini sebuah kesalahan.'
             )
             return render(request, 'eprestasi/login.html')
 
@@ -193,6 +199,14 @@ def login_view(request):
         request.session['username'] = user.username
         request.session['role'] = user.role
         request.session['nama'] = nama_tampil
+
+        if siswa_nonaktif:
+            messages.warning(
+                request,
+                f'Halo, {nama_tampil}. Akun Anda berstatus siswa nonaktif, sehingga hanya bisa '
+                f'mengakses QR Code dan halaman portofolio.'
+            )
+            return redirect('siswa_qr_code')
 
         messages.success(request, f'Selamat datang, {nama_tampil}!')
         

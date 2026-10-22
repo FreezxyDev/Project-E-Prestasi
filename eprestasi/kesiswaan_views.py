@@ -903,12 +903,20 @@ def statistik(request):
         .annotate(tertinggi=Max('bobot'), total=Count('id'))
         .order_by('-tertinggi', '-total', 'siswa__nama')[:5]
     )
+    # Satu query untuk semua siswa teratas (sebelumnya 1 query per siswa). Urutan terbaru dulu,
+    # jadi entri pertama untuk (siswa, tingkat) = prestasi terbaru di tingkat tertingginya.
+    contoh_map = {}
+    if top_tingkat:
+        kandidat = (
+            diterima.filter(siswa_id__in=[r['siswa_id'] for r in top_tingkat])
+            .order_by('-tanggal_prestasi', '-id')
+            .values_list('siswa_id', 'tingkat_prestasi', 'nama_prestasi')
+        )
+        for sid, tingkat, nama in kandidat:
+            contoh_map.setdefault((sid, tingkat), nama)
     for r in top_tingkat:
         r['tingkat_label'] = LABEL_TINGKAT.get(r['tertinggi'], '-')
-        contoh = diterima.filter(
-            siswa_id=r['siswa_id'], tingkat_prestasi=BOBOT_KE_TINGKAT.get(r['tertinggi'])
-        ).order_by('-tanggal_prestasi').first()
-        r['contoh'] = contoh.nama_prestasi if contoh else ''
+        r['contoh'] = contoh_map.get((r['siswa_id'], BOBOT_KE_TINGKAT.get(r['tertinggi'])), '')
 
     return render(request, 'eprestasi/kesiswaan_portal/statistik.html', {
         'kesiswaan': kesiswaan,

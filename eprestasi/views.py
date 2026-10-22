@@ -302,13 +302,15 @@ def Update_siswa(request, siswa_id):
             kelas_obj = data.get('kelas')
             if kelas_obj and kelas_obj.nama_kelas != siswa.kelas:
                 perubahan.append(f'kelas {siswa.kelas or "-"} → {kelas_obj.nama_kelas}')
-            if siswa.status != (data.get('status') or siswa.status):
+            # Status 'keluar' hanya diubah lewat tombol Pulihkan (supaya NPSN ikut dipulihkan).
+            status_boleh_diubah = siswa.status != 'keluar'
+            if status_boleh_diubah and siswa.status != (data.get('status') or siswa.status):
                 perubahan.append(f'status {siswa.status} → {data.get("status")}')
 
             siswa.nis = data['nis']
             siswa.nama = data['nama']
             siswa.jurusan = data.get('jurusan', '')
-            if data.get('status'):
+            if data.get('status') and status_boleh_diubah:
                 siswa.status = data['status']
             siswa.save()
 
