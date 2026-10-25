@@ -6,42 +6,45 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load environment variables dari file .env
 load_dotenv()
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = BASE_DIR / 'templates'
 
-# ---------------------------------------------------------------------------
-# Keamanan: semua rahasia dibaca dari environment variable (Vercel > Settings
-# > Environment Variables). Jangan menaruh password/secret key di kode.
-# ---------------------------------------------------------------------------
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-key-ganti-di-production')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#zd^1((1@f6wx87z!2g*u5080_8lm36kax9e6h#hu-l*fv&q@d')
 
-# DEBUG hanya True kalau env DEBUG=true (lokal). Di Vercel biarkan kosong/False.
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
     'localhost',
-    '127.0.0.1',
     'eprestasi.freznx.my.id',
-    '.vercel.app',
+    '127.0.0.1',
+    '.vercel.app',  # Menjangkau seluruh subdomain *.vercel.app
 ]
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',  # sebelum staticfiles
+    'cloudinary_storage',  # Harus diletakkan sebelum staticfiles
     'django.contrib.staticfiles',
     'cloudinary',
     'eprestasi',
 ]
 
+# Un-comment baris di bawah jika Anda menggunakan custom user model:
+# AUTH_USER_MODEL = 'eprestasi.Users'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # tepat setelah Security
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Posisi tepat di bawah SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -50,24 +53,28 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ---------------------------------------------------------------------------
-# CSRF / cookie / proxy HTTPS
-# ---------------------------------------------------------------------------
+# ==========================================
+# KONFIGURASI CORS & COOKIE (DEVELOPMENT & PROD)
+# ==========================================
+
+# 1. Izinkan frontend mengirim cookie/session
+
+# 2. Daftarkan URL/Port tempat Frontend kamu berjalan
+# 3. Gabungan domain trusted origin untuk CSRF
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://*.vercel.app',
-    'https://eprestasi.freznx.my.id',
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app",
+    "https://eprestasi.freznx.my.id",
 ]
 
-# Vercel berada di belakang proxy HTTPS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Cookie aman di production, longgar di lokal (DEBUG=true)
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# 4. Pengaturan Cookie untuk HTTP (localhost)
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -78,11 +85,18 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+        'OPTIONS': {
+            'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'eprestasi.context_processors.notifikasi_kesiswaan',
+                'eprestasi.context_processors.notifikasi_kesiswaan',   # <- tambahan
             ],
         },
     },
@@ -90,73 +104,73 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ---------------------------------------------------------------------------
-# Database (Supabase PostgreSQL) - isi lewat env, tanpa default password
-# ---------------------------------------------------------------------------
+# Database (Supabase PostgreSQL)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'postgres'),
-        'USER': os.environ.get('DB_USER', ''),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', ''),
+        'USER': os.environ.get('DB_USER', 'postgres.ftdtjcvmfhajwxwgeqqk'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'Helmi123@123'),
+        'HOST': os.environ.get('DB_HOST', 'aws-0-ap-southeast-1.pooler.supabase.com'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
+# Internationalization
 LANGUAGE_CODE = 'id-id'
 TIME_ZONE = 'Asia/Jakarta'
 USE_I18N = True
 USE_TZ = True
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ---------------------------------------------------------------------------
-# STATIC FILES
-# Hasil collectstatic masuk ke staticfiles_build/static, cocok dengan
-# "distDir": "staticfiles_build" di vercel.json -> URL /static/...
-# ---------------------------------------------------------------------------
+# ==============================================================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ==============================================================================
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles_build' / 'static'
 
-# Folder eprestasi/static ditemukan otomatis (app ada di INSTALLED_APPS).
-# Folder static di root hanya dipakai kalau memang ada.
-STATICFILES_DIRS = [p for p in [BASE_DIR / 'static'] if p.exists()]
+STATICFILES_DIRS = [
+    BASE_DIR / 'eprestasi' / 'templates' / 'static',
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# ---------------------------------------------------------------------------
-# Cloudinary (media upload) + STORAGES (Django 5.1+)
-# ---------------------------------------------------------------------------
+# ==============================================================================
+# KONFIGURASI CLOUDINARY VIA CLOUDINARY_URL
+# ==============================================================================
 CLOUDINARY_STORAGE = {
-    'CLOUDINARY_URL': os.environ.get('CLOUDINARY_URL'),
+    'CLOUDINARY_URL': os.environ.get('CLOUDINARY_URL')
 }
 
-STORAGES = {
-    'default': {'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage'},
-    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
-}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# settings.py
+DEBUG = True
 
-# ---------------------------------------------------------------------------
-# Email (OTP lupa password)
-# ---------------------------------------------------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# ==== Email (OTP lupa password) ====
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'   
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
+EMAIL_USE_SSL = False   
 EMAIL_TIMEOUT = 15
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# ---------------------------------------------------------------------------
-# OTP ke no HP (WhatsApp via Fonnte)
-# ---------------------------------------------------------------------------
+# ==== OTP ke no HP (WhatsApp via Fonnte) ====
 OTP_HP_PROVIDER = os.environ.get('OTP_HP_PROVIDER', 'console')
 FONNTE_TOKEN = os.environ.get('FONNTE_TOKEN', '')
