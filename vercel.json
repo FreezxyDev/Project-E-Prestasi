@@ -7,7 +7,7 @@
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
+      "src": "eprestasi/static/(.*)",
       "dest": "/static/$1"
     },
     {
