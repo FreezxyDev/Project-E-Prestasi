@@ -3,6 +3,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8" />
+{% include 'eprestasi/_partials/theme_head.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - E-Prestasi SMKN 11 Bandung</title>
 
@@ -17,6 +18,7 @@
     <link rel="stylesheet" href="{% static 'css/design.css' %}" />
 </head>
 <body class="page-login">
+{% include 'eprestasi/_partials/theme_toggle.html' with floating=1 %}
   <div class="login-layout">
 
     <!-- ==================== PANEL KIRI (FOTO SEKOLAH) ==================== -->
@@ -127,6 +129,10 @@
                   <i class="bi bi-eye" id="toggle-password-icon"></i>
                 </button>
               </div>
+            </div>
+
+            <div style="text-align:right; margin-top:-4px;">
+              <a href="{% url 'lupa_password' %}" style="font-size:var(--text-caption); color:var(--color-ash-text); text-decoration:underline;">Lupa password?</a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">Masuk</button>

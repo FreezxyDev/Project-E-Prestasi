@@ -1,4 +1,6 @@
-from eprestasi.models import Prestasi, Kesiswaan, NotifikasiDibaca, Siswa, NotifikasiSiswa
+from eprestasi.models import (
+    Prestasi, Kesiswaan, NotifikasiDibaca, Siswa, NotifikasiSiswa, PermintaanResetPassword,
+)
 
 BATAS_NOTIF = 5
 
@@ -23,6 +25,10 @@ def notifikasi_kesiswaan(request):
             'notif_list': list(qs[:BATAS_NOTIF]),
             'notif_batas': BATAS_NOTIF,
         }
+
+    # Admin: jumlah permintaan reset password dari siswa yang menunggu (badge di sidebar).
+    if role in ('admin', 'super_admin'):
+        return {'permintaan_reset_pending': PermintaanResetPassword.objects.filter(status='pending').count()}
 
     if role != 'kesiswaan':
         return {}

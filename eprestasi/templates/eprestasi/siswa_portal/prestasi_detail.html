@@ -94,6 +94,8 @@
                     <i class="bi bi-info-circle"></i>
                     {% if prestasi.status == 'perbaikan' and prestasi.jenis_perbaikan == 'file' %}
                         File sertifikat lama sudah dihapus. Unggah file baru di bawah ini.
+                    {% elif prestasi.status == 'ditolak' %}
+                        Pengajuan ditolak. Sertifikat telah dihapus.
                     {% else %}
                         Belum ada file sertifikat.
                     {% endif %}
@@ -128,7 +130,14 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="dp-empty"><i class="bi bi-info-circle"></i> Belum ada foto dokumentasi.</div>
+                <div class="dp-empty">
+                    <i class="bi bi-info-circle"></i>
+                    {% if prestasi.status == 'ditolak' %}
+                        Pengajuan ditolak. Dokumentasi telah dihapus.
+                    {% else %}
+                        Belum ada foto dokumentasi.
+                    {% endif %}
+                </div>
             {% endif %}
 
             {% if prestasi.status == 'pending' %}
@@ -166,8 +175,11 @@
                         <i class="bi bi-box-arrow-up-right go"></i>
                     </a>
                 {% endif %}
+                {% if prestasi.status == 'ditolak' and not prestasi.dokumen_puspresnas %}
+                    <div class="dp-empty mt-3"><i class="bi bi-info-circle"></i> Pengajuan ditolak. File Puspresnas (jika ada) telah dihapus.</div>
+                {% endif %}
             {% else %}
-                <div class="dp-empty"><i class="bi bi-dash-circle"></i> Tidak ada kode atau dokumen Puspresnas.</div>
+                <div class="dp-empty"><i class="bi bi-dash-circle"></i> {% if prestasi.status == 'ditolak' %}Pengajuan ditolak. File Puspresnas (jika ada) telah dihapus.{% else %}Tidak ada kode atau dokumen Puspresnas.{% endif %}</div>
             {% endif %}
         </div>
 

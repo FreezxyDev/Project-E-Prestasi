@@ -1,0 +1,10 @@
+{# Pasang di <head> SEBELUM stylesheet. Menentukan tema (terang/gelap) sebelum halaman digambar supaya tidak berkedip. #}
+<script>
+(function () {
+    var t = 'light';
+    try { t = localStorage.getItem('eprestasi-theme') || 'light'; } catch (e) {}
+    document.documentElement.setAttribute('data-bs-theme', t);
+    document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<meta name="color-scheme" content="light dark">

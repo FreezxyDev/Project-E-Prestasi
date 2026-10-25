@@ -10,6 +10,8 @@ from . import import_views
 from . import kelas_views
 from . import kelulusan_views
 from . import siswa_keluar_views
+from . import views_drilldown
+from . import lupa_password_views
 
 urlpatterns = [
     # Autentikasi
@@ -17,6 +19,17 @@ urlpatterns = [
     path('api/cari-siswa/', views.cari_siswa_api, name='cari_siswa_api'),
     path('login/', auth_views.login_view, name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
+
+    # Lupa password (siswa)
+    path('lupa-password/', lupa_password_views.lupa_password, name='lupa_password'),
+    path('lupa-password/metode/', lupa_password_views.lupa_password_metode, name='lupa_password_metode'),
+    path('lupa-password/verifikasi/', lupa_password_views.lupa_password_verifikasi, name='lupa_password_verifikasi'),
+    path('lupa-password/baru/', lupa_password_views.lupa_password_baru, name='lupa_password_baru'),
+
+    # Permintaan reset password (admin)
+    path('permintaan-reset-password/', lupa_password_views.permintaan_reset_list, name='permintaan_reset_list'),
+    path('permintaan-reset-password/<int:permintaan_id>/proses/', lupa_password_views.permintaan_reset_proses, name='permintaan_reset_proses'),
+    path('permintaan-reset-password/<int:permintaan_id>/tolak/', lupa_password_views.permintaan_reset_tolak, name='permintaan_reset_tolak'),
 
     # Portal Siswa
     path('siswa/dashboard/', siswa_views.dashboard, name='siswa_dashboard'),
@@ -76,6 +89,8 @@ urlpatterns = [
     # Tahun Ajaran
     path('tahun-ajaran/', tahun_ajaran_views.tahun_ajaran_list, name='tahun_ajaran_list'),
     path('tahun-ajaran/<int:tahun_ajaran_id>/statistik/', tahun_ajaran_views.tahun_ajaran_statistik, name='tahun_ajaran_statistik'),
+    path('tahun-ajaran/<int:tahun_id>/kelas/', views_drilldown.tahun_ajaran_kelas, name='tahun_ajaran_kelas'),
+    path('tahun-ajaran/<int:tahun_id>/kelas/<int:kelas_id>/siswa/', views_drilldown.tahun_ajaran_kelas_siswa, name='tahun_ajaran_kelas_siswa'),
     path('tahun-ajaran/tambah/', views.Create_tahun_ajaran, name='tambah_tahun_ajaran'),
     path('tahun-ajaran/edit/<int:tahun_ajaran_id>/', views.Update_tahun_ajaran, name='update_tahun_ajaran'),
     path('tahun-ajaran/aktifkan/<int:tahun_ajaran_id>/', views.aktifkan_tahun_ajaran, name='aktifkan_tahun_ajaran'),

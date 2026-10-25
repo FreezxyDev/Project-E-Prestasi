@@ -1,0 +1,17 @@
+{% extends 'eprestasi/lupa_password/base.html' %}
+{% block heading %}Lupa Password{% endblock %}
+{% block subheading %}Masukkan NIS / username akun siswa kamu.{% endblock %}
+
+{% block content %}
+<form method="POST" class="login-form">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="identitas">NIS / Username</label>
+    <input type="text" name="identitas" id="identitas" class="input-pill" value="{{ identitas|default:'' }}"
+           placeholder="Masukkan NIS" autocomplete="username" required autofocus />
+  </div>
+  <button type="submit" class="btn btn-primary btn-block">Lanjut</button>
+  <a href="{% url 'login' %}" class="btn btn-outline btn-block"><i class="bi bi-arrow-left"></i> Kembali ke Login</a>
+</form>
+<p class="lp-info">Fitur ini khusus akun siswa. Akun kesiswaan atau admin yang lupa password, silakan hubungi administrator.</p>
+{% endblock %}

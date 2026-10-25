@@ -478,3 +478,54 @@ class LoginAttempt(models.Model):
 
     class Meta:
         db_table = 'login_attempt'
+
+
+class PermintaanResetPassword(models.Model):
+    """
+    Permintaan reset password dari siswa ke admin (dipakai kalau profil siswa belum
+    lengkap -- jadi belum punya email/no HP untuk OTP -- atau kalau siswa memilih
+    meminta lewat admin). Admin memprosesnya dari menu "Permintaan Reset Password".
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Menunggu'),
+        ('selesai', 'Selesai'),
+        ('ditolak', 'Ditolak'),
+    ]
+    siswa = models.ForeignKey(Siswa, on_delete=models.CASCADE, related_name='permintaan_reset_password')
+    alasan = models.CharField(max_length=30, blank=True, default='')  # 'profil_belum_lengkap' / 'pilih_admin'
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    dibuat_pada = models.DateTimeField(auto_now_add=True)
+    diproses_pada = models.DateTimeField(null=True, blank=True)
+    diproses_oleh = models.CharField(max_length=100, blank=True, default='')
+    catatan = models.CharField(max_length=255, blank=True, default='')
+
+    class Meta:
+        db_table = 'permintaan_reset_password'
+        ordering = ['-dibuat_pada']
+
+    def __str__(self):
+        return f'Reset password {self.siswa.nis} ({self.status})'
+
+
+class OtpResetPassword(models.Model):
+    """
+    Kode OTP reset password (dikirim ke email / no HP siswa). Kode TIDAK disimpan
+    mentah, hanya HMAC-nya. Berlaku 10 menit dan sekali pakai.
+    """
+    KANAL_CHOICES = [('email', 'Email'), ('hp', 'No HP')]
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='otp_reset_password')
+    kanal = models.CharField(max_length=10, choices=KANAL_CHOICES)
+    tujuan = models.CharField(max_length=100)  # email / no HP saat OTP dikirim
+    kode_hash = models.CharField(max_length=64)
+    dibuat_pada = models.DateTimeField(default=timezone.now)
+    kedaluwarsa_pada = models.DateTimeField()
+    terpakai = models.BooleanField(default=False)
+    percobaan_salah = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'otp_reset_password'
+        ordering = ['-dibuat_pada']
+
+    def __str__(self):
+        return f'OTP {self.kanal} user#{self.user_id}'
+

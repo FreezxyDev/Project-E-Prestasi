@@ -22,7 +22,7 @@ from eprestasi.models import (
 from eprestasi.forms import (
     KesiswaanProfilForm, VerifikasiPrestasiForm, TINGKAT_PRESTASI_CHOICES,
 )
-from eprestasi.cloudinary_utils import hapus_sertifikat_prestasi
+from eprestasi.cloudinary_utils import hapus_sertifikat_prestasi, hapus_semua_file_prestasi
 from eprestasi.log_utils import catat_aktivitas
 
 PAGE_SIZE = 10
@@ -675,17 +675,17 @@ def verifikasi_detail(request, prestasi_id):
                 )
 
                 # Prestasi ditolak permanen.
-                # File sertifikat dihapus dari Cloudinary.
+                # Semua file (sertifikat + foto dokumentasi) dihapus dari Cloudinary.
 
-                hapus_sertifikat_prestasi(
+                hapus_semua_file_prestasi(
                     prestasi
                 )
 
                 messages.success(
                     request,
                     f'Prestasi "{prestasi.nama_prestasi}" '
-                    'ditolak. File sertifikat sudah '
-                    'dihapus dari penyimpanan.'
+                    'ditolak. File sertifikat, foto dokumentasi, dan dokumen '
+                    'Puspresnas sudah dihapus dari penyimpanan.'
                 )
 
             return redirect(

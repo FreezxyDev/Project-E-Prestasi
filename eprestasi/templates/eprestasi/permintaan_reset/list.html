@@ -1,0 +1,89 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Permintaan Reset Password{% endblock %}
+
+{% block content %}
+
+<div class="topbar">
+    <h4>Permintaan Reset Password</h4>
+</div>
+
+{% if password_sementara %}
+<div class="alert alert-warning">
+    <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle"></i> Password sementara untuk {{ password_sementara.nama }} (NIS {{ password_sementara.nis }})</div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <code class="fs-5" id="pwSementara">{{ password_sementara.password }}</code>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('pwSementara').textContent); this.textContent='Tersalin';">
+            <i class="bi bi-clipboard"></i> Salin
+        </button>
+    </div>
+    <div class="small mt-1">Password ini hanya ditampilkan SEKALI. Berikan ke siswa yang bersangkutan, lalu minta siswa melengkapi profil dan menggantinya.</div>
+</div>
+{% endif %}
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link {% if status == 'pending' %}active{% endif %}" href="?status=pending">Menunggu <span class="badge bg-secondary">{{ hitung.pending }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status == 'selesai' %}active{% endif %}" href="?status=selesai">Selesai <span class="badge bg-secondary">{{ hitung.selesai }}</span></a></li>
+    <li class="nav-item"><a class="nav-link {% if status == 'ditolak' %}active{% endif %}" href="?status=ditolak">Ditolak <span class="badge bg-secondary">{{ hitung.ditolak }}</span></a></li>
+</ul>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Siswa</th>
+                    <th>Kelas</th>
+                    <th>Alasan</th>
+                    <th>Diminta</th>
+                    {% if status == 'pending' %}<th class="text-end">Aksi</th>{% else %}<th>Diproses</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in daftar %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ p.siswa.nama|default:"(belum diisi)" }}</div>
+                        <div class="small text-muted">NIS {{ p.siswa.nis }}</div>
+                    </td>
+                    <td>{{ p.siswa.kelas|default:"-" }}</td>
+                    <td>
+                        {% if p.alasan == 'profil_belum_lengkap' %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning">Profil belum lengkap</span>
+                        {% else %}
+                            <span class="badge bg-info-subtle text-info border border-info">Memilih lewat admin</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.dibuat_pada|date:"d M Y H:i" }}</td>
+                    {% if status == 'pending' %}
+                    <td class="text-end">
+                        <form method="POST" action="{% url 'permintaan_reset_proses' p.id %}" class="d-inline"
+                              onsubmit="return confirm('Reset password {{ p.siswa.nis }}? Password lama akan diganti password sementara.')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-key"></i> Reset</button>
+                        </form>
+                        <form method="POST" action="{% url 'permintaan_reset_tolak' p.id %}" class="d-inline"
+                              onsubmit="return confirm('Tolak permintaan reset password {{ p.siswa.nis }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Tolak</button>
+                        </form>
+                    </td>
+                    {% else %}
+                    <td>
+                        <div>{{ p.diproses_pada|date:"d M Y H:i" }}</div>
+                        <div class="small text-muted">{{ p.diproses_oleh|default:"-" }}{% if p.catatan %} &middot; {{ p.catatan }}{% endif %}</div>
+                    </td>
+                    {% endif %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        {% if status == 'pending' %}Tidak ada permintaan yang menunggu.{% else %}Belum ada data.{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

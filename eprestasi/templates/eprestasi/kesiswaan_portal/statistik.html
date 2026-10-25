@@ -60,7 +60,7 @@
     </div>
     <div class="col-6 col-lg-3 col-xl">
         <div class="card stat-card h-100">
-            <div class="stat-icon-badge info"><i class="bi bi-tools"></i></div>
+            <div class="stat-icon-badge orange"><i class="bi bi-tools"></i></div>
             <div class="stat-label">Perbaikan</div>
             <div class="stat-value">{{ ringkasan.perbaikan }}</div>
             <div class="stat-sub">menunggu revisi siswa</div>
@@ -174,7 +174,7 @@
     Chart.defaults.color = cssVar('--color-ash-text');
 
     const warna = { pending: cssVar('--chart-2'), diterima: cssVar('--chart-1'), perbaikan: cssVar('--chart-3'), ditolak: cssVar('--chart-4') };
-    const palet = [1, 2, 3, 4, 5, 6].map(n => cssVar('--chart-' + n));
+    const palet = [1, 2, 3, 4, 5, 6].map(n => cssVar('--chart-cat-' + n));
     const sumbuY = { beginAtZero: true, ticks: { precision: 0 }, grid: { color: cssVar('--color-hairline') } };
     const sumbuX = { grid: { display: false } };
     const opsiDasar = { maintainAspectRatio: false, plugins: { legend: { display: false } } };

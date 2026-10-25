@@ -1,0 +1,63 @@
+{% extends 'eprestasi/lupa_password/base.html' %}
+{% block icon %}bi-shield-lock{% endblock %}
+{% block heading %}Masukkan Kode OTP{% endblock %}
+{% block subheading %}Dikirim ke {{ tujuan_samar }}{% endblock %}
+
+{% block content %}
+<form method="POST" class="login-form" autocomplete="off">
+  {% csrf_token %}
+  <input type="hidden" name="aksi" value="verifikasi" />
+  <div class="form-group">
+    <label for="kode">Kode OTP (6 digit)</label>
+    <input type="text" name="kode" id="kode" class="input-pill lp-otp" inputmode="numeric"
+           pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="••••••" required autofocus />
+  </div>
+  <p class="lp-info lp-center" id="masaBerlaku" data-sisa="{{ sisa_berlaku }}">
+    {% if sisa_berlaku %}Kode berlaku {{ masa_berlaku_menit }} menit dan hanya bisa dipakai sekali.{% else %}Kode sudah tidak berlaku. Silakan kirim ulang.{% endif %}
+  </p>
+  <button type="submit" class="btn btn-primary btn-block">Verifikasi</button>
+</form>
+
+<form method="POST" class="lp-center lp-info">
+  {% csrf_token %}
+  <input type="hidden" name="aksi" value="kirim_ulang" />
+  Kode belum masuk?
+  <button type="submit" class="lp-link" id="btnKirimUlang" data-sisa="{{ sisa_jeda }}" {% if sisa_jeda %}disabled{% endif %}>Kirim ulang</button>
+  <span id="hitungMundur"></span>
+</form>
+
+<a href="{% url 'lupa_password_metode' %}" class="btn btn-outline btn-block"><i class="bi bi-arrow-left"></i> Ganti Metode</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var btn = document.getElementById('btnKirimUlang');
+    var label = document.getElementById('hitungMundur');
+    var jeda = parseInt(btn.dataset.sisa, 10) || 0;
+    var berlaku = document.getElementById('masaBerlaku');
+    var sisaBerlaku = parseInt(berlaku.dataset.sisa, 10) || 0;
+
+    function pad(n) { return n < 10 ? '0' + n : n; }
+
+    function tick() {
+      if (jeda > 0) {
+        btn.disabled = true;
+        label.textContent = '(tunggu ' + jeda + ' detik)';
+        jeda--;
+      } else {
+        btn.disabled = false;
+        label.textContent = '';
+      }
+      if (sisaBerlaku > 0) {
+        berlaku.textContent = 'Kode berlaku ' + Math.floor(sisaBerlaku / 60) + ':' + pad(sisaBerlaku % 60) + ' lagi.';
+        sisaBerlaku--;
+      } else {
+        berlaku.textContent = 'Kode sudah tidak berlaku. Silakan kirim ulang.';
+      }
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+{% endblock %}

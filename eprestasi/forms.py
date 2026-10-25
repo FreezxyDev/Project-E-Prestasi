@@ -648,3 +648,38 @@ class NaikkanOtomatisForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+
+
+class LupaPasswordBaruForm(forms.Form):
+    """Password baru setelah OTP terverifikasi (lupa password -> tidak ada password lama)."""
+    password_baru = forms.CharField(
+        label='Password baru',
+        widget=forms.PasswordInput(attrs={'class': 'input-pill', 'autocomplete': 'new-password', 'placeholder': f'Minimal {SISWA_PASSWORD_MIN_LENGTH} karakter'})
+    )
+    konfirmasi_password = forms.CharField(
+        label='Konfirmasi password baru',
+        widget=forms.PasswordInput(attrs={'class': 'input-pill', 'autocomplete': 'new-password', 'placeholder': 'Ulangi password baru'})
+    )
+
+    def __init__(self, *args, user=None, siswa=None, **kwargs):
+        self.user = user
+        self.siswa = siswa
+        super().__init__(*args, **kwargs)
+
+    def clean_password_baru(self):
+        baru = self.cleaned_data['password_baru']
+        if len(baru) < SISWA_PASSWORD_MIN_LENGTH:
+            raise forms.ValidationError(f'Password baru minimal {SISWA_PASSWORD_MIN_LENGTH} karakter.')
+        terlarang = {self.user.username.lower()}
+        if self.siswa is not None:
+            terlarang.add(self.siswa.nis.lower())
+        if baru.lower() in terlarang:
+            raise forms.ValidationError('Password baru tidak boleh sama dengan username atau NIS.')
+        return baru
+
+    def clean(self):
+        data = super().clean()
+        baru, konf = data.get('password_baru'), data.get('konfirmasi_password')
+        if baru and konf and baru != konf:
+            self.add_error('konfirmasi_password', 'Konfirmasi password tidak cocok.')
+        return data

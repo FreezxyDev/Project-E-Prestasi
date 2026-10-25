@@ -161,3 +161,18 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # settings.py
 DEBUG = True
+
+# ==== Email (OTP lupa password) ====
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'   
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False   
+EMAIL_TIMEOUT = 15
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ==== OTP ke no HP (WhatsApp via Fonnte) ====
+OTP_HP_PROVIDER = os.environ.get('OTP_HP_PROVIDER', 'console')
+FONNTE_TOKEN = os.environ.get('FONNTE_TOKEN', '')

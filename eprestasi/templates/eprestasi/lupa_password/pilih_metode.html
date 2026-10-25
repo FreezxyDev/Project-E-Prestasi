@@ -1,0 +1,38 @@
+{% extends 'eprestasi/lupa_password/base.html' %}
+{% block heading %}Pilih Cara Reset{% endblock %}
+{% block subheading %}{{ siswa.nama|default:siswa.nis }} &middot; NIS {{ siswa.nis }}{% endblock %}
+
+{% block content %}
+{% if lengkap %}
+  <p class="lp-info">Kode OTP akan dikirim ke kontak yang tertera di profil kamu. Kode berlaku 10 menit dan hanya bisa dipakai sekali.</p>
+{% else %}
+  <p class="lp-info">Profil kamu belum lengkap (email / no HP belum diisi), jadi kode OTP belum bisa dikirim. Kamu bisa mengirim permintaan reset password ke admin.</p>
+{% endif %}
+
+<form method="POST" class="lp-metode">
+  {% csrf_token %}
+  {% if lengkap %}
+    <button type="submit" name="aksi" value="email" class="lp-opsi">
+      <i class="bi bi-envelope"></i>
+      <span><strong>Kirim OTP ke email</strong><small>{{ email_samar }}</small></span>
+    </button>
+    <button type="submit" name="aksi" value="hp" class="lp-opsi">
+      <i class="bi bi-phone"></i>
+      <span><strong>Kirim OTP ke no HP</strong><small>{{ hp_samar }} (WhatsApp)</small></span>
+    </button>
+  {% endif %}
+
+  {% if pending %}
+    <div class="login-alert"><i class="bi bi-hourglass-split"></i>
+      <span>Permintaan reset ke admin sudah dikirim {{ pending.dibuat_pada|date:"d M Y H:i" }} dan sedang menunggu diproses.</span>
+    </div>
+  {% else %}
+    <button type="submit" name="aksi" value="admin" class="lp-opsi">
+      <i class="bi bi-person-gear"></i>
+      <span><strong>Minta reset lewat admin</strong><small>Admin akan memberikan password sementara</small></span>
+    </button>
+  {% endif %}
+</form>
+
+<a href="{% url 'lupa_password' %}" class="btn btn-outline btn-block"><i class="bi bi-arrow-left"></i> Ganti Akun</a>
+{% endblock %}

@@ -7,6 +7,7 @@ from django.db.models import Q, Count
 from .models import Siswa, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi
 from .forms import PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm, PrestasiEditForm
 from .decorators import role_required
+from .cloudinary_utils import hapus_semua_file_prestasi
 
 
 def _get_siswa(request):
@@ -359,7 +360,10 @@ def hapus_prestasi(request, prestasi_id):
 
     if request.method == 'POST':
         nama = prestasi.nama_prestasi
-        prestasi.delete()  # cascade menghapus Sertifikat & Dokumentasi terkait
+        # Hapus file (sertifikat + foto dokumentasi) dari Cloudinary dulu, baru baris
+        # prestasi di database -- cascade saja hanya menghapus baris DB, bukan file-nya.
+        hapus_semua_file_prestasi(prestasi, simpan_perubahan=False)
+        prestasi.delete()
         messages.success(request, f'Prestasi "{nama}" telah dihapus.')
         return redirect('siswa_prestasi_list')
 

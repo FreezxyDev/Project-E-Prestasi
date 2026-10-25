@@ -57,3 +57,47 @@ def hapus_sertifikat_prestasi(prestasi):
     for sertifikat in sertifikat_qs:
         hapus_file_cloudinary(sertifikat.file)
     sertifikat_qs.delete()
+
+
+def hapus_dokumentasi_prestasi(prestasi):
+    """
+    Hapus SEMUA foto dokumentasi milik satu prestasi -- dari Cloudinary
+    sekaligus baris Dokumentasi-nya di database.
+    """
+    dokumentasi_qs = prestasi.dokumentasi_set.all()
+    for dokumentasi in dokumentasi_qs:
+        hapus_file_cloudinary(dokumentasi.foto)
+    dokumentasi_qs.delete()
+
+
+def hapus_dokumen_puspresnas(prestasi, simpan_perubahan=True):
+    """
+    Hapus file dokumen Puspresnas milik satu prestasi dari Cloudinary. Berbeda
+    dengan sertifikat/dokumentasi, dokumen ini field langsung di model Prestasi
+    (bukan tabel terpisah), jadi field-nya dikosongkan -- bersama jenis wilayah &
+    jenis penyelenggara yang hanya bermakna kalau ada dokumennya. Kode Puspresnas
+    (teks biasa) dibiarkan.
+
+    simpan_perubahan=False dipakai kalau prestasinya sendiri akan langsung dihapus.
+    """
+    if not prestasi.dokumen_puspresnas:
+        return
+    hapus_file_cloudinary(prestasi.dokumen_puspresnas)
+    prestasi.dokumen_puspresnas = None
+    prestasi.jenis_wilayah_puspresnas = None
+    prestasi.jenis_penyelenggara_puspresnas = None
+    if simpan_perubahan:
+        prestasi.save(update_fields=[
+            'dokumen_puspresnas', 'jenis_wilayah_puspresnas', 'jenis_penyelenggara_puspresnas',
+        ])
+
+
+def hapus_semua_file_prestasi(prestasi, simpan_perubahan=True):
+    """
+    Hapus SEMUA file prestasi (sertifikat PDF + foto dokumentasi + dokumen
+    Puspresnas) dari Cloudinary dan database. Dipakai saat prestasi ditolak
+    permanen atau dihapus siswa.
+    """
+    hapus_sertifikat_prestasi(prestasi)
+    hapus_dokumentasi_prestasi(prestasi)
+    hapus_dokumen_puspresnas(prestasi, simpan_perubahan=simpan_perubahan)

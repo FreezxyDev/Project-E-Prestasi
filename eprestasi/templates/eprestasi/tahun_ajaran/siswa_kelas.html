@@ -1,0 +1,121 @@
+{% extends 'eprestasi/base.html' %}
+{% load eprestasi_extras %}
+{% block body_class %}pg-ta-siswa{% endblock %}
+{% block title %}Siswa {{ kelas.nama_kelas }}{% endblock %}
+
+{% block content %}
+
+<nav class="crumbs" aria-label="Breadcrumb">
+    <a href="{% url 'tahun_ajaran_list' %}"><i class="bi bi-calendar3"></i> Tahun Ajaran</a>
+    <i class="bi bi-chevron-right"></i>
+    <a href="{% url 'tahun_ajaran_kelas' tahun.id %}">{{ tahun.tahun_ajaran }}</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="current">{{ kelas.nama_kelas }}</span>
+</nav>
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+        <h1>Siswa Kelas {{ kelas.nama_kelas }}</h1>
+        <p>Tahun ajaran {{ tahun.tahun_ajaran }} &middot; {{ kelas.jurusan|default:"-" }} &middot; Tingkat {{ kelas.tingkat_romawi }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'tahun_ajaran_kelas' tahun.id %}" class="qa-btn"><i class="bi bi-arrow-left"></i> Kembali ke Daftar Kelas</a>
+        <a href="{% url 'pengelolaan_kelas' %}?tahun_ajaran={{ tahun.id }}&kelas={{ kelas.id }}" class="qa-btn"><i class="bi bi-diagram-3"></i> Kelola di Pengelolaan Kelas</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Jumlah Siswa</div>
+            <div class="stat-value">{{ total_siswa }}</div>
+            <div class="stat-sub">di kelas ini</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge success"><i class="bi bi-person-check"></i></div>
+            <div class="stat-label">Siswa Aktif</div>
+            <div class="stat-value">{{ total_aktif }}</div>
+            <div class="stat-sub">status aktif</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-trophy"></i></div>
+            <div class="stat-label">Total Prestasi</div>
+            <div class="stat-value">{{ total_prestasi }}</div>
+            <div class="stat-sub">seluruh siswa kelas ini</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge info"><i class="bi bi-patch-check"></i></div>
+            <div class="stat-label">Terverifikasi</div>
+            <div class="stat-value">{{ total_diterima }}</div>
+            <div class="stat-sub">prestasi diterima</div>
+        </div>
+    </div>
+</div>
+
+<div class="card data-region" data-skeleton-root>
+    <form method="get" class="table-toolbar js-filter-form">
+        <div class="table-toolbar-search">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari NIS atau nama siswa...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Cari</button>
+        {% if q %}<a href="{% url 'tahun_ajaran_kelas_siswa' tahun.id kelas.id %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> Reset</a>{% endif %}
+        <span class="table-toolbar-meta">{{ page_obj.paginator.count }} siswa</span>
+    </form>
+
+    {% include 'eprestasi/_partials/skeleton_rows.html' %}
+
+    <div class="table-responsive real-content">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="col-w-48">No</th>
+                    <th>NIS</th>
+                    <th>Nama</th>
+                    <th>Jurusan</th>
+                    <th>Status</th>
+                    <th>Prestasi</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in page_obj %}
+                <tr>
+                    <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td class="fw-semibold">{{ s.nis }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="row-avatar">{{ s.nama|default:s.nis|slice:":2"|upper }}</div>
+                            <div class="cell-name">{{ s.nama|default:"(belum diisi)" }}</div>
+                        </div>
+                    </td>
+                    <td>{{ s.jurusan|default:"-" }}</td>
+                    <td>{% if s.status == 'aktif' %}<span class="badge badge-aktif">Aktif</span>{% else %}<span class="badge badge-alumni">Alumni</span>{% endif %}</td>
+                    <td>{{ s.jumlah_prestasi|default:0 }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'riwayat_kelas_siswa' s.id %}" class="btn btn-sm btn-outline-secondary" title="Riwayat kelas"><i class="bi bi-clock-history"></i></a>
+                        <a href="{% url 'update_siswa' s.id %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="real-content">
+        {% if not page_obj.object_list %}
+            {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-people' empty_title='Belum ada siswa' empty_desc='Belum ada siswa yang cocok di kelas ini.' %}
+        {% else %}
+            {% include 'eprestasi/_partials/pagination.html' with item_label='siswa' %}
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

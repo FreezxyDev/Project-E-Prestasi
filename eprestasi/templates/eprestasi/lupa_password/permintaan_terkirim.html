@@ -1,0 +1,10 @@
+{% extends 'eprestasi/lupa_password/base.html' %}
+{% block icon %}bi-check2-circle{% endblock %}
+{% block heading %}Permintaan Terkirim{% endblock %}
+{% block subheading %}{{ siswa.nama|default:siswa.nis }} &middot; NIS {{ siswa.nis }}{% endblock %}
+
+{% block content %}
+<p class="lp-info">Permintaan reset password kamu sudah dikirim ke admin ({{ permintaan.dibuat_pada|date:"d M Y H:i" }}). Setelah diproses, admin akan memberikan password sementara. Hubungi admin / Tim Kesiswaan kalau belum ada kabar.</p>
+<p class="lp-info">Setelah masuk dengan password sementara, lengkapi profil kamu (email &amp; no HP) agar ke depannya bisa reset password sendiri lewat OTP.</p>
+<a href="{% url 'login' %}" class="btn btn-primary btn-block">Kembali ke Login</a>
+{% endblock %}

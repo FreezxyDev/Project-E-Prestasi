@@ -11,6 +11,7 @@
         <p>Tempatkan siswa ke kelas pada tahun ajaran {% if tahun_ajaran_terpilih %}<strong>{{ tahun_ajaran_terpilih.tahun_ajaran }}</strong>{% else %}yang dipilih{% endif %}.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="qa-btn qa-btn-primary" data-bs-toggle="offcanvas" data-bs-target="#panelKelola"><i class="bi bi-sliders"></i> Kelola Penempatan <span class="kelola-badge" id="badgeKelola">0</span></button>
         <a href="{% url 'kelola_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="qa-btn"><i class="bi bi-grid-3x3-gap"></i> Kelola Daftar Kelas</a>
         <a href="{% url 'riwayat_berdasarkan_kelas' %}{% if tahun_ajaran_terpilih %}?tahun_ajaran={{ tahun_ajaran_terpilih.id }}{% endif %}" class="qa-btn"><i class="bi bi-people"></i> Riwayat Berdasarkan Kelas</a>
         <a href="{% url 'log_perubahan_kelas' %}" class="qa-btn"><i class="bi bi-journal-text"></i> Log Perubahan</a>
@@ -88,9 +89,18 @@
     <input type="hidden" name="jenis_perubahan" id="inputJenisPerubahan" value="penempatan_awal">
     <div id="hiddenIds"></div>
 
-    <!-- ============ WIDGET: INPUT NIS MASSAL + SISWA TERPILIH ============ -->
+    <!-- ============ SLIDE BAR: KELOLA PENEMPATAN (panel geser dari kanan) ============ -->
+    <div class="offcanvas offcanvas-end kelola-panel" tabindex="-1" id="panelKelola" aria-labelledby="panelKelolaLabel">
+        <div class="offcanvas-header">
+            <div>
+                <h5 class="offcanvas-title" id="panelKelolaLabel"><i class="bi bi-sliders"></i> Kelola Penempatan</h5>
+                <div class="offcanvas-sub">Tahun ajaran {{ tahun_ajaran_terpilih.tahun_ajaran }} &middot; <span id="subJumlahTerpilih">0</span> siswa terpilih</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Tutup"></button>
+        </div>
+        <div class="offcanvas-body">
     <div class="row g-3 mb-3">
-        <div class="col-lg-6">
+        <div class="col-12">
             <div class="card p-3 p-lg-4 h-100">
                 <div class="widget-head">
                     <div>
@@ -112,7 +122,7 @@
             </div>
         </div>
 
-        <div class="col-lg-6">
+        <div class="col-12">
             <div class="card p-3 p-lg-4 h-100">
                 <div class="widget-head">
                     <div>
@@ -166,6 +176,15 @@
                 </div>
             </div>
         </div>
+    </div>
+
+        </div>
+    </div>
+
+    <!-- ============ BAR AKSI: muncul saat ada siswa tercentang ============ -->
+    <div class="bulk-bar" id="barPilih">
+        <span><strong id="barPilihJumlah">0</strong> siswa terpilih</span>
+        <button type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="offcanvas" data-bs-target="#panelKelola"><i class="bi bi-sliders"></i> Kelola Pemindahan</button>
     </div>
 
     <!-- ============ TABEL SISWA ============ -->
@@ -386,6 +405,9 @@
 
         var n = terpilih.size;
         $('statTerpilih').textContent = n;
+        ['badgeKelola', 'barPilihJumlah', 'subJumlahTerpilih'].forEach(function (id) { var el = $(id); if (el) el.textContent = n; });
+        var bar = $('barPilih'); if (bar) bar.classList.toggle('show', n > 0);
+        var bdg = $('badgeKelola'); if (bdg) bdg.classList.toggle('is-empty', n === 0);
         $('labelJumlahPicked').textContent = n ? '(' + n + ')' : '';
         $('kosongTerpilih').style.display = n ? 'none' : 'block';
 

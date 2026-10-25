@@ -1,0 +1,128 @@
+{% extends 'eprestasi/base.html' %}
+{% block body_class %}pg-ta-kelas{% endblock %}
+{% block title %}Kelas {{ tahun.tahun_ajaran }}{% endblock %}
+
+{% block content %}
+{% url 'kelola_kelas' as kelola_kelas_url %}
+
+<nav class="crumbs" aria-label="Breadcrumb">
+    <a href="{% url 'tahun_ajaran_list' %}"><i class="bi bi-calendar3"></i> Tahun Ajaran</a>
+    <i class="bi bi-chevron-right"></i>
+    <span class="current">{{ tahun.tahun_ajaran }}</span>
+</nav>
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+        <h1>Kelas Tahun Ajaran {{ tahun.tahun_ajaran }}
+            {% if tahun.status == 'aktif' %}<span class="badge badge-aktif align-middle">Aktif</span>{% else %}<span class="badge badge-nonaktif align-middle">Nonaktif</span>{% endif %}
+        </h1>
+        <p>Pilih kelas untuk melihat daftar siswanya.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'kelola_kelas' %}?tahun_ajaran={{ tahun.id }}" class="qa-btn"><i class="bi bi-grid-3x3-gap"></i> Kelola Daftar Kelas</a>
+        <a href="{% url 'pengelolaan_kelas' %}?tahun_ajaran={{ tahun.id }}" class="qa-btn"><i class="bi bi-diagram-3"></i> Penempatan Siswa</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge info"><i class="bi bi-grid-3x3-gap"></i></div>
+            <div class="stat-label">Total Kelas</div>
+            <div class="stat-value">{{ total_kelas }}</div>
+            <div class="stat-sub">pada tahun ajaran ini</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge"><i class="bi bi-people"></i></div>
+            <div class="stat-label">Total Siswa</div>
+            <div class="stat-value">{{ total_siswa }}</div>
+            <div class="stat-sub">tertempatkan di kelas</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge success"><i class="bi bi-bar-chart"></i></div>
+            <div class="stat-label">Rata-rata / Kelas</div>
+            <div class="stat-value">{{ rata_siswa }}</div>
+            <div class="stat-sub">siswa per kelas</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card stat-card">
+            <div class="stat-icon-badge amber"><i class="bi bi-person-exclamation"></i></div>
+            <div class="stat-label">Belum Ditempatkan</div>
+            <div class="stat-value">{{ tanpa_kelas }}</div>
+            <div class="stat-sub">{% if tanpa_kelas %}<a href="{% url 'pengelolaan_kelas' %}?tahun_ajaran={{ tahun.id }}&kelas=__belum__" class="amber-txt">tempatkan sekarang</a>{% else %}semua sudah punya kelas{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <form method="get" class="table-toolbar">
+        <div class="table-toolbar-search">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Cari nama kelas, contoh XI RPL 1">
+        </div>
+        <select name="tingkat" class="form-select form-select-sm w-auto" onchange="this.form.requestSubmit()">
+            <option value="">Semua Tingkat</option>
+            {% for nilai, label in daftar_tingkat %}
+                <option value="{{ nilai }}" {% if tingkat_filter == nilai|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="jurusan" class="form-select form-select-sm w-auto" onchange="this.form.requestSubmit()">
+            <option value="">Semua Jurusan</option>
+            {% for nilai, label in daftar_jurusan %}
+                <option value="{{ nilai }}" {% if jurusan_filter == nilai %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Cari</button>
+        {% if q or tingkat_filter or jurusan_filter %}
+            <a href="{% url 'tahun_ajaran_kelas' tahun.id %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> Reset</a>
+        {% endif %}
+        <span class="table-toolbar-meta">{{ daftar_kelas|length }} kelas</span>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="col-w-48">No</th>
+                    <th>Kelas</th>
+                    <th>Tingkat</th>
+                    <th>Jurusan</th>
+                    <th>Jumlah Siswa</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for k in daftar_kelas %}
+                <tr class="row-link">
+                    <td class="text-muted">{{ forloop.counter }}</td>
+                    <td><a class="cell-link fw-semibold" href="{% url 'tahun_ajaran_kelas_siswa' tahun.id k.id %}">{{ k.nama_kelas }}</a></td>
+                    <td><span class="badge badge-kelas">{{ k.tingkat_romawi }}</span></td>
+                    <td>{{ k.jurusan|default:"-" }}</td>
+                    <td>
+                        <div class="kelas-fill">
+                            <progress class="kelas-progress" max="{{ maks_siswa|default:1 }}" value="{{ k.jumlah_siswa }}"></progress>
+                            <span class="kelas-fill-num">{{ k.jumlah_siswa }}</span>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'tahun_ajaran_kelas_siswa' tahun.id k.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-people"></i> Lihat Siswa
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6">
+                    {% include 'eprestasi/_partials/empty_state.html' with empty_icon='bi-grid-3x3-gap' empty_title='Belum ada kelas' empty_desc='Belum ada kelas yang cocok pada tahun ajaran ini.' show_add=1 add_url=kelola_kelas_url add_label='Buat Daftar Kelas' %}
+                </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

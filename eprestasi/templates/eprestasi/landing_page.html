@@ -3,6 +3,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+{% include 'eprestasi/_partials/theme_head.html' %}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>E-Prestasi — Show Your Pride</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +25,7 @@
       <li><a href="#contact">Contact</a></li>
     </ul>
     <div class="nav-actions">
+{% include 'eprestasi/_partials/theme_toggle.html' %}
       <a href="{% url "login" %}" class="btn btn-primary">Masuk</a>
       <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
     </div>

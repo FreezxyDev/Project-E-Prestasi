@@ -1,8 +1,9 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="id" data-bs-theme="dark">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
+{% include 'eprestasi/_partials/theme_head.html' %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Admin{% endblock %} - E-Prestasi</title>
 
@@ -54,6 +55,10 @@
             <a href="{% url 'kelulusan_alumni' %}" class="nav-link {% if active_menu == 'kelulusan_alumni' %}active{% endif %}">
                 <i class="bi bi-mortarboard-fill"></i><span>Kelulusan &amp; Alumni</span>
             </a>
+            <a href="{% url 'permintaan_reset_list' %}" class="nav-link {% if active_menu == 'permintaan_reset' %}active{% endif %}">
+                <i class="bi bi-key"></i><span>Reset Password</span>
+                {% if permintaan_reset_pending %}<span class="badge rounded-pill bg-danger ms-auto">{{ permintaan_reset_pending }}</span>{% endif %}
+            </a>
         </div>
 
         {% if request.session.role == 'super_admin' %}
@@ -99,11 +104,12 @@
             </form>
         </div>
         <div class="topnav-actions">
+{% include 'eprestasi/_partials/theme_toggle.html' %}
             {% if active_menu == 'kesiswaan' %}
                 <a href="{% url 'tambah_kesiswaan' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
             {% elif active_menu == 'admin' %}
                 <a href="{% url 'tambah_admin' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>
-            {% elif active_menu == 'kelulusan_alumni' or active_menu == 'profil_admin' %}
+            {% elif active_menu == 'kelulusan_alumni' or active_menu == 'profil_admin' or active_menu == 'permintaan_reset' %}
                 {# Tidak relevan di halaman ini: kelulusan diproses lewat aksi massal di tabel; profil tidak punya "tambah data". #}
             {% else %}
                 <a href="{% url 'tambah_siswa' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>New</span></a>

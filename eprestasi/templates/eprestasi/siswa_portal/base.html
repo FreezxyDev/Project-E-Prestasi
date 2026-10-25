@@ -1,8 +1,9 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="id" data-bs-theme="dark">
+<html lang="id">
 <head>
 <meta charset="UTF-8">
+{% include 'eprestasi/_partials/theme_head.html' %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Portal Siswa{% endblock %} - E-Prestasi</title>
 
@@ -105,6 +106,7 @@
             {% endif %}
         </div>
         <div class="topnav-actions">
+{% include 'eprestasi/_partials/theme_toggle.html' %}
 {% if not wajib_diisi and siswa.status != 'keluar' %}
 {% if siswa.bisa_edit %}<a href="{% url 'siswa_upload_prestasi' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>Ajukan Prestasi</span></a>{% endif %}
 <div class="dropdown">

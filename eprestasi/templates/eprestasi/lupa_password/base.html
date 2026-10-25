@@ -1,0 +1,74 @@
+<!doctype html>
+{% load static %}
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+{% include 'eprestasi/_partials/theme_head.html' %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Lupa Password{% endblock %} - E-Prestasi SMKN 11 Bandung</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="{% static 'css/design.css' %}" />
+    <style>
+        /* Halaman ini tidak punya panel foto di kiri, jadi panel form dibuat selebar layar. */
+        .page-lupa .login-panel { width: 100%; flex: 1; }
+        .page-lupa .lp-metode { display: flex; flex-direction: column; gap: 10px; }
+        .page-lupa .lp-opsi { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left;
+            padding: 14px 16px; border-radius: var(--radius-cards); border: 1px solid var(--color-slate-border);
+            background: transparent; color: var(--color-ivory-text); cursor: pointer; }
+        .page-lupa .lp-opsi:hover { background: rgba(var(--fg-rgb), .06); }
+        .page-lupa .lp-opsi i { font-size: 20px; flex-shrink: 0; }
+        .page-lupa .lp-opsi small { display: block; color: var(--color-ash-text); font-size: var(--text-caption); }
+        .page-lupa .lp-opsi strong { font-weight: var(--fw-w480); }
+        .page-lupa .lp-info { font-size: var(--text-caption); color: var(--color-ash-text); line-height: 1.5; }
+        .page-lupa .lp-otp { text-align: center; letter-spacing: .5em; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+        .page-lupa .lp-link { background: none; border: 0; padding: 0; color: var(--color-ivory-text);
+            text-decoration: underline; cursor: pointer; font: inherit; }
+        .page-lupa .lp-link:disabled { color: var(--color-ash-text); text-decoration: none; cursor: not-allowed; }
+        .page-lupa .lp-center { text-align: center; }
+        .page-lupa .lp-error { color: #ff8a8a; font-size: var(--text-caption); }
+    </style>
+</head>
+<body class="page-login page-lupa">
+{% include 'eprestasi/_partials/theme_toggle.html' with floating=1 %}
+  <div class="login-layout">
+    <div class="login-panel">
+      <div class="login-mobile-brand" style="display:block">
+        <h1>E-Prestasi</h1>
+        <span>SMKN 11 Bandung</span>
+      </div>
+
+      <div class="login-card-wrap">
+        <div class="login-card">
+          <div class="login-card-head">
+            <div class="login-logo"><i class="bi {% block icon %}bi-key{% endblock %}"></i></div>
+            <div>
+              <h4>{% block heading %}Lupa Password{% endblock %}</h4>
+              <p>{% block subheading %}{% endblock %}</p>
+            </div>
+          </div>
+
+          {% if messages %}
+          <div class="login-messages" role="alert">
+            {% for message in messages %}
+            <div class="login-alert {% if message.tags == 'error' %}is-error{% endif %}">
+              <i class="bi {% if message.tags == 'error' %}bi-exclamation-circle-fill{% else %}bi-check-circle-fill{% endif %}"></i>
+              <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+
+      <div class="login-help">Butuh bantuan? Kontak Tim Kesiswaan / Administrator.</div>
+    </div>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

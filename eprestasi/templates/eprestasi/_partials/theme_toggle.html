@@ -1,0 +1,21 @@
+{# Tombol ganti tema. Tambahkan 'with floating=1' di include untuk halaman tanpa topbar. #}
+<button type="button" class="icon-btn theme-toggle{% if floating %} theme-toggle-floating{% endif %}" data-theme-toggle title="Ganti tema terang / gelap" aria-label="Ganti tema terang atau gelap">
+    <i class="bi bi-moon-stars theme-icon-light"></i><i class="bi bi-sun theme-icon-dark"></i>
+</button>
+<script>
+(function () {
+    if (window.__themeToggleReady) return;
+    window.__themeToggleReady = true;
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-theme-toggle]');
+        if (!btn) return;
+        var root = document.documentElement;
+        var next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-bs-theme', next);
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('eprestasi-theme', next); } catch (err) {}
+        /* Grafik Chart.js membaca warna saat dibuat, jadi dimuat ulang agar ikut tema. */
+        if (document.querySelector('canvas')) { location.reload(); }
+    });
+})();
+</script>

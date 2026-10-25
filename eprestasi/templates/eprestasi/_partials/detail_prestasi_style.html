@@ -13,7 +13,7 @@
         font-size: .75rem; font-weight: 500; border-radius: 9999px;
         background: var(--bg-card-2); color: var(--text); border: 1px solid var(--border);
     }
-    .dp-tag.puspresnas { background: rgba(0,168,104,.1); color: #007a4d; border-color: rgba(0,168,104,.25); font-weight: 600; }
+    .dp-tag.puspresnas { background: var(--success-dim); color: var(--success); border-color: transparent; font-weight: 600; }
     .dp-meta { display: flex; flex-wrap: wrap; gap: .35rem 1.4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .8rem; }
     .dp-meta span { display: inline-flex; align-items: center; gap: .4rem; }
 
@@ -21,7 +21,7 @@
     .dp-pill { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .85rem; border-radius: 9999px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
     .dp-pill.pending { background: var(--warning-dim); color: var(--warning); }
     .dp-pill.diterima { background: var(--success-dim); color: var(--success); }
-    .dp-pill.perbaikan { background: rgba(249,115,22,.12); color: #c2410c; }
+    .dp-pill.perbaikan { background: var(--orange-dim); color: var(--orange); }
     .dp-pill.ditolak { background: var(--danger-dim); color: var(--danger); }
 
     /* ---------- Notice (perbaikan / ditolak) ---------- */
@@ -29,8 +29,8 @@
     .dp-notice i { font-size: 1.1rem; margin-top: .1rem; }
     .dp-notice .ttl { font-weight: 600; font-size: .85rem; margin-bottom: .15rem; }
     .dp-notice .txt { font-size: .83rem; line-height: 1.5; }
-    .dp-notice.perbaikan { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
-    .dp-notice.ditolak { background: var(--danger-dim); border-color: rgba(185,28,28,.25); color: var(--danger); }
+    .dp-notice.perbaikan { background: var(--orange-dim); border-color: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
+    .dp-notice.ditolak { background: var(--danger-dim); border-color: color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); }
 
     /* ---------- Section card ---------- */
     .dp-card { padding: 1.25rem 1.35rem; margin-bottom: 1rem; }
@@ -59,7 +59,7 @@
     .dp-file:last-child { margin-bottom: 0; }
     .dp-file:hover { background: var(--bg-card-2); }
     .dp-file .ico { width: 38px; height: 38px; border-radius: 10px; background: var(--bg-card-2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text); flex-shrink: 0; }
-    .dp-file:hover .ico { background: #fff; }
+    .dp-file:hover .ico { background: var(--surface); }
     .dp-file .info { flex: 1; min-width: 0; }
     .dp-file .nm { font-weight: 600; font-size: .85rem; color: var(--text); }
     .dp-file .ds { font-size: .78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -69,8 +69,8 @@
 
     /* ---------- Galeri dokumentasi ---------- */
     .dp-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
-    .dp-photo { display: block; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; transition: box-shadow .15s, transform .15s; }
-    .dp-photo:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); transform: translateY(-1px); }
+    .dp-photo { display: block; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface-2); transition: box-shadow .15s, transform .15s; }
+    .dp-photo:hover { box-shadow: var(--shadow-pop); transform: translateY(-1px); }
     .dp-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
     .dp-photo .cap { padding: .45rem .65rem; font-size: .75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
 

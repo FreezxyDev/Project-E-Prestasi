@@ -180,7 +180,7 @@
             {% for tahun in page_obj %}
                 <tr>
                     <td class="text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                    <td class="fw-semibold">{{ tahun.tahun_ajaran }}</td>
+                    <td><a class="cell-link fw-semibold" href="{% url 'tahun_ajaran_kelas' tahun.id %}" title="Lihat kelas pada tahun ajaran ini">{{ tahun.tahun_ajaran }}</a></td>
                     <td>
                         {% if tahun.status == 'aktif' %}
                             <span class="badge badge-aktif">Aktif</span>
@@ -191,6 +191,7 @@
                     <td>{{ tahun.jumlah_siswa }}</td>
                     <td>{{ tahun.jumlah_prestasi }}</td>
                     <td class="text-end">
+                        <a href="{% url 'tahun_ajaran_kelas' tahun.id %}" class="btn btn-sm btn-outline-primary" title="Lihat kelas"><i class="bi bi-grid-3x3-gap"></i> Kelas</a>
                         <button type="button" class="btn btn-sm btn-outline-info js-lihat-statistik" title="Lihat Statistik"
                                 data-url="{% url 'tahun_ajaran_statistik' tahun.id %}">
                             <i class="bi bi-pie-chart"></i>
@@ -301,7 +302,7 @@
 
     // ---- Modal "Lihat Statistik" per tahun ajaran ----
     (function () {
-        const WARNA = [1,2,3,4,5,6,7].map(n => cssVar('--chart-' + n));
+        const WARNA = [1,2,3,4,5,6,7].map(n => cssVar('--chart-cat-' + n));
         const modalEl = document.getElementById('modalStatistik');
         const modal = new bootstrap.Modal(modalEl);
         const $ = (id) => document.getElementById(id);
