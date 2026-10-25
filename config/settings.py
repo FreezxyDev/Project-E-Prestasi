@@ -91,12 +91,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ---------------------------------------------------------------------------
+# Database (Supabase PostgreSQL)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'postgres'),
         'USER': os.environ.get('DB_USER', 'postgres.ftdtjcvmfhajwxwgeqqk'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),  # wajib diisi lewat .env / Vercel
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'Helmi123@123'),
         'HOST': os.environ.get('DB_HOST', 'aws-0-ap-southeast-1.pooler.supabase.com'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
