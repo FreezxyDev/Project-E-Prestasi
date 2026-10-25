@@ -2,14 +2,17 @@
   "builds": [
     {
       "src": "config/wsgi.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "includeFiles": "eprestasi/templates/static/**"
-      }
+      "use": "@vercel/python"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "config/wsgi.py" }
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "config/wsgi.py"
+    }
   ]
 }
