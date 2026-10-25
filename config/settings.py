@@ -56,11 +56,6 @@ MIDDLEWARE = [
 # ==========================================
 # KONFIGURASI CORS & COOKIE (DEVELOPMENT & PROD)
 # ==========================================
-
-# 1. Izinkan frontend mengirim cookie/session
-
-# 2. Daftarkan URL/Port tempat Frontend kamu berjalan
-# 3. Gabungan domain trusted origin untuk CSRF
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -68,13 +63,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://eprestasi.freznx.my.id",
 ]
 
-# 4. Pengaturan Cookie untuk HTTP (localhost)
+# Pengaturan Cookie untuk HTTP (localhost)
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
-
-
 
 ROOT_URLCONF = 'config.urls'
 
@@ -85,18 +78,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-        'OPTIONS': {
-            'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'eprestasi.context_processors.notifikasi_kesiswaan',   # <- tambahan
+                'eprestasi.context_processors.notifikasi_kesiswaan',  # <- tambahan
             ],
         },
     },
@@ -144,23 +130,29 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
     BASE_DIR / "eprestasi" / "static",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
+# Gunakan Storage standar Django untuk lokal
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ==============================================================================
 # KONFIGURASI CLOUDINARY VIA CLOUDINARY_URL
 # ==============================================================================
 CLOUDINARY_STORAGE = {
     'CLOUDINARY_URL': os.environ.get('CLOUDINARY_URL')
 }
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-# settings.py
-DEBUG = True
 
 # ==== Email (OTP lupa password) ====
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'   
