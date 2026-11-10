@@ -5,7 +5,9 @@
 from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q, Count, F, OuterRef, Subquery, Max, Case, When, Value, IntegerField
+from django.http import HttpResponse
 from django.db.models.functions import Coalesce, TruncMonth
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -18,10 +20,12 @@ from eprestasi.models import NotifikasiDibaca, NotifikasiSiswa
 from eprestasi.decorators import role_required
 from eprestasi.models import (
     Siswa, Kesiswaan, Prestasi, Tahun_ajaran, Kelas, RiwayatKelas, DAFTAR_TINGKAT,
+    SubkategoriPrestasi, KategoriPrestasi, PEROLEHAN_CHOICES, URUTAN_TINGKAT, LABEL_TINGKAT_PRESTASI,
 )
 from eprestasi.forms import (
-    KesiswaanProfilForm, VerifikasiPrestasiForm, TINGKAT_PRESTASI_CHOICES,
+    KesiswaanProfilForm, VerifikasiPrestasiForm, LengkapiDataPrestasiForm, TINGKAT_PRESTASI_CHOICES,
 )
+from eprestasi.prestasi_utils import cari_duplikat, catat_riwayat
 from eprestasi.cloudinary_utils import hapus_sertifikat_prestasi, hapus_semua_file_prestasi
 from eprestasi.log_utils import catat_aktivitas
 
@@ -101,12 +105,13 @@ def _anotasi_kelas_riwayat(qs):
 # ==========================================
 
 STATUS_LABEL = {
-    'pending': 'Pending', 'diterima': 'Diterima',
-    'perbaikan': 'Perbaikan', 'ditolak': 'Ditolak',
+    'pending': 'Menunggu verifikasi', 'diterima': 'Terverifikasi',
+    'perbaikan': 'Perlu perbaikan', 'ditolak': 'Ditolak',
 }
-BOBOT_TINGKAT = {'sekolah': 1, 'kabupaten/kota': 2, 'provinsi': 3, 'nasional': 4, 'internasional': 5}
+# Peringkat tingkat (1 = terendah), dipakai untuk menentukan "tingkat tertinggi" siswa.
+BOBOT_TINGKAT = dict(URUTAN_TINGKAT)
 BOBOT_KE_TINGKAT = {v: k for k, v in BOBOT_TINGKAT.items()}
-LABEL_TINGKAT = {1: 'Sekolah', 2: 'Kabupaten/Kota', 3: 'Provinsi', 4: 'Nasional', 5: 'Internasional'}
+LABEL_TINGKAT = {v: LABEL_TINGKAT_PRESTASI[k] for k, v in BOBOT_TINGKAT.items()}
 NAMA_BULAN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 STATUS_TERVERIFIKASI = ('diterima', 'perbaikan', 'ditolak')
 
@@ -134,6 +139,7 @@ FILTER_LANJUTAN = [
     'kelas', 'tingkat_siswa', 'jurusan', 'tahun',
     'tanggal_dari', 'tanggal_sampai', 'upload_dari', 'upload_sampai',
     'verifikator', 'verif_dari', 'verif_sampai',
+    'subkategori', 'perolehan',
 ]
 
 
@@ -182,6 +188,10 @@ def _terapkan_filter(qs, f, kesiswaan, abaikan=()):
         qs = qs.filter(kelas_jurusan=f['jurusan'])
     if f['tahun'].isdigit():
         qs = qs.filter(tahun_ajaran_id=int(f['tahun']))
+    if f['subkategori'].isdigit():
+        qs = qs.filter(subkategori_id=int(f['subkategori']))
+    if f['perolehan'] in dict(PEROLEHAN_CHOICES):
+        qs = qs.filter(jenis_perolehan=f['perolehan'])
 
     sudah_puspresnas = (
         (Q(kode_puspresnas__isnull=False) & ~Q(kode_puspresnas=''))
@@ -214,6 +224,7 @@ def _chip_filter(request, f, opsi):
     tahun_label = {str(i): t for i, t in opsi['tahun_list']}
     verifikator_label = {'saya': 'Saya', 'belum': 'Belum ada'}
     verifikator_label.update({str(k.id): (k.nama or k.nip) for k in opsi['verifikator_list']})
+    subkategori_label = {str(sub.pk): sub.nama_lengkap for sub in opsi['subkategori_list']}
 
     def tampil(key, nilai):
         return {
@@ -230,6 +241,8 @@ def _chip_filter(request, f, opsi):
             'tanggal_dari': f'Prestasi dari {nilai}', 'tanggal_sampai': f'Prestasi sampai {nilai}',
             'upload_dari': f'Upload dari {nilai}', 'upload_sampai': f'Upload sampai {nilai}',
             'verif_dari': f'Verifikasi dari {nilai}', 'verif_sampai': f'Verifikasi sampai {nilai}',
+            'subkategori': f'Subkategori: {subkategori_label.get(nilai, nilai)}',
+            'perolehan': f'Perolehan: {dict(PEROLEHAN_CHOICES).get(nilai, nilai)}',
         }[key]
 
     chips = []
@@ -257,9 +270,17 @@ def _opsi_filter(tahun_id=''):
         'jurusan_choices': Siswa.JURUSAN_CHOICES,
         'tahun_list': list(Tahun_ajaran.objects.order_by('-id').values_list('id', 'tahun_ajaran')),
         'verifikator_list': list(Kesiswaan.objects.exclude(nama='').order_by('nama')),
+        'subkategori_list': list(SubkategoriPrestasi.objects.select_related('kategori').order_by('kategori__urutan', 'kelompok', 'nama')),
+        'perolehan_choices': PEROLEHAN_CHOICES,
     }
 
-def _susun_halaman_prestasi(request, kesiswaan, *, qs_awal, sort_default, status_pilihan=None, status_default=None, tahun_default=None):
+def _filter_halaman(request, kesiswaan, *, qs_awal, sort_default, status_pilihan=None, status_default=None, tahun_default=None):
+    """
+    Satu-satunya tempat yang menerjemahkan querystring (pencarian, filter, tahun, status, urutan)
+    menjadi queryset. Dipakai oleh tampilan tabel DAN ekspor, jadi file yang diunduh selalu
+    sama persis dengan baris yang sedang tampil setelah difilter/dicari.
+    Mengembalikan (f, sort, base_qs, hasil).
+    """
     f = _baca_filter(request)
     if status_default and 'status' not in request.GET:
         f['status'] = status_default
@@ -267,14 +288,35 @@ def _susun_halaman_prestasi(request, kesiswaan, *, qs_awal, sort_default, status
         f['tahun'] = str(tahun_default)
     if status_pilihan and f['status'] not in status_pilihan:
         f['status'] = ''
-    # ... sisanya tidak berubah
-        
+
     sort = request.GET.get('sort', sort_default)
     if sort not in SORT_PRESTASI:
         sort = sort_default
 
     base_qs = _anotasi_kelas_riwayat(
-        qs_awal.select_related('siswa', 'tahun_ajaran', 'kesiswaan')
+        qs_awal.select_related('siswa', 'tahun_ajaran', 'kesiswaan', 'subkategori', 'subkategori__kategori')
+    )
+    hasil = _terapkan_filter(base_qs, f, kesiswaan).order_by(*SORT_PRESTASI[sort])
+    return f, sort, base_qs, hasil
+
+
+def _qs_ekspor(request, f):
+    """
+    Querystring untuk tombol ekspor: semua filter/pencarian/urutan yang sedang aktif (tanpa page),
+    ditambah nilai tahun & status yang SEDANG DIPAKAI (termasuk default halaman) supaya hasil
+    ekspor persis sama dengan tabel di layar.
+    """
+    qd = request.GET.copy()
+    qd.pop('page', None)
+    qd['tahun'] = f['tahun']
+    qd['status'] = f['status']
+    return qd.urlencode()
+
+
+def _susun_halaman_prestasi(request, kesiswaan, *, qs_awal, sort_default, status_pilihan=None, status_default=None, tahun_default=None, ekspor_halaman=None):
+    f, sort, base_qs, hasil = _filter_halaman(
+        request, kesiswaan, qs_awal=qs_awal, sort_default=sort_default,
+        status_pilihan=status_pilihan, status_default=status_default, tahun_default=tahun_default,
     )
     # Statistik status dihitung dari hasil filter KECUALI filter status-nya
     # sendiri, supaya kartu/tab tetap menunjukkan sebaran seluruh status.
@@ -283,8 +325,11 @@ def _susun_halaman_prestasi(request, kesiswaan, *, qs_awal, sort_default, status
     statistik = {s: hitung.get(s, 0) for s in STATUS_LABEL}
     statistik['total'] = sum(statistik.values())
 
-    hasil = _terapkan_filter(base_qs, f, kesiswaan).order_by(*SORT_PRESTASI[sort])
     page_obj = Paginator(hasil, PAGE_SIZE).get_page(request.GET.get('page'))
+
+    # Total prestasi TERVERIFIKASI pada filter aktif (pengajuan yang belum disetujui tidak ikut;
+    # tidak ada baris ganda karena anotasi kelas memakai subquery, bukan join).
+    total_terverifikasi = hasil.filter(status='diterima').count()
 
     opsi = _opsi_filter(f['tahun'])
     jumlah_lanjutan = sum(bool(f[k]) for k in FILTER_LANJUTAN)
@@ -314,6 +359,10 @@ def _susun_halaman_prestasi(request, kesiswaan, *, qs_awal, sort_default, status
         'qs_tanpa_sort': qs_tanpa_sort,
         'paginator': paginator,
         'page_range': page_range,
+        'total_terverifikasi': total_terverifikasi,
+        # Tombol ekspor (Excel/Cetak) mengikuti filter & pencarian aktif; None = tanpa tombol.
+        'ekspor_halaman': ekspor_halaman,
+        'qs_ekspor': _qs_ekspor(request, f) if ekspor_halaman else '',
     }
 
 
@@ -489,6 +538,7 @@ def verifikasi_list(request):
         qs_awal=Prestasi.objects.all(),
         sort_default='upload_asc',      # yang paling lama menunggu di atas
         status_default='pending',
+        ekspor_halaman='verifikasi',
     )
 
     # Status sudah ditampilkan lewat tab, jadi chip status tidak perlu
@@ -512,237 +562,181 @@ def verifikasi_list(request):
 # VERIFIKASI DETAIL
 # ==========================================
 
+def _konteks_verifikasi(prestasi, kesiswaan, form):
+    """Konteks halaman detail verifikasi (dipakai saat GET dan saat form tidak valid)."""
+    return {
+        'prestasi': prestasi,
+        'kesiswaan': kesiswaan,
+        'form': form,
+        'sertifikat_list': prestasi.sertifikat_set.all(),
+        'dokumentasi_list': prestasi.dokumentasi_set.all(),
+        'riwayat_list': prestasi.riwayat_verifikasi.all(),
+        'duplikat_list': cari_duplikat(prestasi),
+        'lengkapi_form': LengkapiDataPrestasiForm(prestasi=prestasi, initial={
+            'subkategori': prestasi.subkategori_id,
+            'subkategori_lainnya': prestasi.subkategori_lainnya,
+            'jenis_perolehan': prestasi.jenis_perolehan,
+            'nomor_sertifikat': prestasi.nomor_sertifikat,
+        }),
+        'active_menu': 'verifikasi',
+    }
+
+
 @role_required('kesiswaan')
 def verifikasi_detail(request, prestasi_id):
     """
-    Detail verifikasi prestasi
-    -- 3 keputusan: terima / perbaikan / tolak.
+    Detail verifikasi prestasi -- 3 keputusan: terima / perbaikan / tolak.
+    Setiap keputusan: dicatat di RiwayatVerifikasi (pelaku, waktu, status lama/baru, catatan),
     """
-
     kesiswaan, redirect_response = _guard_kesiswaan(request)
-
     if redirect_response:
         return redirect_response
 
-    prestasi = get_object_or_404(
-        Prestasi,
-        pk=prestasi_id
-    )
-
+    prestasi = get_object_or_404(Prestasi, pk=prestasi_id)
     NotifikasiDibaca.objects.get_or_create(kesiswaan=kesiswaan, prestasi=prestasi)
 
     if request.method == 'POST':
+        # Keputusan hanya boleh diambil untuk pengajuan yang MENUNGGU verifikasi.
+        # (Tombolnya memang hanya tampil untuk status itu, tapi server tetap harus
+        # menolak POST langsung -- mis. mengubah 'ditolak' menjadi 'diterima'.)
+        if prestasi.status != 'pending':
+            messages.error(request, 'Pengajuan ini tidak sedang menunggu verifikasi, keputusan tidak dapat diubah.')
+            return redirect('kesiswaan_verifikasi_detail', prestasi_id=prestasi.id)
 
-        form = VerifikasiPrestasiForm(
-            request.POST
-        )
+        form = VerifikasiPrestasiForm(request.POST)
+        if not form.is_valid():
+            return render(request, 'eprestasi/kesiswaan_portal/verifikasi_detail.html',
+                          _konteks_verifikasi(prestasi, kesiswaan, form))
 
-        if form.is_valid():
+        keputusan = form.cleaned_data['keputusan']
+        nama_pelaku = kesiswaan.nama or kesiswaan.nip
+        hapus_file = None   # aksi di Cloudinary dijalankan SETELAH transaksi database berhasil
 
-            keputusan = form.cleaned_data[
-                'keputusan'
-            ]
-
-            # ==========================================
-            # DITERIMA
-            # ==========================================
+        with transaction.atomic():
+            prestasi.kesiswaan = kesiswaan
+            prestasi.tanggal_verifikasi = timezone.now()
 
             if keputusan == 'diterima':
-
                 prestasi.status = 'diterima'
-
-                prestasi.kesiswaan = kesiswaan
-
-                prestasi.tanggal_verifikasi = (
-                    timezone.now()
-                )
-
                 prestasi.jenis_perbaikan = None
-
                 prestasi.catatan_perbaikan = None
-
                 prestasi.save()
-
+                catat_riwayat(prestasi, 'diterima', nama_pelaku, 'kesiswaan', 'pending', 'diterima',
+                              'Prestasi disetujui dan tercatat sebagai prestasi terverifikasi.')
                 NotifikasiSiswa.objects.create(
                     siswa=prestasi.siswa, prestasi=prestasi, status='diterima',
-                    pesan=f'Prestasi "{prestasi.nama_prestasi}" diterima.',
+                    pesan=f'Prestasi "{prestasi.nama_prestasi}" terverifikasi.',
                 )
-
-                messages.success(
-                    request,
-                    f'Prestasi "{prestasi.nama_prestasi}" diterima.'
-                )
-
-            # ==========================================
-            # PERBAIKAN
-            # ==========================================
+                pesan_sukses = f'Prestasi "{prestasi.nama_prestasi}" diterima.'
 
             elif keputusan == 'perbaikan':
-
-                jenis = form.cleaned_data[
-                    'jenis_perbaikan'
-                ]
-
-                catatan = (
-                    form
-                    .cleaned_data[
-                        'catatan_perbaikan'
-                    ]
-                    .strip()
-                )
-
+                jenis = form.cleaned_data['jenis_perbaikan']
+                catatan_perbaikan = form.cleaned_data['catatan_perbaikan'].strip()
                 prestasi.status = 'perbaikan'
-
                 prestasi.jenis_perbaikan = jenis
-
-                prestasi.catatan_perbaikan = catatan
-
-                prestasi.kesiswaan = kesiswaan
-
-                prestasi.tanggal_verifikasi = (
-                    timezone.now()
-                )
-
+                prestasi.catatan_perbaikan = catatan_perbaikan
                 prestasi.save()
-
+                catat_riwayat(
+                    prestasi, 'perbaikan', nama_pelaku, 'kesiswaan', 'pending', 'perbaikan',
+                    f'Perbaikan {"file" if jenis == "file" else "data"}: {catatan_perbaikan}',
+                )
                 NotifikasiSiswa.objects.create(
                     siswa=prestasi.siswa, prestasi=prestasi, status='perbaikan',
                     pesan=f'Prestasi "{prestasi.nama_prestasi}" perlu perbaikan {"file" if jenis == "file" else "data"}.',
                 )
-
                 if jenis == 'file':
-
-                    # File sertifikat lama dihapus
-                    # dari Cloudinary.
-                    #
-                    # Siswa WAJIB unggah ulang
-                    # file baru.
-
-                    hapus_sertifikat_prestasi(
-                        prestasi
+                    hapus_file = 'sertifikat'
+                    pesan_sukses = (
+                        f'Prestasi "{prestasi.nama_prestasi}" dikembalikan untuk perbaikan file. '
+                        'File sertifikat lama sudah dihapus dari penyimpanan, siswa perlu unggah ulang.'
                     )
-
-                    messages.success(
-                        request,
-                        f'Prestasi "{prestasi.nama_prestasi}" '
-                        'dikembalikan untuk perbaikan file. '
-                        'File sertifikat lama sudah dihapus '
-                        'dari penyimpanan, siswa perlu '
-                        'unggah ulang.'
-                    )
-
                 else:
+                    pesan_sukses = f'Prestasi "{prestasi.nama_prestasi}" dikembalikan untuk perbaikan data.'
 
-                    messages.success(
-                        request,
-                        f'Prestasi "{prestasi.nama_prestasi}" '
-                        'dikembalikan untuk perbaikan data.'
-                    )
-
-            # ==========================================
-            # DITOLAK
-            # ==========================================
-
-            elif keputusan == 'ditolak':
-
-                alasan = (
-                    form
-                    .cleaned_data[
-                        'alasan_penolakan'
-                    ]
-                    .strip()
-                )
-
+            else:  # ditolak
+                alasan = form.cleaned_data['alasan_penolakan'].strip()
                 prestasi.status = 'ditolak'
-
                 prestasi.alasan_penolakan = alasan
-
-                prestasi.kesiswaan = kesiswaan
-
-                prestasi.tanggal_verifikasi = (
-                    timezone.now()
-                )
-
                 prestasi.jenis_perbaikan = None
-
                 prestasi.catatan_perbaikan = None
-
                 prestasi.save()
-
+                catat_riwayat(prestasi, 'ditolak', nama_pelaku, 'kesiswaan', 'pending', 'ditolak', alasan)
                 NotifikasiSiswa.objects.create(
                     siswa=prestasi.siswa, prestasi=prestasi, status='ditolak',
                     pesan=f'Prestasi "{prestasi.nama_prestasi}" ditolak.',
                 )
-
-                # Prestasi ditolak permanen.
-                # Semua file (sertifikat + foto dokumentasi) dihapus dari Cloudinary.
-
-                hapus_semua_file_prestasi(
-                    prestasi
+                hapus_file = 'semua'
+                pesan_sukses = (
+                    f'Prestasi "{prestasi.nama_prestasi}" ditolak. File sertifikat, foto dokumentasi, '
+                    'dan dokumen Puspresnas sudah dihapus dari penyimpanan.'
                 )
 
-                messages.success(
-                    request,
-                    f'Prestasi "{prestasi.nama_prestasi}" '
-                    'ditolak. File sertifikat, foto dokumentasi, dan dokumen '
-                    'Puspresnas sudah dihapus dari penyimpanan.'
-                )
+        # Di luar transaksi: penghapusan file Cloudinary (efek samping eksternal).
+        if hapus_file == 'sertifikat':
+            hapus_sertifikat_prestasi(prestasi)
+        elif hapus_file == 'semua':
+            hapus_semua_file_prestasi(prestasi)
 
-            return redirect(
-                'kesiswaan_verifikasi_list'
-            )
+        messages.success(request, pesan_sukses)
+        return redirect('kesiswaan_verifikasi_list')
 
-        # ==========================================
-        # FORM INVALID
-        # ==========================================
+    return render(request, 'eprestasi/kesiswaan_portal/verifikasi_detail.html',
+                  _konteks_verifikasi(prestasi, kesiswaan, VerifikasiPrestasiForm()))
 
-        context = {
-            'prestasi': prestasi,
-            'kesiswaan': kesiswaan,
-            'form': form,
 
-            'sertifikat_list': (
-                prestasi.sertifikat_set.all()
-            ),
+@role_required('kesiswaan')
+@require_POST
+def lengkapi_data(request, prestasi_id):
+    """
+    Kesiswaan melengkapi klasifikasi (subkategori, perolehan, nomor sertifikat) -- terutama untuk
+    prestasi lama. Perubahan dicatat di riwayat.
+    """
+    kesiswaan, redirect_response = _guard_kesiswaan(request)
+    if redirect_response:
+        return redirect_response
 
-            'dokumentasi_list': (
-                prestasi.dokumentasi_set.all()
-            ),
+    prestasi = get_object_or_404(Prestasi, pk=prestasi_id)
+    if prestasi.status == 'ditolak':
+        messages.error(request, 'Pengajuan yang ditolak tidak dapat diubah.')
+        return redirect('kesiswaan_verifikasi_detail', prestasi_id=prestasi.id)
 
-            'active_menu': 'verifikasi',
-        }
+    form = LengkapiDataPrestasiForm(request.POST, prestasi=prestasi)
+    if not form.is_valid():
+        pesan = '; '.join(e for errs in form.errors.values() for e in errs)
+        messages.error(request, f'Data tidak disimpan: {pesan}')
+        return redirect('kesiswaan_verifikasi_detail', prestasi_id=prestasi.id)
 
-        return render(
-            request,
-            'eprestasi/kesiswaan_portal/verifikasi_detail.html',
-            context
+    d = form.cleaned_data
+    perubahan = []
+    with transaction.atomic():
+        sub = d.get('subkategori')
+        if sub is not None and (sub.pk != prestasi.subkategori_id or d['subkategori_lainnya'] != prestasi.subkategori_lainnya):
+            lama = prestasi.label_subkategori or '-'
+            prestasi.subkategori = sub
+            prestasi.subkategori_lainnya = d['subkategori_lainnya']
+            perubahan.append(f'Subkategori: {lama} -> {prestasi.label_subkategori}')
+        perolehan = d.get('jenis_perolehan')
+        if perolehan and perolehan != prestasi.jenis_perolehan:
+            lama = prestasi.get_jenis_perolehan_display() or '-'
+            prestasi.jenis_perolehan = perolehan
+            perubahan.append(f'Perolehan: {lama} -> {prestasi.get_jenis_perolehan_display()}')
+        nomor = (d.get('nomor_sertifikat') or '').strip()
+        if nomor and nomor != prestasi.nomor_sertifikat:
+            perubahan.append(f'Nomor sertifikat: {prestasi.nomor_sertifikat or "-"} -> {nomor}')
+            prestasi.nomor_sertifikat = nomor
+
+        if not perubahan:
+            messages.info(request, 'Tidak ada perubahan yang disimpan.')
+            return redirect('kesiswaan_verifikasi_detail', prestasi_id=prestasi.id)
+
+        prestasi.save()
+        catat_riwayat(
+            prestasi, 'data_dilengkapi', kesiswaan.nama or kesiswaan.nip, 'kesiswaan',
+            prestasi.status, prestasi.status, '; '.join(perubahan),
         )
+    messages.success(request, 'Klasifikasi prestasi diperbarui dan tercatat di riwayat.')
+    return redirect('kesiswaan_verifikasi_detail', prestasi_id=prestasi.id)
 
-    # ==========================================
-    # GET
-    # ==========================================
-
-    context = {
-        'prestasi': prestasi,
-        'kesiswaan': kesiswaan,
-        'form': VerifikasiPrestasiForm(),
-
-        'sertifikat_list': (
-            prestasi.sertifikat_set.all()
-        ),
-
-        'dokumentasi_list': (
-            prestasi.dokumentasi_set.all()
-        ),
-
-        'active_menu': 'verifikasi',
-    }
-
-    return render(
-        request,
-        'eprestasi/kesiswaan_portal/verifikasi_detail.html',
-        context
-    )
 
 # ==========================================
 # RIWAYAT VERIFIKASI
@@ -760,6 +754,7 @@ def riwayat_verifikasi(request):
         qs_awal=Prestasi.objects.filter(status__in=STATUS_TERVERIFIKASI),
         sort_default='verif_desc',
         status_pilihan=list(STATUS_TERVERIFIKASI),
+        ekspor_halaman='riwayat',
     )
     context.update({
         'active_menu': 'riwayat',
@@ -787,6 +782,7 @@ def data_prestasi(request):
         qs_awal=Prestasi.objects.all(),
         sort_default='upload_desc',
         tahun_default=tahun_aktif.id if tahun_aktif else None,
+        ekspor_halaman='data',
     )
     # Tahun sudah dipilih lewat selector di atas, jadi chip-nya disembunyikan
     context['chips'] = [c for c in context['chips'] if c['key'] != 'tahun']
@@ -915,8 +911,18 @@ def statistik(request):
         for sid, tingkat, nama in kandidat:
             contoh_map.setdefault((sid, tingkat), nama)
     for r in top_tingkat:
+        r['tingkat'] = r['tertinggi'] or 0
         r['tingkat_label'] = LABEL_TINGKAT.get(r['tertinggi'], '-')
         r['contoh'] = contoh_map.get((r['siswa_id'], BOBOT_KE_TINGKAT.get(r['tertinggi'])), '')
+
+    # ---- Distribusi perolehan (hanya prestasi terverifikasi) ----
+    per_perolehan = {r['jenis_perolehan']: r['n'] for r in diterima.values('jenis_perolehan').annotate(n=Count('id'))}
+    chart_data['perolehan'] = {
+        'labels': [label for kode, label in PEROLEHAN_CHOICES if per_perolehan.get(kode)]
+                  + (['Belum diisi'] if per_perolehan.get('') else []),
+        'data': [per_perolehan[kode] for kode, label in PEROLEHAN_CHOICES if per_perolehan.get(kode)]
+                + ([per_perolehan['']] if per_perolehan.get('') else []),
+    }
 
     return render(request, 'eprestasi/kesiswaan_portal/statistik.html', {
         'kesiswaan': kesiswaan,
@@ -967,3 +973,183 @@ def notif_tandai_semua(request):
     if tujuan and url_has_allowed_host_and_scheme(tujuan, allowed_hosts={request.get_host()}):
         return redirect(tujuan)
     return redirect('kesiswaan_dashboard')
+
+# ==========================================
+# EKSPOR REKAP / LEGER PRESTASI
+# ==========================================
+# Ekspor mengikuti PENCARIAN + FILTER + URUTAN yang sedang aktif di tabel (lewat querystring yang
+# sama, diterjemahkan oleh _filter_halaman yang sama). Tersedia dari tiga halaman tabel:
+# Data Prestasi, Verifikasi, dan Riwayat.
+
+BATAS_BARIS_EKSPOR = 5000
+BATAS_BARIS_CETAK = 1500
+
+
+def _hasil_terfilter(request, kesiswaan):
+    """
+    Queryset prestasi persis seperti yang tampil di halaman asal (`halaman` = data/verifikasi/riwayat)
+    setelah dicari/difilter, tanpa paginasi. Mengembalikan (f, hasil, tahun_terpilih, halaman).
+    """
+    halaman = request.GET.get('halaman', 'data')
+    if halaman == 'verifikasi':
+        opsi = dict(qs_awal=Prestasi.objects.all(), sort_default='upload_asc', status_default='pending')
+    elif halaman == 'riwayat':
+        opsi = dict(qs_awal=Prestasi.objects.filter(status__in=STATUS_TERVERIFIKASI), sort_default='verif_desc',
+                    status_pilihan=list(STATUS_TERVERIFIKASI))
+    else:
+        halaman = 'data'
+        tahun_aktif = Tahun_ajaran.objects.filter(status='aktif').first()
+        opsi = dict(qs_awal=Prestasi.objects.all(), sort_default='upload_desc',
+                    tahun_default=tahun_aktif.id if tahun_aktif else None)
+    f, sort, base_qs, hasil = _filter_halaman(request, kesiswaan, **opsi)
+    tahun = Tahun_ajaran.objects.filter(id=int(f['tahun'])).first() if f['tahun'].isdigit() else None
+    return f, hasil, tahun, halaman
+
+
+def _aman_excel(nilai):
+    """Cegah formula injection: teks yang diawali = + - @ dipaksa jadi teks biasa."""
+    if isinstance(nilai, str) and nilai[:1] in ('=', '+', '-', '@', '\t', '\r'):
+        return "'" + nilai
+    return nilai
+
+
+def _nama_kategori():
+    """{kode: nama} dari master kategori (nama yang dikelola admin), untuk judul kolom ekspor."""
+    return dict(KategoriPrestasi.objects.values_list('kode', 'nama'))
+
+
+def _baris_rekap(p, nama_kategori):
+    return {
+        'nama': p.siswa.nama, 'nis': p.siswa.nis,
+        'kelas': p.kelas_nama or '', 'jurusan': p.kelas_jurusan or '',
+        'kegiatan': p.nama_prestasi,
+        'kategori': nama_kategori.get(p.kategori_prestasi) or p.get_kategori_prestasi_display().capitalize(),
+        'subkategori': p.label_subkategori, 'penyelenggara': p.penyelenggara,
+        'wilayah': p.get_wilayah_prestasi_display(), 'tingkat': p.label_tingkat,
+        'perolehan': p.get_jenis_perolehan_display() if p.jenis_perolehan else '',
+        'tanggal': p.tanggal_prestasi, 'tahun_ajaran': p.tahun_ajaran.tahun_ajaran,
+        'nomor_sertifikat': p.nomor_sertifikat,
+        'status': STATUS_LABEL.get(p.status, p.status),
+    }
+
+
+def _ringkasan_filter(f, opsi_tahun, halaman):
+    """Teks singkat filter aktif untuk judul/baris keterangan dokumen ekspor."""
+    bagian = []
+    if f.get('q'):
+        bagian.append(f'pencarian "{f["q"]}"')
+    if f.get('status'):
+        bagian.append(f'status {STATUS_LABEL.get(f["status"], f["status"])}')
+    for kunci, label in (('kategori', 'kategori'), ('tingkat_prestasi', 'tingkat'), ('jurusan', 'jurusan'), ('kelas', 'kelas')):
+        if f.get(kunci):
+            bagian.append(f'{label} {f[kunci]}')
+    if f.get('perolehan'):
+        bagian.append(f'perolehan {dict(PEROLEHAN_CHOICES).get(f["perolehan"], f["perolehan"])}')
+    return ', '.join(bagian) or 'tanpa filter tambahan'
+
+
+@role_required('kesiswaan')
+def export_rekap_excel(request):
+    """Ekspor Excel dari tabel yang sedang dicari/difilter: leger + rekap per siswa + ringkasan per tingkat."""
+    kesiswaan, redirect_response = _guard_kesiswaan(request)
+    if redirect_response:
+        return redirect_response
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment
+    from openpyxl.utils import get_column_letter
+
+    f, hasil, tahun, halaman = _hasil_terfilter(request, kesiswaan)
+    total = hasil.count()
+    daftar = list(hasil[:BATAS_BARIS_EKSPOR])
+    dipotong = total > BATAS_BARIS_EKSPOR
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Leger Prestasi'
+    ws.append([f'Leger Prestasi Siswa - {tahun.tahun_ajaran if tahun else "Semua Tahun Ajaran"}'])
+    ws['A1'].font = Font(bold=True, size=13)
+    ws.append([f'Filter: {_ringkasan_filter(f, tahun, halaman)}. Jumlah baris: {total}. '
+               f'Dicetak {timezone.localtime().strftime("%d-%m-%Y %H:%M")} oleh {kesiswaan.nama or kesiswaan.nip}.'
+               + (f' Data dipotong {BATAS_BARIS_EKSPOR} baris pertama.' if dipotong else '')])
+    ws.append([])
+    ws.append(['No', 'Nama Siswa', 'NIS', 'Kelas', 'Jurusan', 'Nama Kegiatan', 'Kategori', 'Subkategori',
+               'Penyelenggara', 'Wilayah', 'Tingkat', 'Perolehan', 'Tanggal', 'Tahun Ajaran',
+               'Nomor Sertifikat', 'Status'])
+    for c in ws[4]:
+        c.font = Font(bold=True)
+        c.alignment = Alignment(wrap_text=True, vertical='center')
+
+    per_siswa = {}
+    per_tingkat = {}
+    nama_kategori = _nama_kategori()
+    for i, p in enumerate(daftar, start=1):
+        r = _baris_rekap(p, nama_kategori)
+        ws.append([_aman_excel(x) for x in [
+            i, r['nama'], r['nis'], r['kelas'], r['jurusan'], r['kegiatan'], r['kategori'],
+            r['subkategori'], r['penyelenggara'], r['wilayah'], r['tingkat'], r['perolehan'],
+            r['tanggal'], r['tahun_ajaran'], r['nomor_sertifikat'], r['status'],
+        ]])
+        ws.cell(row=ws.max_row, column=13).number_format = 'DD-MM-YYYY'
+        if p.status == 'diterima':
+            d = per_siswa.setdefault(p.siswa_id, {'nama': r['nama'], 'nis': r['nis'], 'kelas': r['kelas'],
+                                                  'jurusan': r['jurusan'], 'jumlah': 0})
+            d['jumlah'] += 1
+            kt = (r['tahun_ajaran'], r['tingkat'])
+            per_tingkat[kt] = per_tingkat.get(kt, 0) + 1
+    for kol, lebar in enumerate([5, 26, 14, 12, 10, 38, 14, 28, 28, 14, 20, 16, 12, 12, 20, 20], start=1):
+        ws.column_dimensions[get_column_letter(kol)].width = lebar
+    ws.freeze_panes = 'A5'
+
+    ws2 = wb.create_sheet('Rekap per Siswa')
+    ws2.append(['Rekap Prestasi Terverifikasi per Siswa (mengikuti filter yang sama)'])
+    ws2['A1'].font = Font(bold=True, size=13)
+    ws2.append([])
+    ws2.append(['No', 'Nama Siswa', 'NIS', 'Kelas', 'Jurusan', 'Jumlah Prestasi Terverifikasi'])
+    for c in ws2[3]:
+        c.font = Font(bold=True)
+    for i, d in enumerate(sorted(per_siswa.values(), key=lambda x: (-x['jumlah'], x['nama'])), start=1):
+        ws2.append([i, _aman_excel(d['nama']), _aman_excel(d['nis']), _aman_excel(d['kelas']),
+                    _aman_excel(d['jurusan']), d['jumlah']])
+    for kol, lebar in enumerate([5, 28, 14, 14, 10, 28], start=1):
+        ws2.column_dimensions[get_column_letter(kol)].width = lebar
+
+    ws3 = wb.create_sheet('Ringkasan Tingkat')
+    ws3.append(['Jumlah Prestasi Terverifikasi per Tahun Ajaran dan Tingkat'])
+    ws3['A1'].font = Font(bold=True, size=13)
+    ws3.append([])
+    ws3.append(['Tahun Ajaran', 'Tingkat', 'Jumlah'])
+    for c in ws3[3]:
+        c.font = Font(bold=True)
+    urut_tingkat = {LABEL_TINGKAT_PRESTASI[k]: v for k, v in URUTAN_TINGKAT.items()}
+    for (ta, tingkat), n in sorted(per_tingkat.items(), key=lambda x: (x[0][0], -urut_tingkat.get(x[0][1], 0))):
+        ws3.append([_aman_excel(ta), _aman_excel(tingkat), n])
+    for kol, lebar in enumerate([16, 26, 10], start=1):
+        ws3.column_dimensions[get_column_letter(kol)].width = lebar
+
+    nama_file = f'leger-prestasi-{halaman}-{tahun.tahun_ajaran.replace("/", "-") if tahun else "semua"}.xlsx'
+    respons = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    respons['Content-Disposition'] = f'attachment; filename="{nama_file}"'
+    wb.save(respons)
+    return respons
+
+
+@role_required('kesiswaan')
+def cetak_rekap(request):
+    """Halaman rekap siap cetak (Ctrl+P -> Simpan sebagai PDF), sesuai pencarian & filter aktif."""
+    kesiswaan, redirect_response = _guard_kesiswaan(request)
+    if redirect_response:
+        return redirect_response
+
+    f, hasil, tahun, halaman = _hasil_terfilter(request, kesiswaan)
+    total = hasil.count()
+    nama_kategori = _nama_kategori()
+    baris = [_baris_rekap(p, nama_kategori) for p in hasil[:BATAS_BARIS_CETAK]]
+    return render(request, 'eprestasi/kesiswaan_portal/rekap_cetak.html', {
+        'baris': baris, 'tahun': tahun, 'total': total,
+        'dipotong': total > BATAS_BARIS_CETAK, 'batas': BATAS_BARIS_CETAK,
+        'total_terverifikasi': hasil.filter(status='diterima').count(),
+        'filter_teks': _ringkasan_filter(f, tahun, halaman),
+        'dicetak_pada': timezone.localtime(),
+        'dicetak_oleh': kesiswaan.nama or kesiswaan.nip,
+    })

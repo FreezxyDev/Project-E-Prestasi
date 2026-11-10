@@ -12,13 +12,20 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card p-3">
             <div class="text-muted small mb-1">Berhasil Dibuat</div>
             <div class="fs-3 fw-bold text-success">{{ berhasil|length }}</div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small mb-1">Password Dibuat Otomatis</div>
+            <div class="fs-3 fw-bold">{{ jumlah_password_otomatis|default:0 }}</div>
+            <div class="small text-muted">tidak ada password di Excel</div>
+        </div>
+    </div>
+    <div class="col-md-4">
         <div class="card p-3">
             <div class="text-muted small mb-1">Gagal / Dilewati</div>
             <div class="fs-3 fw-bold text-danger">{{ gagal|length }}</div>
@@ -39,6 +46,12 @@
         Simpan/download daftar ini SEKARANG -- password aslinya tidak akan bisa dilihat lagi
         setelah kamu tinggalkan halaman ini (cuma tersimpan dalam bentuk terenkripsi).
     </div>
+    {% if jumlah_password_otomatis %}
+    <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Filter akun" id="filterAkun">
+        <button type="button" class="btn btn-outline-secondary{% if not filter_otomatis %} active{% endif %}" data-filter="semua">Semua ({{ berhasil|length }})</button>
+        <button type="button" class="btn btn-outline-secondary{% if filter_otomatis %} active{% endif %}" data-filter="otomatis"><i class="bi bi-key-fill"></i> Password otomatis ({{ jumlah_password_otomatis }})</button>
+    </div>
+    {% endif %}
     <div class="table-responsive">
         <table class="table table-sm table-hover mb-0">
             <thead>
@@ -46,13 +59,13 @@
             </thead>
             <tbody>
                 {% for item in berhasil %}
-                <tr>
+                <tr data-otomatis="{% if item.password_otomatis %}1{% else %}0{% endif %}"{% if filter_otomatis and not item.password_otomatis %} hidden{% endif %}>
                     <td>{{ item.nis }}</td>
                     <td>{{ item.nama|default:"-" }}</td>
                     <td>{{ item.kelas|default:"-" }}</td>
                     <td>{{ item.jurusan|default:"-" }}</td>
                     <td><code>{{ item.username }}</code></td>
-                    <td><code>{{ item.password }}</code></td>
+                    <td><code>{{ item.password }}</code>{% if item.password_otomatis %} <span class="badge text-bg-secondary">otomatis</span>{% endif %}</td>
                     <td class="text-warning small">{{ item.catatan }}</td>
                 </tr>
                 {% endfor %}
@@ -84,4 +97,18 @@
 </div>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    var g = document.getElementById('filterAkun'); if (!g) { return; }
+    g.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-filter]'); if (!b) { return; }
+        var oto = b.dataset.filter === 'otomatis';
+        g.querySelectorAll('.btn').forEach(function (x) { x.classList.toggle('active', x === b); });
+        document.querySelectorAll('tr[data-otomatis]').forEach(function (tr) { tr.hidden = oto && tr.dataset.otomatis !== '1'; });
+    });
+})();
+</script>
 {% endblock %}

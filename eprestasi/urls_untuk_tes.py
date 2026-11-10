@@ -1,3 +1,4 @@
+"""URLconf KHUSUS TES. Proyek aslimu memakai urls.py miliknya sendiri; file ini hanya agar tes berjalan mandiri."""
 from django.urls import path
 from . import views
 from . import auth_views
@@ -12,6 +13,7 @@ from . import kelulusan_views
 from . import siswa_keluar_views
 from . import views_drilldown
 from . import lupa_password_views
+from . import master_views
 
 urlpatterns = [
     # Autentikasi
@@ -124,4 +126,19 @@ urlpatterns = [
     path('kelola-admin/tambah/', views.Create_admin, name='tambah_admin'),
     path('kelola-admin/edit/<int:admin_id>/', views.Update_admin, name='update_admin'),
     path('kelola-admin/hapus/<int:admin_id>/', views.delete_admin, name='delete_admin'),
+
+    # --- rute yang ada di proyek terbaru tetapi tidak di zip lama (agar halaman terbaru bisa dirender saat tes) ---
+    path('siswa/panduan/', siswa_views.panduan, name='siswa_panduan'),
+    path('siswa/import/mulai/', import_views.import_siswa_mulai, name='siswa_import_mulai'),
+    path('siswa/import/proses/', import_views.import_siswa_proses, name='siswa_import_proses'),
+    path('siswa/import/batal/', import_views.import_siswa_batal, name='siswa_import_batal'),
+    path('siswa/import/status/', import_views.import_siswa_status, name='siswa_import_status'),
+    path('siswa/import/tutup/', import_views.import_siswa_tutup, name='siswa_import_tutup'),
+
+    # --- rute fitur prestasi ---
+    path('kesiswaan/verifikasi/<int:prestasi_id>/lengkapi/', kesiswaan_views.lengkapi_data, name='kesiswaan_lengkapi_data'),
+    path('kesiswaan/rekap/excel/', kesiswaan_views.export_rekap_excel, name='kesiswaan_export_excel'),
+    path('kesiswaan/rekap/cetak/', kesiswaan_views.cetak_rekap, name='kesiswaan_cetak_rekap'),
+    path('master-prestasi/', master_views.master_prestasi, name='master_prestasi'),
 ]
+

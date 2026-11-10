@@ -7,6 +7,40 @@ from cloudinary.models import CloudinaryField
 NPSN_SMKN_11_BANDUNG = '20219175'
 
 
+# ── Konstanta prestasi (dipakai models, forms, dan views) ──
+# Urutan tingkat dari terendah ke tertinggi. Nilai lama ('sekolah', 'kabupaten/kota',
+# 'provinsi', 'nasional', 'internasional') TIDAK diubah supaya data yang sudah ada
+# tetap valid; 'regional' (Regional/Asia) adalah tambahan baru.
+TINGKAT_CHOICES = [
+    ('sekolah', 'Sekolah'),
+    ('kabupaten/kota', 'Kabupaten/Kota'),
+    ('provinsi', 'Provinsi'),
+    ('nasional', 'Nasional'),
+    ('regional', 'Regional/Asia'),
+    ('internasional', 'Internasional/Dunia'),
+]
+URUTAN_TINGKAT = {kode: i for i, (kode, _) in enumerate(TINGKAT_CHOICES, start=1)}
+LABEL_TINGKAT_PRESTASI = dict(TINGKAT_CHOICES)
+# Prestasi di luar negeri hanya masuk akal untuk tingkat regional/internasional.
+TINGKAT_LUAR_NEGERI = ('regional', 'internasional')
+
+PEROLEHAN_CHOICES = [
+    ('juara_umum', 'Juara Umum'),
+    ('juara_1', 'Juara 1'),
+    ('juara_2', 'Juara 2'),
+    ('juara_3', 'Juara 3'),
+    ('harapan_1', 'Harapan 1'),
+    ('harapan_2', 'Harapan 2'),
+    ('finalis', 'Finalis'),
+    ('peserta', 'Peserta'),
+    ('medali_emas', 'Medali Emas'),
+    ('medali_perak', 'Medali Perak'),
+    ('medali_perunggu', 'Medali Perunggu'),
+    ('jabatan', 'Jabatan / Pengalaman Organisasi'),
+]
+LABEL_PEROLEHAN = dict(PEROLEHAN_CHOICES)
+
+
 # Create your models here
 class Users(models.Model):
     username = models.CharField(max_length=100)
@@ -71,6 +105,8 @@ class Siswa(models.Model):
     jurusan = models.CharField(max_length=100, blank=True, null=True, choices = JURUSAN_CHOICES)
     email = models.EmailField(max_length=100, blank=True, null=True)
     no_hp = models.CharField(max_length=100, blank=True, null=True)
+    tempat_lahir = models.CharField(max_length=100, blank=True, default='')
+    tanggal_lahir = models.DateField(null=True, blank=True)
     alamat = models.TextField(blank=True, default='')
     foto_profil = CloudinaryField('foto_profil', blank=True, null=True)
     qr_code = CloudinaryField('qr_code', blank=True, null=True)
@@ -150,6 +186,52 @@ class Kesiswaan(models.Model):
     def profil_lengkap(self):
         return bool(self.nama and self.no_hp and self.jabatan)
     
+class KategoriPrestasi(models.Model):
+    """
+    Kategori utama prestasi yang dikelola admin (tanpa ubah kode program).
+    `kode` sengaja sama dengan nilai lama di Prestasi.kategori_prestasi
+    ('akademik', 'non-akademik') supaya filter, statistik, dan data lama tetap jalan.
+    """
+    kode = models.SlugField(max_length=50, unique=True)
+    nama = models.CharField(max_length=100)
+    urutan = models.PositiveSmallIntegerField(default=0)
+    aktif = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'kategori_prestasi'
+        ordering = ['urutan', 'nama']
+
+    def __str__(self):
+        return self.nama
+
+
+class SubkategoriPrestasi(models.Model):
+    """
+    Subkategori di bawah satu kategori. Satu subkategori per kategori boleh
+    ditandai `adalah_lainnya` -> siswa wajib mengetik nama bidangnya sendiri
+    (disimpan di Prestasi.subkategori_lainnya), jadi data tetap fleksibel.
+    """
+    kategori = models.ForeignKey(KategoriPrestasi, on_delete=models.CASCADE, related_name='subkategori')
+    # Pengelompok tampilan di dropdown (mis. "Olahraga", "Seni dan Budaya"); boleh kosong.
+    kelompok = models.CharField(max_length=100, blank=True, default='')
+    nama = models.CharField(max_length=100)
+    adalah_lainnya = models.BooleanField(default=False)
+    urutan = models.PositiveSmallIntegerField(default=0)
+    aktif = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'subkategori_prestasi'
+        ordering = ['kategori__urutan', 'adalah_lainnya', 'kelompok', 'urutan', 'nama']
+        unique_together = ('kategori', 'kelompok', 'nama')
+
+    @property
+    def nama_lengkap(self):
+        return f'{self.kelompok} - {self.nama}' if self.kelompok else self.nama
+
+    def __str__(self):
+        return f'{self.kategori.nama} - {self.nama_lengkap}'
+
+
 class Prestasi(models.Model):
     siswa = models.ForeignKey(Siswa, on_delete=models.CASCADE)
     tahun_ajaran = models.ForeignKey(Tahun_ajaran, on_delete=models.CASCADE)
@@ -203,6 +285,16 @@ class Prestasi(models.Model):
         ('non_kementerian', 'Non-Kementerian (Swasta)'),
     ])
 
+    # ── Klasifikasi & data tambahan ──────────────────────────────────────
+    subkategori = models.ForeignKey(
+        SubkategoriPrestasi, on_delete=models.SET_NULL, null=True, blank=True, related_name='prestasi'
+    )
+    # Diisi hanya kalau subkategori yang dipilih bertanda "Lainnya".
+    subkategori_lainnya = models.CharField(max_length=100, blank=True, default='')
+    jenis_perolehan = models.CharField(max_length=20, blank=True, default='', choices=PEROLEHAN_CHOICES)
+    nomor_sertifikat = models.CharField(max_length=100, blank=True, default='')
+    tanggal_mulai = models.DateField(null=True, blank=True)
+    tautan_pendukung = models.URLField(max_length=500, blank=True, default='')
 
     class Meta:
         db_table = 'prestasi'
@@ -211,10 +303,54 @@ class Prestasi(models.Model):
         return self.nama_prestasi
 
     @property
+    def label_subkategori(self):
+        """Nama subkategori untuk ditampilkan ('Lainnya' diganti isian siswa)."""
+        if self.subkategori is None:
+            return ''
+        if self.subkategori.adalah_lainnya and self.subkategori_lainnya:
+            return f'{self.subkategori.nama}: {self.subkategori_lainnya}'
+        return self.subkategori.nama_lengkap
+
+    @property
+    def label_tingkat(self):
+        return LABEL_TINGKAT_PRESTASI.get(self.tingkat_prestasi, self.tingkat_prestasi)
+
+    @property
     def tampilkan_tag_puspresnas(self):
         """Dipakai template untuk badge PUSPRESNAS: true kalau ada kode atau dokumen."""
         return bool(self.kode_puspresnas or self.dokumen_puspresnas)
     
+class RiwayatVerifikasi(models.Model):
+    """
+    Jejak verifikasi APPEND-ONLY per prestasi: siapa, kapan, status sebelum/sesudah,
+    dan catatannya. Tidak pernah diedit/dihapus saat data diperbaiki, jadi
+    keputusan verifikasi bisa dipertanggungjawabkan.
+    """
+    AKSI_CHOICES = [
+        ('diajukan', 'Diajukan'),
+        ('diajukan_ulang', 'Diajukan ulang setelah perbaikan'),
+        ('diterima', 'Diverifikasi (diterima)'),
+        ('perbaikan', 'Dikembalikan untuk perbaikan'),
+        ('ditolak', 'Ditolak'),
+        ('data_dilengkapi', 'Data dilengkapi petugas'),
+    ]
+    prestasi = models.ForeignKey(Prestasi, on_delete=models.CASCADE, related_name='riwayat_verifikasi')
+    aksi = models.CharField(max_length=20, choices=AKSI_CHOICES)
+    pelaku = models.CharField(max_length=100, blank=True, default='')
+    role_pelaku = models.CharField(max_length=30, blank=True, default='')
+    status_sebelum = models.CharField(max_length=20, blank=True, default='')
+    status_baru = models.CharField(max_length=20, blank=True, default='')
+    catatan = models.TextField(blank=True, default='')
+    waktu = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'riwayat_verifikasi'
+        ordering = ['waktu', 'id']
+
+    def __str__(self):
+        return f'{self.prestasi_id}: {self.aksi}'
+
+
 class LogAktivitas(models.Model):
     """
     Catatan jejak aktivitas administratif dalam sistem (tambah/ubah/hapus data,
@@ -237,6 +373,7 @@ class LogAktivitas(models.Model):
         ('password_direset', 'Password direset'),
         ('siswa_keluar', 'Siswa keluar / dikeluarkan'),
         ('siswa_dipulihkan', 'Siswa dipulihkan'),
+        ('master_prestasi_diubah', 'Master kategori prestasi diubah'),
     ]
     MODUL_CHOICES = [
         ('siswa', 'Siswa'),
@@ -362,6 +499,15 @@ class Kelas(models.Model):
         hitung = getattr(self, 'jumlah_siswa_hitung', None)
         return hitung if hitung is not None else self.riwayat_kelas.count()
 
+class Jurusan(models.Model):
+    kode = models.CharField(max_length=10, unique=True)
+
+    class Meta:
+        db_table = 'jurusan'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.kode
 
 class RiwayatKelas(models.Model):
     """

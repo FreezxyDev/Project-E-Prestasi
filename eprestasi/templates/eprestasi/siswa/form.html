@@ -7,7 +7,7 @@
     <h4>{% if mode == 'edit' %}Edit Akun Siswa{% else %}Tambah Akun Siswa{% endif %}</h4>
 </div>
 
-<div class="card p-4 form-narrow-md">
+<div class="card p-4 form-card form-md">
 
     {% if mode != 'edit' %}
         <p class="text-muted small mb-3">
@@ -36,71 +36,62 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <!-- Field NIS -->
-        <div class="mb-3">
-            <label class="form-label">NIS</label>
-            {{ form.nis }}
-            {{ form.nis.errors }}
-        </div>
+        <div class="form-layout">
+            <div class="form-subtitle"><i class="bi bi-person-vcard"></i> Identitas Siswa</div>
+            <div class="form-field">
+                <label class="form-label">NIS</label>
+                {{ form.nis }}
+                {{ form.nis.errors }}
+            </div>
+            <div class="form-field">
+                <label class="form-label">Nama Lengkap</label>
+                {{ form.nama }}
+                {{ form.nama.errors }}
+            </div>
 
-        <!-- Field Nama -->
-        <div class="mb-3">
-            <label class="form-label">Nama Lengkap</label>
-            {{ form.nama }}
-            {{ form.nama.errors }}
-        </div>
-
-        <!-- Row Jurusan & Kelas -->
-        <div class="row">
-            <div class="col-6 mb-3">
+            <div class="form-subtitle"><i class="bi bi-mortarboard"></i> Data Akademik</div>
+            <div class="form-field">
                 <label class="form-label">Jurusan</label>
                 {{ form.jurusan }}
                 {{ form.jurusan.errors }}
             </div>
-            <div class="col-6 mb-3">
+            <div class="form-field">
                 <label class="form-label">Kelas</label>
                 {{ form.kelas }}
                 {{ form.kelas.errors }}
                 <div class="form-text">Pilih Jurusan dulu untuk memunculkan pilihan Kelas.</div>
             </div>
-        </div>
-
-        <!-- Row Tingkat & Status (Opsional/Muncul Jika Diatur di Form) -->
-        {% if form.tingkat or form.status %}
-            <div class="row">
-                {% if form.tingkat %}
-                    <div class="col-6 mb-3">
-                        <label class="form-label">Tingkat</label>
-                        {{ form.tingkat }}
-                        {{ form.tingkat.errors }}
-                    </div>
-                {% endif %}
-                {% if form.status and siswa.status != 'keluar' %}
-                    <div class="col-6 mb-3">
-                        <label class="form-label">Status</label>
-                        {{ form.status }}
-                        {{ form.status.errors }}
-                    </div>
-                {% endif %}
+            {% if form.tingkat %}
+            <div class="form-field">
+                <label class="form-label">Tingkat</label>
+                {{ form.tingkat }}
+                {{ form.tingkat.errors }}
             </div>
-        {% endif %}
-
-        <!-- Field Password -->
-        <div class="mb-3">
-            <label class="form-label">Password{% if mode == 'edit' %} Baru (Opsional){% endif %}</label>
-            {{ form.password }}
-            {% if form.password.help_text %}
-                <div class="form-text">{{ form.password.help_text }}</div>
             {% endif %}
-            {{ form.password.errors }}
-        </div>
+            {% if form.status and siswa.status != 'keluar' %}
+            <div class="form-field">
+                <label class="form-label">Status</label>
+                {{ form.status }}
+                {{ form.status.errors }}
+            </div>
+            {% endif %}
 
-        <!-- Tombol Aksi -->
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary">
-                {% if mode == 'edit' %}Simpan Perubahan{% else %}Buat Akun{% endif %}
-            </button>
-            <a href="{% url 'siswa_list' %}" class="btn btn-outline-secondary">Batal</a>
+            <div class="form-subtitle"><i class="bi bi-shield-lock"></i> Keamanan Akun</div>
+            <div class="form-field">
+                <label class="form-label">Password{% if mode == 'edit' %} Baru (Opsional){% endif %}</label>
+                {{ form.password }}
+                {% if form.password.help_text %}
+                    <div class="form-text">{{ form.password.help_text }}</div>
+                {% endif %}
+                {{ form.password.errors }}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'siswa_list' %}" class="btn btn-outline-secondary">Batal</a>
+                <button type="submit" class="btn btn-primary">
+                    {% if mode == 'edit' %}Simpan Perubahan{% else %}Buat Akun{% endif %}
+                </button>
+            </div>
         </div>
     </form>
 

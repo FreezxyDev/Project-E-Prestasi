@@ -1,0 +1,103 @@
+{% extends 'eprestasi/base.html' %}
+{% block title %}Kategori Prestasi{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Kategori &amp; Subkategori Prestasi</h1>
+    <p>Atur pilihan yang muncul di form pengajuan siswa. Data tidak dihapus permanen: yang tidak dipakai lagi cukup dinonaktifkan, sehingga prestasi lama tetap utuh.</p>
+</div>
+
+<div class="card p-3 mb-3">
+    <h6 class="fw-bold mb-2">Tambah Kategori</h6>
+    <form method="post" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <input type="hidden" name="aksi" value="tambah_kategori">
+        <div class="col-md-6">
+            <input type="text" name="nama" maxlength="100" class="form-control form-control-sm" placeholder="Nama kategori, contoh: Keagamaan" required>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Tambah</button>
+        </div>
+    </form>
+    <div class="form-text">Subkategori "Lainnya" dibuat otomatis agar data tetap fleksibel.</div>
+</div>
+
+{% for kat in kategori_list %}
+<div class="card p-3 mb-3 {% if not kat.aktif %}opacity-75{% endif %}">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div>
+            <h5 class="fw-bold mb-0">{{ kat.nama }}
+                {% if not kat.aktif %}<span class="badge bg-secondary ms-1">Nonaktif</span>{% endif %}
+            </h5>
+            <div class="text-muted small">kode: {{ kat.kode }} &middot; {{ kat.daftar_sub|length }} subkategori</div>
+        </div>
+        <div class="d-flex gap-2">
+            <form method="post" class="d-flex gap-1">
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="ubah_nama">
+                <input type="hidden" name="tipe" value="kategori">
+                <input type="hidden" name="id" value="{{ kat.pk }}">
+                <input type="text" name="nama" maxlength="100" value="{{ kat.nama }}" class="form-control form-control-sm" aria-label="Nama kategori">
+                <button class="btn btn-sm btn-outline-secondary">Ganti nama</button>
+            </form>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="aksi" value="toggle_kategori">
+                <input type="hidden" name="id" value="{{ kat.pk }}">
+                <button class="btn btn-sm {% if kat.aktif %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                    {% if kat.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-3">
+            <thead><tr><th>Kelompok</th><th>Subkategori</th><th class="text-end">Dipakai</th><th>Status</th><th class="text-end">Aksi</th></tr></thead>
+            <tbody>
+            {% for sub in kat.daftar_sub %}
+                <tr class="{% if not sub.aktif %}text-muted{% endif %}">
+                    <td>{{ sub.kelompok|default:"-" }}</td>
+                    <td>
+                        <form method="post" class="d-flex gap-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="aksi" value="ubah_nama">
+                            <input type="hidden" name="tipe" value="sub">
+                            <input type="hidden" name="id" value="{{ sub.pk }}">
+                            <input type="text" name="nama" maxlength="100" value="{{ sub.nama }}" class="form-control form-control-sm" aria-label="Nama subkategori">
+                            <button class="btn btn-sm btn-outline-secondary" title="Simpan nama"><i class="bi bi-check2"></i></button>
+                        </form>
+                    </td>
+                    <td class="text-end">{{ sub.dipakai }}</td>
+                    <td>{% if sub.aktif %}Aktif{% else %}Nonaktif{% endif %}{% if sub.adalah_lainnya %} <span class="badge bg-light text-dark border">isian bebas</span>{% endif %}</td>
+                    <td class="text-end">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="aksi" value="toggle_sub">
+                            <input type="hidden" name="id" value="{{ sub.pk }}">
+                            <button class="btn btn-sm {% if sub.aktif %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                {% if sub.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <input type="hidden" name="aksi" value="tambah_sub">
+        <input type="hidden" name="kategori_id" value="{{ kat.pk }}">
+        <div class="col-md-4"><input type="text" name="kelompok" maxlength="100" class="form-control form-control-sm" placeholder="Kelompok (opsional), mis. Olahraga"></div>
+        <div class="col-md-5"><input type="text" name="nama" maxlength="100" class="form-control form-control-sm" placeholder="Nama subkategori, mis. Catur" required></div>
+        <div class="col-md-3"><button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Tambah subkategori</button></div>
+    </form>
+</div>
+{% empty %}
+<div class="alert alert-warning">Belum ada kategori. Jalankan <code>python manage.py migrate</code> atau tambahkan kategori di atas.</div>
+{% endfor %}
+
+{% endblock %}

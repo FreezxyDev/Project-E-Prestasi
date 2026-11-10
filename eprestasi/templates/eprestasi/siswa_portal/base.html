@@ -27,58 +27,59 @@
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <div class="brand-mark">&gt;_</div>
+        <div class="brand-mark"><i class="bi bi-trophy-fill"></i></div>
         <div>
             <div class="brand-name">E-Prestasi</div>
-            <span class="brand-tag">PORTAL SISWA</span>
+            <span class="brand-tag">Rekam Jejak &amp; Portofolio</span>
         </div>
     </div>
 
-    {% if siswa.status == 'keluar' %}
     <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-label">AKSES</div>
+            <div class="nav-link"><i class="bi bi-grid"></i><span>{% if siswa.status == 'keluar' %}Siswa Nonaktif{% else %}Siswa{% endif %}</span></div>
+        </div>
+
+    {% if siswa.status == 'keluar' %}
         <div class="nav-section">
             <div class="nav-label">PORTOFOLIO</div>
             <a href="{% url 'siswa_qr_code' %}" class="nav-link active">
                 <i class="bi bi-qr-code"></i><span>QR Code Portofolio</span>
             </a>
             <a href="{% url 'portofolio_publik' siswa.nis %}" target="_blank" class="nav-link">
-                <i class="bi bi-person-lines-fill"></i><span>Lihat Portofolio</span>
+                <i class="bi bi-person-lines-fill"></i><span>Portofolio Saya</span>
             </a>
         </div>
-    </nav>
     {% elif not wajib_diisi %}
-    <nav class="sidebar-nav">
-        <div class="nav-section">
-            <div class="nav-label">OVERVIEW</div>
-            <a href="{% url 'siswa_dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
-                <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
-            </a>
-        </div>
-
         <div class="nav-section">
             <div class="nav-label">PRESTASI</div>
             <a href="{% url 'siswa_upload_prestasi' %}" class="nav-link {% if active_menu == 'pengajuan' %}active{% endif %}">
-                <i class="bi bi-cloud-arrow-up"></i><span>Pengajuan Prestasi</span>
+                <i class="bi bi-plus-circle"></i><span>Ajukan Prestasi</span>
             </a>
             <a href="{% url 'siswa_prestasi_list' %}" class="nav-link {% if active_menu == 'riwayat' %}active{% endif %}">
-                <i class="bi bi-clock-history"></i><span>Riwayat</span>
+                <i class="bi bi-clock-history"></i><span>Riwayat Pengajuan</span>
             </a>
         </div>
 
         <div class="nav-section">
-            <div class="nav-label">AKUN</div>
-            <a href="{% url 'siswa_lengkapi_profil' %}" class="nav-link {% if active_menu == 'pengaturan' %}active{% endif %}">
-                <i class="bi bi-gear"></i><span>Pengaturan</span>
+            <div class="nav-label">PORTOFOLIO</div>
+            <a href="{% url 'portofolio_publik' siswa.nis %}" target="_blank" rel="noopener" class="nav-link">
+                <i class="bi bi-briefcase"></i><span>Portofolio Saya</span>
             </a>
         </div>
-    </nav>
-    {% else %}
-    <div class="sidebar-nav"></div>
+
+        <div class="nav-section">
+            <div class="nav-label">BANTUAN</div>
+            <a href="{% url 'siswa_panduan' %}" class="nav-link {% if active_menu == 'panduan' %}active{% endif %}">
+                <i class="bi bi-book"></i><span>Panduan</span>
+            </a>
+        </div>
     {% endif %}
+    </nav>
 
     <div class="sidebar-footer">
         {% if not wajib_diisi and siswa.status != 'keluar' %}
-        <a href="{% url 'siswa_lengkapi_profil' %}" class="sidebar-user" title="Profil saya">
+        <a href="{% url 'siswa_lengkapi_profil' %}" class="sidebar-user" title="Profil &amp; pengaturan saya">
         {% else %}
         <div class="sidebar-user">
         {% endif %}
@@ -108,7 +109,6 @@
         <div class="topnav-actions">
 {% include 'eprestasi/_partials/theme_toggle.html' %}
 {% if not wajib_diisi and siswa.status != 'keluar' %}
-{% if siswa.bisa_edit %}<a href="{% url 'siswa_upload_prestasi' %}" class="btn-new"><i class="bi bi-plus-lg"></i><span>Ajukan Prestasi</span></a>{% endif %}
 <div class="dropdown">
     <button class="icon-btn" type="button" title="Notifikasi" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
         <i class="bi bi-bell"></i>
@@ -164,15 +164,6 @@
             </div>
         {% endif %}
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
         {% block content %}{% endblock %}
 
     </div>
@@ -213,5 +204,6 @@
     })();
 </script>
 {% block extra_scripts %}{% endblock %}
+{% include 'eprestasi/_partials/toast.html' %}
 </body>
 </html>

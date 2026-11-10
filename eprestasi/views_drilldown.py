@@ -82,8 +82,10 @@ def tahun_ajaran_kelas_siswa(request, tahun_id, kelas_id):
 
     # Total prestasi dihitung untuk SELURUH siswa kelas (bukan hanya halaman ini)
     total = semua.aggregate(
-        prestasi=Count('prestasi', distinct=True),
-        diterima=Count('prestasi', filter=Q(prestasi__status='diterima'), distinct=True),
+        # Nama alias JANGAN 'prestasi': bentrok dengan relasi Siswa -> prestasi, sehingga
+        # 'prestasi__status' dibaca sebagai alias (angka) dan memicu FieldError.
+        jml_prestasi=Count('prestasi', distinct=True),
+        jml_diterima=Count('prestasi', filter=Q(prestasi__status='diterima'), distinct=True),
     )
 
     return render(request, 'eprestasi/tahun_ajaran/siswa_kelas.html', {
@@ -94,6 +96,6 @@ def tahun_ajaran_kelas_siswa(request, tahun_id, kelas_id):
         'q': q,
         'total_siswa': semua.count(),
         'total_aktif': semua.filter(status='aktif').count(),
-        'total_prestasi': total['prestasi'],
-        'total_diterima': total['diterima'],
+        'total_prestasi': total['jml_prestasi'],
+        'total_diterima': total['jml_diterima'],
     })

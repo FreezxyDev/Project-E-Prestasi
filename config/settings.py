@@ -5,7 +5,7 @@ Django settings for config project.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+import resend
 # Load environment variables dari file .env
 load_dotenv()
 
@@ -17,7 +17,7 @@ TEMPLATES_DIR = BASE_DIR / 'templates'
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-#zd^1((1@f6wx87z!2g*u5080_8lm36kax9e6h#hu-l*fv&q@d')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cloudinary',
     'eprestasi',
+    'resend',  # Tambahkan aplikasi Resend
 ]
 
 # Un-comment baris di bawah jika Anda menggunakan custom user model:
@@ -47,6 +48,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Posisi tepat di bawah SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+        'eprestasi.middleware.ErrorPageMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -67,6 +69,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
     "https://eprestasi.freznx.my.id",
 ]
+CSRF_FAILURE_VIEW = 'eprestasi.error_views.csrf_failure'
 
 # 4. Pengaturan Cookie untuk HTTP (localhost)
 SESSION_COOKIE_SECURE = False
@@ -145,7 +148,9 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-    BASE_DIR / "eprestasi" / "static",
+    BASE_DIR / "eprestasi" / "static" /"css",
+    BASE_DIR / "eprestasi" / "static" /"js",
+    BASE_DIR / "eprestasi" / "static" /"img",
 ]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -163,16 +168,8 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 DEBUG = True
 
 # ==== Email (OTP lupa password) ====
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'   
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False   
-EMAIL_TIMEOUT = 15
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = f'E-Prestasi SMKN 11 Bandung <{EMAIL_HOST_USER}>'
 
-# ==== OTP ke no HP (WhatsApp via Fonnte) ====
+RESEND_API_KEY= os.environ.get('RESEND_API', '')  # Ganti dengan API key Resend Anda
+RESEND_FROM_EMAIL='E-Prestasi <noreply@eprestasi.freznx.my.id>'# ==== OTP ke no HP (WhatsApp via Fonnte) ====
 OTP_HP_PROVIDER = os.environ.get('OTP_HP_PROVIDER', 'console')
 FONNTE_TOKEN = os.environ.get('FONNTE_TOKEN', '')

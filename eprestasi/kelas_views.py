@@ -19,7 +19,7 @@ from django.utils import timezone
 
 from .models import (
     Siswa, Users, Tahun_ajaran, Kelas, RiwayatKelas, LogPerubahanKelas,
-    DAFTAR_JURUSAN, DAFTAR_TINGKAT, TINGKAT_KE_ROMAWI,
+    Jurusan, DAFTAR_JURUSAN, DAFTAR_TINGKAT, TINGKAT_KE_ROMAWI,
 )
 from .forms import KelasForm, BuatKelasMassalForm, SalinKelasForm, NaikkanOtomatisForm
 from .decorators import role_required
@@ -429,32 +429,30 @@ def kelola_kelas(request):
         'form_kelas': KelasForm(tahun_ajaran=tahun_ajaran_terpilih),
         'form_massal': BuatKelasMassalForm(tahun_ajaran=tahun_ajaran_terpilih),
         'form_salin': SalinKelasForm(),
+        'daftar_jurusan': DAFTAR_JURUSAN,
     }
     return render(request, 'eprestasi/pengelolaan_kelas/kelola_kelas.html', context)
 
 
 @role_required('admin', 'super_admin')
-def tambah_kelas(request):
-    if request.method != 'POST':
-        return redirect('kelola_kelas')
 
-    tahun_ajaran = get_object_or_404(Tahun_ajaran, id=request.POST.get('tahun_ajaran'))
-    form = KelasForm(request.POST, tahun_ajaran=tahun_ajaran)
-
-    if form.is_valid():
-        data = form.cleaned_data
-        Kelas.objects.create(
-            nama_kelas=data['nama_kelas'],
-            jurusan=data['jurusan'],
-            tingkat=data['tingkat'],
-            tahun_ajaran=tahun_ajaran,
-        )
-        messages.success(request, f'Kelas "{data["nama_kelas"]}" berhasil ditambahkan.')
+def _tambah_jurusan(request, tahun_ajaran):
+    """
+    Tambah jurusan baru. Form-nya ada di kartu "Buat Kelas Massal" dan memakai URL
+    yang sama (field tersembunyi aksi=tambah_jurusan), jadi tidak butuh route baru.
+    """
+    kode = re.sub(r'\s+', '', request.POST.get('kode_jurusan', '')).upper()
+    if not re.fullmatch(r'[A-Z0-9]{2,10}', kode):
+        messages.error(request, 'Kode jurusan harus 2-10 karakter huruf/angka tanpa spasi (contoh: PPLG).')
+    elif kode in {k.upper() for k, _ in DAFTAR_JURUSAN}:
+        messages.error(request, f'Jurusan {kode} sudah ada.')
     else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, error)
-
+        # Pertama kali tabel dipakai: isi dulu jurusan bawaan supaya tidak hilang dari daftar.
+        if not Jurusan.objects.exists():
+            for k, _label in DAFTAR_JURUSAN:
+                Jurusan.objects.get_or_create(kode=k)
+        Jurusan.objects.create(kode=kode)
+        messages.success(request, f'Jurusan {kode} berhasil ditambahkan.')
     return redirect(f'/pengelolaan-kelas/kelas/?tahun_ajaran={tahun_ajaran.id}')
 
 
@@ -464,6 +462,10 @@ def buat_kelas_massal(request):
         return redirect('kelola_kelas')
 
     tahun_ajaran = get_object_or_404(Tahun_ajaran, id=request.POST.get('tahun_ajaran'))
+
+    if request.POST.get('aksi') == 'tambah_jurusan':
+        return _tambah_jurusan(request, tahun_ajaran)
+
     form = BuatKelasMassalForm(request.POST, tahun_ajaran=tahun_ajaran)
 
     if form.is_valid():
@@ -471,16 +473,32 @@ def buat_kelas_massal(request):
         jurusan = data['jurusan']
         tingkat = int(data['tingkat'])
         romawi = TINGKAT_KE_ROMAWI.get(tingkat, '')
+
+        # Pola nama: <tingkat> <nama kustom ATAU kode jurusan> <nomor>, contoh "X PPLG 1".
+        # Kelas tetap tersimpan dengan jurusan yang dipilih (misal RPL), jadi
+        # penempatan siswa tetap divalidasi terhadap jurusan itu.
+        penanda = data.get('nama_kustom') or jurusan
+        daftar_nama = [f'{romawi} {penanda} {nomor}' for nomor in range(1, data['jumlah_kelas'] + 1)]
+
+        sudah_ada = {
+            n.lower() for n in Kelas.objects.filter(tahun_ajaran=tahun_ajaran).values_list('nama_kelas', flat=True)
+        }
         dibuat = 0
-        for nomor in range(1, data['jumlah_kelas'] + 1):
-            nama_kelas = f'{romawi} {jurusan} {nomor}'
+        dilewati = []
+        for nama in daftar_nama:
+            if nama.lower() in sudah_ada:
+                dilewati.append(nama)
+                continue
             _kelas, is_baru = Kelas.objects.get_or_create(
-                nama_kelas=nama_kelas, tahun_ajaran=tahun_ajaran,
+                nama_kelas=nama, tahun_ajaran=tahun_ajaran,
                 defaults={'jurusan': jurusan, 'tingkat': tingkat}
             )
             if is_baru:
                 dibuat += 1
-        messages.success(request, f'{dibuat} kelas baru berhasil dibuat untuk jurusan {jurusan}.')
+        if dibuat:
+            messages.success(request, f'{dibuat} kelas baru berhasil dibuat untuk jurusan {jurusan}.')
+        if dilewati:
+            messages.info(request, 'Dilewati karena sudah ada: ' + ', '.join(dilewati))
     else:
         for field, errors in form.errors.items():
             for error in errors:

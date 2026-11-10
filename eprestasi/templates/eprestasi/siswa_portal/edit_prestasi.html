@@ -7,7 +7,7 @@
     <i class="bi bi-arrow-left"></i> Kembali
 </a>
 
-<div class="card p-4 form-narrow-xl">
+<div class="card p-4 form-card">
     <h4 class="fw-bold mb-1"><i class="bi bi-tools icon-perbaikan"></i> Perbaiki Data Prestasi</h4>
     <p class="text-muted small mb-3">Perbaiki data sesuai catatan kesiswaan, lalu kirim ulang untuk diverifikasi.</p>
 
@@ -20,54 +20,28 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <div class="mb-3">
-            <label class="form-label small">Nama Prestasi</label>
-            {{ form.nama_prestasi }}
-            {{ form.nama_prestasi.errors }}
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-6">
-                <label class="form-label small">Kategori</label>
-                {{ form.kategori_prestasi }}
-                {{ form.kategori_prestasi.errors }}
+        <div class="form-layout">
+            <div class="form-subtitle"><i class="bi bi-trophy"></i> Informasi Prestasi</div>
+            {% include 'eprestasi/_partials/form_prestasi_data.html' %}
+            <div class="form-field span-2">
+                <label class="form-label">{{ form.tautan_pendukung.label }}</label>
+                {{ form.tautan_pendukung }}
+                {{ form.tautan_pendukung.errors }}
             </div>
-            <div class="col-md-6">
-                <label class="form-label small">Tingkat</label>
-                {{ form.tingkat_prestasi }}
-                {{ form.tingkat_prestasi.errors }}
+            <div class="form-field span-2">
+                <label class="form-label">{{ form.deskripsi.label }}</label>
+                {{ form.deskripsi }}
+                {{ form.deskripsi.errors }}
             </div>
-        </div>
 
-        <div class="mb-3">
-            <label class="form-label small">Wilayah</label>
-            {{ form.wilayah_prestasi }}
-            {{ form.wilayah_prestasi.errors }}
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-6">
-                <label class="form-label small">Penyelenggara</label>
-                {{ form.penyelenggara }}
-                {{ form.penyelenggara.errors }}
-            </div>
-            <div class="col-md-6">
-                <label class="form-label small">Tanggal Prestasi</label>
-                {{ form.tanggal_prestasi }}
-                {{ form.tanggal_prestasi.errors }}
+            <div class="form-actions">
+                <a href="{% url 'siswa_prestasi_detail' prestasi.id %}" class="btn btn-outline-secondary">Batal</a>
+                <button type="submit" class="btn btn-perbaikan">
+                    <i class="bi bi-send"></i> Simpan &amp; Kirim Ulang untuk Verifikasi
+                </button>
             </div>
         </div>
-
-        <div class="mb-4">
-            <label class="form-label small">Deskripsi</label>
-            {{ form.deskripsi }}
-            {{ form.deskripsi.errors }}
-        </div>
-
-        <button type="submit" class="btn btn-perbaikan">
-            <i class="bi bi-send"></i> Simpan &amp; Kirim Ulang untuk Verifikasi
-        </button>
     </form>
 </div>
 
-{% endblock %}
+{% endblock %}  

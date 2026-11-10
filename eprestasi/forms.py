@@ -1,8 +1,11 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .models import (
     Siswa, Kesiswaan, Users, Prestasi, Sertifikat, Dokumentasi,
     Kelas, Tahun_ajaran, DAFTAR_JURUSAN, DAFTAR_TINGKAT,
+    KategoriPrestasi, SubkategoriPrestasi,
+    TINGKAT_CHOICES, PEROLEHAN_CHOICES, TINGKAT_LUAR_NEGERI,
 )
 
 
@@ -219,10 +222,32 @@ class SiswaProfilForm(forms.Form):
         label='Nomor Telepon',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 081234567890', 'inputmode': 'tel', 'autocomplete': 'tel'})
     )
+    # Tempat & tanggal lahir sengaja TIDAK wajib (required=False) supaya siswa lama
+    # tidak terkunci di halaman "Lengkapi Profil". Ingin mewajibkan? ubah required=True
+    # dan tambahkan kedua field ke Siswa.profil_lengkap.
+    tempat_lahir = forms.CharField(
+        max_length=100, required=False, label='Tempat Lahir',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Bandung'})
+    )
+    tanggal_lahir = forms.DateField(
+        required=False, label='Tanggal Lahir',
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'],
+    )
     alamat = forms.CharField(
         max_length=255,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Alamat lengkap tempat tinggal'})
     )
+
+    def clean_tempat_lahir(self):
+        return ' '.join(self.cleaned_data.get('tempat_lahir', '').split())
+
+    def clean_tanggal_lahir(self):
+        from datetime import date
+        tgl = self.cleaned_data.get('tanggal_lahir')
+        if tgl and not (date(1980, 1, 1) <= tgl <= date.today()):
+            raise forms.ValidationError('Tanggal lahir tidak valid.')
+        return tgl
 
     def clean_no_hp(self):
         import re
@@ -289,13 +314,8 @@ class SiswaPasswordForm(forms.Form):
         return data
 
 
-TINGKAT_PRESTASI_CHOICES = [
-    ('sekolah', 'Sekolah'),
-    ('kabupaten/kota', 'Kabupaten/Kota'),
-    ('provinsi', 'Provinsi'),
-    ('nasional', 'Nasional'),
-    ('internasional', 'Internasional'),
-]
+# Sumber tunggal ada di models.TINGKAT_CHOICES (nama lama dipertahankan untuk import lama).
+TINGKAT_PRESTASI_CHOICES = TINGKAT_CHOICES
 
 WILAYAH_PRESTASI_CHOICES = [
     ('dalam_negeri', 'Dalam Negeri'),
@@ -303,48 +323,164 @@ WILAYAH_PRESTASI_CHOICES = [
 ]
 
 
-class PrestasiUploadForm(forms.Form):
-    """
-    Form upload prestasi BARU oleh siswa. Wajib melampirkan 2 bukti sekaligus:
-    file sertifikat (bukti prestasi) DAN foto dokumentasi -- keduanya wajib,
-    tanpa bukti yang lengkap prestasinya tidak ada gunanya untuk diverifikasi.
+class SubkategoriSelect(forms.Select):
+    """Select subkategori; tiap <option> membawa data-kategori & data-lainnya untuk JavaScript."""
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        instance = getattr(value, 'instance', None)
+        if instance is not None:
+            option['attrs']['data-kategori'] = instance.kategori.kode
+            option['attrs']['data-kelompok'] = instance.kelompok
+            option['attrs']['data-nama'] = instance.nama
+            option['attrs']['data-lainnya'] = '1' if instance.adalah_lainnya else '0'
+        return option
 
-    Kode & dokumen Puspresnas OPSIONAL dan tersedia di SEMUA tingkat prestasi --
-    makanya semua field puspresnas di sini required=False di level form,
-    validasinya dicek manual di clean(), bukan lewat required=True biasa.
+
+class SubkategoriChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.nama_lengkap
+
+
+def _pilihan_kategori():
+    """Kategori aktif dari master; kalau master belum terisi, pakai dua kategori bawaan."""
+    pilihan = list(KategoriPrestasi.objects.filter(aktif=True).values_list('kode', 'nama'))
+    return pilihan or [('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik')]
+
+
+def data_subkategori():
+    """
+    Data untuk JavaScript form (dependent dropdown), dikirim lewat json_script:
+    {kode_kategori: [{id, nama, kelompok, lainnya}, ...]}.
+    """
+    hasil = {}
+    for sub in SubkategoriPrestasi.objects.filter(aktif=True, kategori__aktif=True).select_related('kategori'):
+        hasil.setdefault(sub.kategori.kode, []).append({
+            'id': sub.pk, 'nama': sub.nama, 'kelompok': sub.kelompok, 'lainnya': sub.adalah_lainnya,
+        })
+    return hasil
+
+
+def konfigurasi_form_prestasi():
+    """Paket konteks untuk template form prestasi (subkategori + aturan wilayah/tingkat)."""
+    return {
+        'data_subkategori': data_subkategori(),
+        'tingkat_luar_negeri': list(TINGKAT_LUAR_NEGERI),
+    }
+
+
+class PrestasiDataForm(forms.Form):
+    """
+    Bagian DATA prestasi yang dipakai bersama oleh form pengajuan baru dan form
+    perbaikan data. Menjaga konsistensi: kategori <-> subkategori, wilayah <->
+    tingkat, tanggal tidak di masa depan, dan "Lainnya" wajib diketik.
     """
     nama_prestasi = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Juara 1 LKS Web Design'})
+        max_length=100, label='Nama kegiatan / kompetisi',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Lomba Kompetensi Siswa (LKS) Web Technologies'})
     )
     kategori_prestasi = forms.ChoiceField(
-        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik')],
-        widget=forms.Select(attrs={'class': 'form-select'})
+        choices=[], label='Kategori',
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_kategori_prestasi'})
     )
-    tingkat_prestasi = forms.ChoiceField(
-        choices=TINGKAT_PRESTASI_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tingkat_prestasi'})
+    subkategori = SubkategoriChoiceField(
+        queryset=SubkategoriPrestasi.objects.none(), label='Subkategori',
+        empty_label='-- Pilih subkategori --',
+        widget=SubkategoriSelect(attrs={'class': 'form-select', 'id': 'id_subkategori'})
     )
-    wilayah_prestasi = forms.ChoiceField(
-        label='Wilayah',
-        choices=WILAYAH_PRESTASI_CHOICES,
-        initial='dalam_negeri',
-        widget=forms.Select(attrs={'class': 'form-select'})
+    subkategori_lainnya = forms.CharField(
+        max_length=100, required=False, label='Sebutkan bidangnya',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_subkategori_lainnya', 'placeholder': 'Contoh: Catur'})
     )
     penyelenggara = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Dinas Pendidikan Provinsi'})
+        max_length=100, label='Penyelenggara',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Dinas Pendidikan Provinsi Jawa Barat'})
     )
-    tanggal_prestasi = forms.DateField(
+    wilayah_prestasi = forms.ChoiceField(
+        label='Wilayah penyelenggaraan', choices=WILAYAH_PRESTASI_CHOICES, initial='dalam_negeri',
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_wilayah_prestasi'})
+    )
+    tingkat_prestasi = forms.ChoiceField(
+        label='Tingkat', choices=TINGKAT_PRESTASI_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_tingkat_prestasi'})
+    )
+    jenis_perolehan = forms.ChoiceField(
+        label='Perolehan', choices=[('', '-- Pilih perolehan --')] + PEROLEHAN_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    tanggal_mulai = forms.DateField(
+        required=False, label='Tanggal mulai (jika kegiatan lebih dari 1 hari)',
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
+    tanggal_prestasi = forms.DateField(
+        label='Tanggal pelaksanaan / pengumuman hasil',
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
+    )
+    nomor_sertifikat = forms.CharField(
+        max_length=100, required=False, label='Nomor sertifikat / piagam (jika ada)',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 123/SERT/2026'})
+    )
+    tautan_pendukung = forms.URLField(
+        max_length=500, required=False, label='Tautan pendukung (opsional)',
+        widget=forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'})
+    )
     deskripsi = forms.CharField(
+        label='Deskripsi',
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Ceritakan sedikit tentang prestasi ini'})
     )
 
-    # ── Bukti WAJIB, 2-2nya ──
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['kategori_prestasi'].choices = _pilihan_kategori()
+        self.fields['subkategori'].queryset = (
+            SubkategoriPrestasi.objects.filter(aktif=True, kategori__aktif=True).select_related('kategori')
+        )
+
+    def clean(self):
+        data = super().clean()
+        kategori = data.get('kategori_prestasi')
+        sub = data.get('subkategori')
+        wilayah = data.get('wilayah_prestasi')
+        tingkat = data.get('tingkat_prestasi')
+        mulai = data.get('tanggal_mulai')
+        tanggal = data.get('tanggal_prestasi')
+
+        if sub is not None and kategori and sub.kategori.kode != kategori:
+            self.add_error('subkategori', 'Subkategori tidak sesuai dengan kategori yang dipilih.')
+        if sub is not None:
+            if sub.adalah_lainnya:
+                teks = ' '.join((data.get('subkategori_lainnya') or '').split())
+                if not teks:
+                    self.add_error('subkategori_lainnya', 'Sebutkan bidang prestasinya karena kamu memilih "Lainnya".')
+                data['subkategori_lainnya'] = teks
+            else:
+                data['subkategori_lainnya'] = ''
+
+        if wilayah == 'luar_negeri' and tingkat and tingkat not in TINGKAT_LUAR_NEGERI:
+            self.add_error('tingkat_prestasi', 'Untuk penyelenggaraan di luar negeri, pilih tingkat Regional/Asia atau Internasional/Dunia.')
+
+        hari_ini = timezone.localdate()
+        if tanggal and tanggal > hari_ini:
+            self.add_error('tanggal_prestasi', 'Tanggal tidak boleh di masa depan.')
+        if mulai and mulai > hari_ini:
+            self.add_error('tanggal_mulai', 'Tanggal mulai tidak boleh di masa depan.')
+        if mulai and tanggal and mulai > tanggal:
+            self.add_error('tanggal_mulai', 'Tanggal mulai tidak boleh setelah tanggal pelaksanaan.')
+        return data
+
+
+class PrestasiUploadForm(PrestasiDataForm):
+    """
+    Form pengajuan prestasi BARU oleh siswa.
+
+    Bukti: MINIMAL SATU dari sertifikat/piagam, foto dokumentasi, atau tautan
+    pendukung (tidak lagi mewajibkan sertifikat DAN foto sekaligus). Kebijakan
+    sekolah bisa mengubah syaratnya di method clean() ini.
+
+    Kode & dokumen Puspresnas tetap OPSIONAL dan berdiri sendiri.
+    """
+    # ── Bukti (minimal satu) ──
     file_sertifikat = forms.FileField(
-        label='Bukti Prestasi (Sertifikat)',
+        required=False, label='Sertifikat / piagam',
         validators=[validasi_ukuran_file],
         help_text=f'Maksimal {MAKS_UKURAN_FILE_MB}MB.',
         widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
@@ -355,9 +491,9 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Sertifikat asli, halaman depan'})
     )
     foto_dokumentasi = forms.ImageField(
-        label='Bukti Dokumentasi (Foto)',
+        required=False, label='Foto kegiatan / dokumentasi',
         validators=[validasi_ukuran_file],
-        help_text=f'Wajib diisi. Maksimal {MAKS_UKURAN_FILE_MB}MB.',
+        help_text=f'Maksimal {MAKS_UKURAN_FILE_MB}MB.',
         widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
     )
     caption_dokumentasi = forms.CharField(
@@ -366,8 +502,7 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: Foto saat penyerahan piala'})
     )
 
-    # ── Kode Puspresnas (di atas bukti prestasi) & file bukti Puspresnas (paling
-    #    bawah form), dua-duanya OPSIONAL dan berdiri sendiri-sendiri. ──
+    # ── Kode Puspresnas & file bukti Puspresnas, dua-duanya OPSIONAL ──
     kode_puspresnas = forms.CharField(
         max_length=100, required=False,
         label='Kode Puspresnas (opsional)',
@@ -387,16 +522,34 @@ class PrestasiUploadForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
+    pernyataan = forms.BooleanField(
+        required=True,
+        label='Saya menyatakan bahwa data dan bukti yang saya ajukan adalah benar.',
+        error_messages={'required': 'Centang pernyataan ini sebelum mengirim pengajuan.'},
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
     def clean(self):
         cleaned_data = super().clean()
         dokumen = cleaned_data.get('dokumen_puspresnas')
         penyelenggara_jenis = cleaned_data.get('jenis_penyelenggara_puspresnas')
 
-        # Wilayah dokumen Puspresnas mengikuti field 'Wilayah' prestasi di atas
-        # (disalin di view), jadi cukup jenis penyelenggara yang divalidasi.
+        # Wilayah dokumen Puspresnas mengikuti field 'Wilayah' prestasi (disalin di view),
+        # jadi cukup jenis penyelenggara yang divalidasi.
         if dokumen and not penyelenggara_jenis:
             self.add_error('jenis_penyelenggara_puspresnas', 'Wajib dipilih kalau melampirkan dokumen Puspresnas.')
 
+        ada_bukti = any([
+            cleaned_data.get('file_sertifikat'),
+            cleaned_data.get('foto_dokumentasi'),
+            cleaned_data.get('tautan_pendukung'),
+        ])
+        # Hanya tampilkan error ini kalau field bukti sendiri tidak error (mis. file kebesaran).
+        error_bukti = any(k in self.errors for k in ('file_sertifikat', 'foto_dokumentasi', 'tautan_pendukung'))
+        if not ada_bukti and not error_bukti:
+            raise ValidationError(
+                'Lampirkan minimal satu bukti prestasi: sertifikat/piagam, foto dokumentasi, atau tautan pendukung.'
+            )
         return cleaned_data
 
 
@@ -510,40 +663,59 @@ class VerifikasiPrestasiForm(forms.Form):
         return cleaned_data
 
 
-class PrestasiEditForm(forms.Form):
+class PrestasiEditForm(PrestasiDataForm):
     """
     Dipakai siswa untuk memperbaiki DATA prestasi yang dikembalikan kesiswaan
     dengan jenis_perbaikan='data' (tidak termasuk file -- file sertifikat lama
     tetap ada, tidak perlu upload ulang).
     """
-    nama_prestasi = forms.CharField(
-        max_length=100,
+
+
+class LengkapiDataPrestasiForm(forms.Form):
+    """
+    Dipakai KESISWAAN untuk melengkapi klasifikasi prestasi (terutama data lama yang
+    dibuat sebelum ada subkategori & perolehan). Setiap perubahan dicatat di riwayat.
+    """
+    subkategori = SubkategoriChoiceField(
+        queryset=SubkategoriPrestasi.objects.none(), required=False, label='Subkategori',
+        empty_label='-- Tidak diubah --',
+        widget=SubkategoriSelect(attrs={'class': 'form-select'})
+    )
+    subkategori_lainnya = forms.CharField(
+        max_length=100, required=False, label='Sebutkan bidangnya',
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    kategori_prestasi = forms.ChoiceField(
-        choices=[('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik')],
+    jenis_perolehan = forms.ChoiceField(
+        required=False, label='Perolehan', choices=[('', '-- Tidak diubah --')] + PEROLEHAN_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    tingkat_prestasi = forms.ChoiceField(
-        choices=TINGKAT_PRESTASI_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    wilayah_prestasi = forms.ChoiceField(
-        label='Wilayah',
-        choices=WILAYAH_PRESTASI_CHOICES,
-        initial='dalam_negeri',
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    penyelenggara = forms.CharField(
-        max_length=100,
+    nomor_sertifikat = forms.CharField(
+        max_length=100, required=False, label='Nomor sertifikat',
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    tanggal_prestasi = forms.DateField(
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
-    deskripsi = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4})
-    )
+
+    def __init__(self, *args, prestasi=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prestasi = prestasi
+        qs = SubkategoriPrestasi.objects.filter(aktif=True, kategori__aktif=True).select_related('kategori')
+        if prestasi is not None:
+            # Subkategori harus sesuai kategori prestasi itu (kalau kategorinya ada di master).
+            if KategoriPrestasi.objects.filter(kode=prestasi.kategori_prestasi).exists():
+                qs = qs.filter(kategori__kode=prestasi.kategori_prestasi)
+        self.fields['subkategori'].queryset = qs
+
+    def clean(self):
+        data = super().clean()
+        sub = data.get('subkategori')
+        if sub is not None:
+            if sub.adalah_lainnya:
+                teks = ' '.join((data.get('subkategori_lainnya') or '').split())
+                if not teks:
+                    self.add_error('subkategori_lainnya', 'Sebutkan bidangnya karena memilih "Lainnya".')
+                data['subkategori_lainnya'] = teks
+            else:
+                data['subkategori_lainnya'] = ''
+        return data
 
 
 class ImportSiswaForm(forms.Form):

@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from .models import Siswa, Tahun_ajaran, Prestasi, NotifikasiSiswa, TINGKAT_KE_ROMAWI
+from .models import Siswa, Tahun_ajaran, Prestasi, NotifikasiSiswa, TINGKAT_KE_ROMAWI, TINGKAT_CHOICES
 from .forms import SiswaProfilForm, SiswaPasswordForm
 from .decorators import role_required
 from .log_utils import catat_aktivitas
@@ -38,7 +38,7 @@ def dashboard(request):
 
     # Grafik statistik: prestasi DITERIMA per tingkat
     per_tingkat = {r['tingkat_prestasi']: r['n'] for r in semua.filter(status='diterima').values('tingkat_prestasi').annotate(n=Count('id'))}
-    urutan = [('sekolah', 'Sekolah'), ('kabupaten/kota', 'Kabupaten/Kota'), ('provinsi', 'Provinsi'), ('nasional', 'Nasional'), ('internasional', 'Internasional')]
+    urutan = list(TINGKAT_CHOICES)
     chart_data = {
         'status': {
             'labels': ['Pending', 'Diterima', 'Perbaikan', 'Ditolak'],
@@ -77,7 +77,10 @@ def lengkapi_profil(request):
         return redirect('logout')
 
     sudah_lengkap_sebelumnya = siswa.profil_lengkap
-    form = SiswaProfilForm(initial={'email': siswa.email, 'no_hp': siswa.no_hp, 'alamat': siswa.alamat})
+    form = SiswaProfilForm(initial={
+        'email': siswa.email, 'no_hp': siswa.no_hp, 'alamat': siswa.alamat,
+        'tempat_lahir': siswa.tempat_lahir, 'tanggal_lahir': siswa.tanggal_lahir,
+    })
     form_password = SiswaPasswordForm(user=siswa.users, siswa=siswa)
 
     if request.method == 'POST':
@@ -111,7 +114,9 @@ def lengkapi_profil(request):
                 siswa.email = data['email']
                 siswa.no_hp = data['no_hp']
                 siswa.alamat = data['alamat']
-                siswa.save(update_fields=['email', 'no_hp', 'alamat'])
+                siswa.tempat_lahir = data['tempat_lahir']
+                siswa.tanggal_lahir = data['tanggal_lahir']
+                siswa.save(update_fields=['email', 'no_hp', 'alamat', 'tempat_lahir', 'tanggal_lahir'])
                 catat_aktivitas(
                     request, 'akun_diubah',
                     'Siswa memperbarui profil' if sudah_lengkap_sebelumnya else 'Siswa melengkapi profil',
@@ -236,6 +241,21 @@ def portofolio_publik(request, nis):
         'total_prestasi': prestasi_list.count(),
         'total_akademik': prestasi_list.filter(kategori_prestasi='akademik').count(),
         'total_non_akademik': prestasi_list.filter(kategori_prestasi='non-akademik').count(),
-        'total_nasional_plus': prestasi_list.filter(tingkat_prestasi__in=['nasional', 'internasional']).count(),
+        'total_nasional_plus': prestasi_list.filter(tingkat_prestasi__in=['nasional', 'regional', 'internasional']).count(),
     }
-    return render(request, 'eprestasi/portofolio_publik.html', context)
+    return render(request, 'eprestasi/siswa_portal/portofolio_publik.html', context)
+
+
+@role_required('siswa')
+def panduan(request):
+    """Halaman Panduan penggunaan portal untuk siswa (konten statis)."""
+    siswa = _get_siswa(request)
+    if siswa is None:
+        messages.error(request, 'Data siswa tidak ditemukan. Hubungi admin.')
+        return redirect('logout')
+    if not siswa.profil_lengkap:
+        return redirect('siswa_lengkapi_profil')
+    return render(request, 'eprestasi/siswa_portal/panduan.html', {
+        'siswa': siswa,
+        'active_menu': 'panduan',
+    })

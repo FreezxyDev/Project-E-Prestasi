@@ -28,6 +28,13 @@
         </div>
     </form>
 </div>
+        <!-- Toolbar: search + filter -->
+        <div class="table-toolbar">
+            <div class="table-toolbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+                       placeholder="Cari kelas...">
+            </div>
 
 <div class="row g-3">
     <div class="col-12 col-lg-7">
@@ -70,55 +77,72 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-5">
-        <div class="card p-3 mb-3">
-            <div class="small text-muted fw-semibold mb-2">TAMBAH SATU KELAS</div>
-            <form method="POST" action="{% url 'tambah_kelas' %}">
-                {% csrf_token %}
-                <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
-                <div class="mb-2">
-                    <label class="form-label small">Nama Kelas</label>
-                    {{ form_kelas.nama_kelas }}
-                </div>
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <label class="form-label small">Jurusan</label>
-                        {{ form_kelas.jurusan }}
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small">Tingkat</label>
-                        {{ form_kelas.tingkat }}
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-sm btn-primary w-100">Tambah Kelas</button>
-            </form>
-        </div>
 
-        <div class="card p-3 mb-3">
+        <div class="col-12 col-lg-5">
             <div class="small text-muted fw-semibold mb-2">BUAT KELAS MASSAL</div>
-            <p class="small text-muted">Contoh: Jurusan RPL, Tingkat X, Jumlah 2 &rarr; otomatis membuat "X RPL 1" dan "X RPL 2".</p>
-            <form method="POST" action="{% url 'buat_kelas_massal' %}">
+            <p class="small text-muted">
+                Nama kelas dibuat dengan pola <strong>Tingkat + Nama Kustom + Nomor</strong>. Contoh: Jurusan RPL, Tingkat X,
+                Nama Kustom PPLG, Jumlah 2 &rarr; "X PPLG 1" dan "X PPLG 2" (tetap terhubung ke jurusan RPL).
+                Kalau Nama Kustom dikosongkan, dipakai kode jurusan ("X RPL 1").
+            </p>
+            <form method="POST" action="{% url 'buat_kelas_massal' %}" id="form-massal">
                 {% csrf_token %}
                 <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
                 <div class="row g-2 mb-2">
-                    <div class="col-5">
+                    <div class="col-6">
                         <label class="form-label small">Jurusan</label>
                         {{ form_massal.jurusan }}
                     </div>
-                    <div class="col-4">
+                    <div class="col-6">
                         <label class="form-label small">Tingkat</label>
                         {{ form_massal.tingkat }}
                     </div>
-                    <div class="col-3">
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-8">
+                        <label class="form-label small">Nama Kustom (opsional)</label>
+                        {{ form_massal.nama_kustom }}
+                    </div>
+                    <div class="col-4">
                         <label class="form-label small">Jumlah</label>
                         {{ form_massal.jumlah_kelas }}
                     </div>
                 </div>
+                <div class="small text-muted mb-2">Hasil: <strong id="massal-preview">-</strong></div>
                 <button type="submit" class="btn btn-sm btn-primary w-100">Buat Kelas Massal</button>
             </form>
-        </div>
+            <script>
+            (function () {
+                var f = document.getElementById('form-massal');
+                var romawi = {'10': 'X', '11': 'XI', '12': 'XII'};
+                function q(n) { return f.querySelector('[name="' + n + '"]'); }
+                function preview() {
+                    var tingkat = romawi[q('tingkat').value] || '';
+                    var penanda = (q('nama_kustom').value || '').replace(/\s+/g, '').toUpperCase() || q('jurusan').value;
+                    var jumlah = parseInt(q('jumlah_kelas').value, 10) || 0;
+                    var out = [];
+                    for (var i = 1; i <= Math.min(jumlah, 3); i++) out.push(tingkat + ' ' + penanda + ' ' + i);
+                    if (jumlah > 3) out.push('... ' + tingkat + ' ' + penanda + ' ' + jumlah);
+                    document.getElementById('massal-preview').textContent = out.join(', ') || '-';
+                }
+                f.addEventListener('input', preview);
+                f.addEventListener('change', preview);
+                preview();
+            })();
+            </script>
 
-        <div class="card p-3">
+            <hr class="my-3">
+            <div class="small text-muted fw-semibold mb-2">TAMBAH JURUSAN BARU</div>
+            <form method="POST" action="{% url 'buat_kelas_massal' %}" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="tahun_ajaran" value="{{ tahun_ajaran_terpilih.id }}">
+                <input type="hidden" name="aksi" value="tambah_jurusan">
+                <input type="text" name="kode_jurusan" class="form-control form-control-sm" maxlength="10" placeholder="Contoh: PPLG" required>
+                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Tambah</button>
+            </form>
+            <div class="form-text">Jurusan saat ini: {% for kode, label in daftar_jurusan %}{{ kode }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+
+            <hr class="my-3">
             <div class="small text-muted fw-semibold mb-2">SALIN DAFTAR KELAS</div>
             <p class="small text-muted">Salin seluruh daftar kelas dari tahun ajaran lain ke tahun ajaran <strong>{{ tahun_ajaran_terpilih.tahun_ajaran }}</strong>.</p>
             <form method="POST" action="{% url 'salin_kelas' %}">
@@ -131,8 +155,7 @@
             </form>
         </div>
     </div>
-</div>
 
 {% endif %}
 
-{% endblock %}
+{% endblock %}  

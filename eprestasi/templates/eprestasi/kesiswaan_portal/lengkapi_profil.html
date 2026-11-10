@@ -15,7 +15,7 @@
     </div>
 </div>
 
-<div class="card p-4 form-narrow-sm mx-auto">
+<div class="card p-4 form-card form-md mx-auto">
     <h5 class="fw-bold mb-1">Lengkapi Profil</h5>
     <p class="text-muted small mb-4">Isi data diri kamu sebagai pengelola kesiswaan.</p>
 
@@ -23,20 +23,34 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        <div class="mb-3">
-            <label class="form-label">NIP <span class="readonly-badge">Diisi Admin</span></label>
-            <input type="text" class="form-control is-readonly" value="{{ kesiswaan.nip }}" readonly disabled>
-        </div>
+        <div class="form-layout">
+            <div class="form-subtitle"><i class="bi bi-person-badge"></i> Identitas</div>
+            <div class="form-field">
+                <label class="form-label">NIP <span class="readonly-badge">Diisi Admin</span></label>
+                <input type="text" class="form-control is-readonly" value="{{ kesiswaan.nip }}" readonly disabled>
+            </div>
+            <div class="form-field">
+                <label class="form-label" for="{{ form.nama.id_for_label }}">{{ form.nama.label }}</label>
+                {{ form.nama }}
+                {% for error in form.nama.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-        {% for field in form %}
-        <div class="mb-3">
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-        </div>
-        {% endfor %}
+            <div class="form-subtitle"><i class="bi bi-briefcase"></i> Jabatan &amp; Kontak</div>
+            <div class="form-field">
+                <label class="form-label" for="{{ form.jabatan.id_for_label }}">{{ form.jabatan.label }}</label>
+                {{ form.jabatan }}
+                {% for error in form.jabatan.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-field">
+                <label class="form-label" for="{{ form.no_hp.id_for_label }}">{{ form.no_hp.label }}</label>
+                {{ form.no_hp }}
+                {% for error in form.no_hp.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-        <button type="submit" class="btn btn-primary mt-2">Simpan Profil</button>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Simpan Profil</button>
+            </div>
+        </div>
     </form>
 </div>
 
@@ -94,22 +108,22 @@
                     <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
                 {% endif %}
 
-                <div class="row g-3">
-                    <div class="col-12">
+                <div class="form-layout">
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1">NIP <span class="readonly-badge">Diisi Admin</span></label>
                         <input type="text" class="form-control is-readonly" value="{{ kesiswaan.nip }}" readonly disabled>
                     </div>
-                    <div class="col-12">
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1" for="{{ form.nama.id_for_label }}">{{ form.nama.label }}</label>
                         {{ form.nama }}
                         {% for e in form.nama.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
                     </div>
-                    <div class="col-md-6">
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1" for="{{ form.jabatan.id_for_label }}">{{ form.jabatan.label }}</label>
                         {{ form.jabatan }}
                         {% for e in form.jabatan.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
                     </div>
-                    <div class="col-md-6">
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1" for="{{ form.no_hp.id_for_label }}">{{ form.no_hp.label }}</label>
                         {{ form.no_hp }}
                         {% for e in form.no_hp.errors %}<div class="field-error">{{ e }}</div>{% endfor %}

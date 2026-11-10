@@ -1,0 +1,107 @@
+{% comment %}
+Skeleton loading satu halaman. Semua gaya ada di design.css (bagian 9e).
+Pemakaian (letakkan di awal <body> untuk landing/login, di awal {% block content %} untuk dashboard):
+  {% include 'eprestasi/_partials/skeleton_page.html' with tipe='landing' %}
+  {% include 'eprestasi/_partials/skeleton_page.html' with tipe='login' %}
+  {% include 'eprestasi/_partials/skeleton_page.html' with tipe='dashboard' kartu='1234' panel='12' %}
+`kartu` = jumlah kartu statistik (satu karakter per kartu), `panel` = jumlah panel di bawahnya.
+Overlay hilang otomatis saat halaman selesai dimuat.
+{% endcomment %}
+{% if tipe == 'dashboard' %}
+<div class="skel-page skel-main" aria-hidden="true">
+  <div class="skel-dash">
+    <div class="skel-dash-head">
+      <span class="skel skel-title skel-w-30"></span>
+      <span class="skel skel-line skel-w-50"></span>
+    </div>
+    <div class="skel-grid skel-grid-stat">
+      {% for _ in kartu|default:"1234"|make_list %}
+      <div class="skel-card">
+        <span class="skel skel-circle skel-icon-sm"></span>
+        <span class="skel skel-line skel-w-60"></span>
+        <span class="skel skel-title skel-w-40"></span>
+        <span class="skel skel-line skel-w-80"></span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="skel-grid skel-grid-panel">
+      {% for _ in panel|default:"12"|make_list %}
+      <div class="skel-card is-tall">
+        <span class="skel skel-line lg skel-w-40"></span>
+        <span class="skel skel-line skel-w-60"></span>
+        <span class="skel skel-block"></span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% elif tipe == 'landing' %}
+<div class="skel-page skel-full" aria-hidden="true">
+  <div class="skel-landing">
+    <div class="skel-nav">
+      <span class="skel skel-line lg skel-w-20"></span>
+      <div class="skel-nav-links">
+        <span class="skel skel-line skel-link"></span><span class="skel skel-line skel-link"></span>
+        <span class="skel skel-line skel-link"></span><span class="skel skel-line skel-link"></span>
+      </div>
+      <span class="skel skel-btn skel-btn-sm"></span>
+    </div>
+    <div class="skel-hero">
+      <span class="skel skel-line skel-w-20"></span>
+      <span class="skel skel-hero-title skel-w-80"></span>
+      <span class="skel skel-hero-title skel-w-60"></span>
+      <span class="skel skel-line skel-w-60"></span>
+      <span class="skel skel-line skel-w-40"></span>
+      <div class="skel-row">
+        <span class="skel skel-btn skel-btn-md"></span><span class="skel skel-btn skel-btn-md"></span>
+      </div>
+    </div>
+    <div class="skel-band">
+      <div class="skel-grid skel-grid-feat">
+        {% for _ in "123"|make_list %}
+        <div class="skel-card">
+          <span class="skel skel-circle skel-icon-sm"></span>
+          <span class="skel skel-line lg skel-w-60"></span>
+          <span class="skel skel-line skel-w-100"></span>
+          <span class="skel skel-line skel-w-80"></span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% elif tipe == 'login' %}
+<div class="skel-page skel-full" aria-hidden="true">
+  <div class="skel-login">
+    <span class="skel skel-login-hero"></span>
+    <div class="skel-login-side">
+      <div class="skel-login-card">
+        <div class="skel-row">
+          <span class="skel skel-circle skel-icon-lg"></span>
+          <div class="skel-stack skel-grow">
+            <span class="skel skel-title skel-w-40"></span>
+            <span class="skel skel-line skel-w-80"></span>
+          </div>
+        </div>
+        <span class="skel skel-line skel-w-30"></span>
+        <span class="skel skel-input"></span>
+        <span class="skel skel-line skel-w-30"></span>
+        <span class="skel skel-input"></span>
+        <span class="skel skel-btn skel-btn-full"></span>
+        <span class="skel skel-btn skel-btn-full"></span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+<script>
+/* Sembunyikan skeleton saat halaman selesai dimuat (juga saat kembali lewat tombol Back). */
+(function () {
+    var root = document.documentElement;
+    function selesai() { root.classList.add('skel-done'); }
+    if (document.readyState === 'complete') { selesai(); }
+    else { window.addEventListener('load', selesai); }
+    window.addEventListener('pageshow', function (e) { if (e.persisted) { selesai(); } });
+    setTimeout(selesai, 3500);   /* pengaman: aset yang macet tidak boleh menahan halaman */
+})();
+</script>

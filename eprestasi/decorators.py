@@ -23,7 +23,7 @@ def role_required(*allowed_roles, allow_nonaktif=False):
         @wraps (view_func)
         def wrapper(request, *args, **kwargs):
             if not request.session.get('user_id'):
-                messages.warning(request,'Anda harus login terlebih dahulu !')
+                messages.error(request,'Anda harus login terlebih dahulu !')
                 return redirect('login')
             user_id = request.session.get('user_id')
             user = Users.objects.filter(id=user_id).first()
@@ -40,10 +40,10 @@ def role_required(*allowed_roles, allow_nonaktif=False):
             )
             if siswa_nonaktif:
                 if request.session.get('role') not in allowed_roles:
-                    messages.warning(request,'Anda tidak memiliki izin untuk mengakses halaman ini !')
+                    messages.error(request,'Anda tidak memiliki izin untuk mengakses halaman ini !')
                     return redirect('login')
                 if not allow_nonaktif:
-                    messages.warning(
+                    messages.error(
                         request,
                         'Akun Anda berstatus siswa nonaktif. Anda hanya bisa mengakses QR Code '
                         'dan halaman portofolio.'
@@ -58,7 +58,7 @@ def role_required(*allowed_roles, allow_nonaktif=False):
                 messages.error(request, 'Akun ini tidak terafiliasi dengan SMKN 11 Bandung.')
                 return redirect('login')
             if request.session.get('role')not in allowed_roles:
-                messages.warning(request,'Anda tidak memiliki izin untuk mengakses halaman ini !')
+                messages.error(request,'Anda tidak memiliki izin untuk mengakses halaman ini !')
                 return redirect('login')
             return view_func(request, *args, **kwargs)
         return wrapper

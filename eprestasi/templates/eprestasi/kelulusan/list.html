@@ -76,7 +76,7 @@
     function confirmBulkKelulusan(formEl, tmpl) {
         const checked = formEl.querySelectorAll('.js-row-check:checked').length;
         if (checked === 0) {
-            alert('Pilih minimal satu siswa terlebih dahulu.');
+            toast.error('Pilih minimal satu siswa terlebih dahulu.');
             return false;
         }
         return confirm(tmpl.replace('{n}', checked));

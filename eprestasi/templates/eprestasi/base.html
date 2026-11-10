@@ -49,6 +49,9 @@
             <a href="{% url 'tahun_ajaran_list' %}" class="nav-link {% if active_menu == 'tahun_ajaran' %}active{% endif %}">
                 <i class="bi bi-calendar3"></i><span>Tahun Ajaran</span>
             </a>
+            <a href="{% url 'master_prestasi' %}" class="nav-link {% if active_menu == 'master_prestasi' %}active{% endif %}">
+                <i class="bi bi-tags"></i><span>Kategori Prestasi</span>
+            </a>
             <a href="{% url 'pengelolaan_kelas' %}" class="nav-link {% if active_menu == 'pengelolaan_kelas' %}active{% endif %}">
                 <i class="bi bi-diagram-3"></i><span>Pengelolaan Kelas</span>
             </a>
@@ -119,15 +122,6 @@
     </div>
 
     <div class="main-content">
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'success' }}{% endif %} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
 
         {% block content %}{% endblock %}
 
@@ -207,5 +201,7 @@
     });
 </script>
 {% block extra_scripts %}{% endblock %}
+{% include 'eprestasi/_partials/toast.html' %}
+{% include 'eprestasi/_partials/import_widget.html' %}
 </body>
 </html>

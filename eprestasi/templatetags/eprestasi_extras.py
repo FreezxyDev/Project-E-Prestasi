@@ -72,3 +72,17 @@ def sort_icon(context, current_sort, asc_key, desc_key):
     if current_sort == desc_key:
         return 'bi-sort-down'
     return 'bi-arrow-down-up text-muted'
+
+
+STATUS_PRESTASI_TEKS = {
+    'pending': 'Menunggu verifikasi',
+    'diterima': 'Terverifikasi',
+    'perbaikan': 'Perlu perbaikan',
+    'ditolak': 'Ditolak',
+}
+
+
+@register.filter
+def status_prestasi(kode):
+    """Teks status prestasi yang mudah dipahami (nilai di database tidak berubah)."""
+    return STATUS_PRESTASI_TEKS.get(kode, kode)

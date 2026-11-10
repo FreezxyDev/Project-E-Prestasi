@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="{% static 'css/design.css' %}">
 </head>
 <body class="page-landing">
+{% include 'eprestasi/_partials/skeleton_page.html' with tipe='landing' %}
 
 <nav id="nav">
   <div class="wrap nav-in">
@@ -292,5 +293,6 @@ document.getElementById('search-btn').onclick=doSearch;
 searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
 searchInput.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(doSearch,350);});
 </script>
+{% include 'eprestasi/_partials/toast.html' %}
 </body>
 </html>

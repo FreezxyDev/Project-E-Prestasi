@@ -461,7 +461,7 @@
         }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
         .then(function (res) {
             btn.disabled = false;
-            if (!res.ok) { alert(res.j.error || 'Gagal mencocokkan NIS.'); return; }
+            if (!res.ok) { toast.error(res.j.error || 'Gagal mencocokkan NIS.'); return; }
             var h = res.j;
             h.cocok.forEach(tambah);
             $('hasilNis').classList.add('show');
@@ -472,7 +472,7 @@
             $('barisTidakAda').style.display = h.tidak_ditemukan.length ? 'flex' : 'none';
             chips('hasilTidakAda', h.tidak_ditemukan, 'bad');
             segarkan();
-        }).catch(function () { btn.disabled = false; alert('Gagal menghubungi server. Coba lagi.'); });
+        }).catch(function () { btn.disabled = false; toast.error('Gagal menghubungi server. Coba lagi.'); });
     });
 
     // ---------- Kelas tujuan ----------
@@ -501,11 +501,11 @@
 
     $('btnTinjau').addEventListener('click', function () {
         var select = $('selectKelasTujuan');
-        if (!terpilih.size) { alert('Pilih minimal satu siswa (lewat centang atau Input NIS Massal).'); return; }
-        if (!select.value) { alert('Pilih kelas tujuan terlebih dahulu.'); select.focus(); return; }
+        if (!terpilih.size) { toast.error('Pilih minimal satu siswa (lewat centang atau Input NIS Massal).'); return; }
+        if (!select.value) { toast.error('Pilih kelas tujuan terlebih dahulu.'); select.focus(); return; }
         var opsi = select.options[select.selectedIndex];
         if (opsi.getAttribute('data-tingkat') === '12' && !$('cbModeManualXii').checked) {
-            alert('Aktifkan dulu opsi "Ubah Pembagian Kelas XII" untuk memindahkan siswa ke kelas XII secara manual.');
+            toast.error('Aktifkan dulu opsi "Ubah Pembagian Kelas XII" untuk memindahkan siswa ke kelas XII secara manual.');
             return;
         }
         var tujuan = { id: select.value, nama: opsi.text.trim(), jurusan: opsi.getAttribute('data-jurusan') };

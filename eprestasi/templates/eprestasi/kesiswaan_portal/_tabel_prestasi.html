@@ -1,3 +1,4 @@
+{% load eprestasi_extras %}
 
 <div class="card mb-3">
 
@@ -103,6 +104,24 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        <div class="col-6">
+                            <label class="form-label">Subkategori</label>
+                            <select name="subkategori" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for sub in opsi.subkategori_list %}
+                                    <option value="{{ sub.pk }}" {% if f.subkategori == sub.pk|stringformat:"s" %}selected{% endif %}>{{ sub.nama_lengkap }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Perolehan</label>
+                            <select name="perolehan" class="form-select form-select-sm">
+                                <option value="">Semua</option>
+                                {% for value, label in opsi.perolehan_choices %}
+                                    <option value="{{ value }}" {% if f.perolehan == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="col-12">
                             <label class="form-label">Verifikator</label>
                             <select name="verifikator" class="form-select form-select-sm">
@@ -150,7 +169,17 @@
                 </div>
             </div>
 
-            <div class="table-toolbar-meta">{{ page_obj.paginator.count }} {{ item_label }}</div>
+            <div class="table-toolbar-meta">{{ page_obj.paginator.count }} {{ item_label }}{% if ekspor_halaman %} &middot; {{ total_terverifikasi }} terverifikasi{% endif %}</div>
+            {% if ekspor_halaman %}
+            <div class="d-flex gap-2 ms-auto">
+                <a href="{% url 'kesiswaan_export_excel' %}?halaman={{ ekspor_halaman }}&{{ qs_ekspor }}" class="btn btn-sm btn-outline-success" title="Unduh Excel sesuai pencarian & filter yang sedang aktif">
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </a>
+                <a href="{% url 'kesiswaan_cetak_rekap' %}?halaman={{ ekspor_halaman }}&{{ qs_ekspor }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary" title="Cetak / simpan PDF sesuai pencarian & filter yang sedang aktif">
+                    <i class="bi bi-printer"></i> Cetak / PDF
+                </a>
+            </div>
+            {% endif %}
         </div>
     </form>
 
@@ -209,16 +238,17 @@
                             </td>
                             <td>
                                 <div>{{ p.nama_prestasi }}</div>
-                                <div class="text-muted cell-sub">{{ p.tanggal_prestasi|date:"d M Y" }}</div>
+                                <div class="text-muted cell-sub">{{ p.tanggal_prestasi|date:"d M Y" }}{% if p.jenis_perolehan %} &middot; {{ p.get_jenis_perolehan_display }}{% endif %}</div>
+                                {% if p.subkategori %}<div class="text-muted cell-sub">{{ p.label_subkategori }}</div>{% endif %}
                                 {% if not p.siswa.profil_lengkap %}
                                     <span class="badge-status pending mt-1">PROFIL BELUM LENGKAP</span>
                                 {% endif %}
                             </td>
                             <td>{{ p.get_kategori_prestasi_display }}</td>
-                            <td>{{ p.tingkat_prestasi|capfirst }}</td>
+                            <td>{{ p.label_tingkat }}</td>
                             <td><span class="badge-kelas">{{ p.kelas_nama|default:"-" }}</span></td>
                             <td>{{ p.tanggal_upload|date:"d M Y" }}</td>
-                            <td><span class="badge-status {{ p.status }}">{{ p.status|upper }}</span></td>
+                            <td><span class="badge-status {{ p.status }}">{{ p.status|status_prestasi }}</span></td>
                             {% if tampil_verifikasi %}
                             <td>
                                 {% if p.tanggal_verifikasi %}

@@ -7,7 +7,7 @@
 
 {% if wajib_diisi %}
 {# ================= MODE 1: PROFIL BELUM LENGKAP ================= #}
-<div class="alert alert-warning d-flex gap-2 form-narrow-lg mx-auto mb-3">
+<div class="alert alert-warning d-flex gap-2 form-card form-md mx-auto mb-3">
     <i class="bi bi-exclamation-triangle fs-5"></i>
     <div>
         <strong>Lengkapi profil kamu dulu.</strong>
@@ -15,42 +15,46 @@
     </div>
 </div>
 
-<div class="card p-4 form-narrow-lg mx-auto">
+<div class="card p-4 form-card form-md mx-auto">
     <h5 class="fw-bold mb-1">Lengkapi Profil</h5>
     <p class="text-muted small mb-3">Data sekolah di bawah diisi admin dan tidak bisa kamu ubah.</p>
-
-    <div class="mb-3">
-        <label class="form-label small text-muted mb-1">NIS <span class="readonly-badge">Data Sekolah</span></label>
-        <div class="readonly-box">{{ siswa.nis }}</div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label small text-muted mb-1">Nama Lengkap <span class="readonly-badge">Data Sekolah</span></label>
-        <div class="readonly-box">{{ siswa.nama|default:"-" }}</div>
-    </div>
-    <div class="row">
-        <div class="col-6 mb-3">
-            <label class="form-label small text-muted mb-1">Kelas <span class="readonly-badge">Data Sekolah</span></label>
-            <div class="readonly-box">{{ siswa.kelas|default:"-" }}</div>
-        </div>
-        <div class="col-6 mb-3">
-            <label class="form-label small text-muted mb-1">Jurusan <span class="readonly-badge">Data Sekolah</span></label>
-            <div class="readonly-box">{{ siswa.jurusan|default:"-" }}</div>
-        </div>
-    </div>
-
-    <hr class="my-3">
 
     <form method="POST" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
-        {% for field in form %}
-        <div class="mb-3">
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+
+        <div class="form-layout">
+            <div class="form-subtitle"><i class="bi bi-building"></i> Data Sekolah <small>diisi admin</small></div>
+            <div class="form-field">
+                <label class="form-label small text-muted mb-1">NIS</label>
+                <div class="readonly-box">{{ siswa.nis }}</div>
+            </div>
+            <div class="form-field">
+                <label class="form-label small text-muted mb-1">Nama Lengkap</label>
+                <div class="readonly-box">{{ siswa.nama|default:"-" }}</div>
+            </div>
+            <div class="form-field">
+                <label class="form-label small text-muted mb-1">Kelas</label>
+                <div class="readonly-box">{{ siswa.kelas|default:"-" }}</div>
+            </div>
+            <div class="form-field">
+                <label class="form-label small text-muted mb-1">Jurusan</label>
+                <div class="readonly-box">{{ siswa.jurusan|default:"-" }}</div>
+            </div>
+
+            <div class="form-subtitle"><i class="bi bi-person-lines-fill"></i> Data Pribadi</div>
+            {% for field in form %}
+            <div class="form-field{% if field.name == 'alamat' %} span-2{% endif %}">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Simpan Profil</button>
+            </div>
         </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary mt-2">Simpan Profil</button>
     </form>
 </div>
 
@@ -79,6 +83,7 @@
                 <div class="row-item"><dt>NIS</dt><dd><code>{{ siswa.nis }}</code></dd></div>
                 <div class="row-item"><dt>Kelas</dt><dd>{{ siswa.kelas|default:"-" }}</dd></div>
                 <div class="row-item"><dt>Jurusan</dt><dd>{{ siswa.jurusan|default:"-" }}</dd></div>
+                <div class="row-item"><dt>Tempat, Tgl Lahir</dt><dd>{% if siswa.tempat_lahir or siswa.tanggal_lahir %}{{ siswa.tempat_lahir|default:"-" }}{% if siswa.tanggal_lahir %}, {{ siswa.tanggal_lahir|date:"d M Y" }}{% endif %}{% else %}-{% endif %}</dd></div>
                 <div class="row-item"><dt>Tingkat</dt><dd>{{ tingkat_romawi }}</dd></div>
                 <div class="row-item"><dt>Akun dibuat</dt><dd>{{ siswa.users.created_at|date:"d M Y" }}</dd></div>
                 <div class="row-item"><dt>Terakhir diperbarui</dt><dd>{{ siswa.users.updated_at|date:"d M Y, H:i" }}</dd></div>
@@ -99,34 +104,47 @@
         <!-- EDIT DATA KONTAK -->
         <div class="card p-3 mb-3">
             <div class="panel-title"><i class="bi bi-person-lines-fill"></i> Edit Data</div>
-            <div class="panel-sub">Perbarui email, nomor telepon, dan alamat kamu.</div>
+            <div class="panel-sub">Perbarui email, nomor telepon, tempat &amp; tanggal lahir, dan alamat kamu.</div>
 
             <form method="POST" novalidate>
                 {% csrf_token %}
                 <input type="hidden" name="aksi" value="profil">
                 {% if form.non_field_errors %}<div class="alert alert-danger small">{{ form.non_field_errors }}</div>{% endif %}
 
-                <div class="row g-3">
-                    <div class="col-md-6">
+                <div class="form-layout">
+                    <div class="form-subtitle"><i class="bi bi-telephone"></i> Kontak</div>
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                         {{ form.email }}
                         {% for e in form.email.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
                     </div>
-                    <div class="col-md-6">
+                    <div class="form-field">
                         <label class="form-label small text-muted mb-1" for="{{ form.no_hp.id_for_label }}">{{ form.no_hp.label }}</label>
                         {{ form.no_hp }}
                         {% for e in form.no_hp.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
                     </div>
-                    <div class="col-12">
+
+                    <div class="form-subtitle"><i class="bi bi-person-vcard"></i> Data Pribadi</div>
+                    <div class="form-field">
+                        <label class="form-label small text-muted mb-1" for="{{ form.tempat_lahir.id_for_label }}">{{ form.tempat_lahir.label }}</label>
+                        {{ form.tempat_lahir }}
+                        {% for e in form.tempat_lahir.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label small text-muted mb-1" for="{{ form.tanggal_lahir.id_for_label }}">{{ form.tanggal_lahir.label }}</label>
+                        {{ form.tanggal_lahir }}
+                        {% for e in form.tanggal_lahir.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="form-field span-2">
                         <label class="form-label small text-muted mb-1" for="{{ form.alamat.id_for_label }}">{{ form.alamat.label }}</label>
                         {{ form.alamat }}
                         {% for e in form.alamat.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
                     </div>
-                </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Simpan Data</button>
+                    <div class="form-actions">
+                        <button type="reset" class="btn btn-outline-secondary btn-sm">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> Simpan Data</button>
+                    </div>
                 </div>
             </form>
         </div>

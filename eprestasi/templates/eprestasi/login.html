@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="{% static 'css/design.css' %}" />
 </head>
 <body class="page-login">
+{% include 'eprestasi/_partials/skeleton_page.html' with tipe='login' %}
 {% include 'eprestasi/_partials/theme_toggle.html' with floating=1 %}
   <div class="login-layout">
 
@@ -98,17 +99,6 @@
               <p>Masukkan username / NIS / NIP dan password kamu.</p>
             </div>
           </div>
-
-          {% if messages %}
-          <div class="login-messages" role="alert">
-            {% for message in messages %}
-            <div class="login-alert {% if message.tags == 'error' %}is-error{% endif %}">
-              <i class="bi bi-exclamation-circle-fill"></i>
-              <span>{{ message }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
 
           <form method="POST" class="login-form">
             {% csrf_token %}
@@ -192,5 +182,6 @@
       startAuto();
     })();
   </script>
+{% include 'eprestasi/_partials/toast.html' %}
 </body>
 </html>

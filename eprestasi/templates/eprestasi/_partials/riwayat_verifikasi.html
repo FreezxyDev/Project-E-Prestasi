@@ -1,0 +1,16 @@
+{# Jejak verifikasi (append-only). Butuh: riwayat_list #}
+<div class="card dp-card">
+    <h6 class="dp-card-title"><i class="bi bi-clock-history"></i> Riwayat Verifikasi <span class="count">{{ riwayat_list|length }}</span></h6>
+    {% for r in riwayat_list %}
+        <div class="d-flex gap-2 mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+            <div class="text-muted small" style="min-width:108px">{{ r.waktu|date:"d M Y H:i" }}</div>
+            <div class="small">
+                <div class="fw-semibold">{{ r.get_aksi_display }}</div>
+                <div class="text-muted">{{ r.pelaku|default:"-" }}{% if r.role_pelaku %} ({{ r.role_pelaku }}){% endif %}</div>
+                {% if r.catatan %}<div>{{ r.catatan|linebreaksbr }}</div>{% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="dp-empty"><i class="bi bi-info-circle"></i> Belum ada riwayat tercatat (pengajuan ini dibuat sebelum fitur riwayat ada).</div>
+    {% endfor %}
+</div>

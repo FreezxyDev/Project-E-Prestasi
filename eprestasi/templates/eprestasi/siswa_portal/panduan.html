@@ -1,0 +1,50 @@
+{% extends 'eprestasi/siswa_portal/base.html' %}
+{% block title %}Panduan{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Panduan</h1>
+    <p>Cara menggunakan E-Prestasi untuk mengajukan prestasi dan membagikan portofoliomu.</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card p-3 mb-3">
+            <div class="panel-title"><i class="bi bi-plus-circle"></i> Mengajukan Prestasi</div>
+            <ol class="mb-0 mt-2 small">
+                <li class="mb-2">Buka menu <strong>Ajukan Prestasi</strong>.</li>
+                <li class="mb-2">Isi nama lomba/kegiatan, tingkat, juara, tanggal, dan penyelenggara.</li>
+                <li class="mb-2">Unggah sertifikat (dan dokumentasi bila ada), lalu kirim.</li>
+                <li>Pengajuan berstatus <strong>Pending</strong> sampai diperiksa pihak kesiswaan.</li>
+            </ol>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <div class="panel-title"><i class="bi bi-clock-history"></i> Memantau Riwayat Pengajuan</div>
+            <p class="small mb-2 mt-2">Menu <strong>Riwayat Pengajuan</strong> menampilkan semua pengajuanmu beserta statusnya:</p>
+            <ul class="small mb-0">
+                <li class="mb-1"><strong>Pending</strong> &ndash; menunggu verifikasi.</li>
+                <li class="mb-1"><strong>Diterima</strong> &ndash; tampil di portofolio publikmu.</li>
+                <li class="mb-1"><strong>Perbaikan</strong> &ndash; ada catatan dari kesiswaan; perbaiki lalu kirim ulang.</li>
+                <li><strong>Ditolak</strong> &ndash; tidak memenuhi syarat; alasan penolakan dapat dibaca di detail.</li>
+            </ul>
+        </div>
+
+        <div class="card p-3">
+            <div class="panel-title"><i class="bi bi-briefcase"></i> Portofolio Saya</div>
+            <p class="small mb-0 mt-2">Hanya prestasi berstatus <strong>Diterima</strong> yang tampil di portofolio publik.
+                Buat QR Code di halaman <a href="{% url 'siswa_lengkapi_profil' %}">Pengaturan</a>, lalu bagikan link atau QR-nya.</p>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-3">
+            <div class="panel-title"><i class="bi bi-question-circle"></i> Butuh Bantuan?</div>
+            <ul class="small mb-0 mt-2">
+                <li class="mb-2">Data NIS, nama, kelas, dan jurusan salah &rarr; hubungi admin sekolah.</li>
+                <li class="mb-2">Lupa password &rarr; gunakan &ldquo;Lupa password&rdquo; di halaman login atau hubungi admin.</li>
+                <li>Ubah email, nomor telepon, tempat &amp; tanggal lahir, dan alamat di <a href="{% url 'siswa_lengkapi_profil' %}">Pengaturan</a>.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

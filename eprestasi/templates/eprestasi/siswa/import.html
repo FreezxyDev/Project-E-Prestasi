@@ -1,11 +1,12 @@
 {% extends 'eprestasi/base.html' %}
+{% load static %}
 {% block title %}Import Siswa{% endblock %}
 
 {% block content %}
 
 <div class="topbar">
     <h4>Import Siswa dari Excel</h4>
-    <a href="{% url 'siswa_list' %}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+    <div class="d-flex gap-2">{% if ada_hasil_terakhir %}<a href="{% url 'siswa_import_hasil' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-card-checklist"></i> Hasil Import Terakhir</a>{% endif %}<a href="{% url 'siswa_list' %}" class="btn btn-sm btn-outline-secondary">Kembali</a></div>
 </div>
 
 <div class="card p-4 form-narrow-lg">
@@ -13,10 +14,10 @@
     <div class="alert alert-info small">
         <i class="bi bi-info-circle"></i>
         Belum punya file template? <a href="{% url 'siswa_import_template' %}">Download template Excel di sini</a>.
-        Kolom <strong>NIS</strong> wajib diisi.
+        Kolom <strong>NIS</strong> wajib diisi. Kolom password boleh dikosongkan: sistem akan membuatkan password acak otomatis.
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="formImport">
         {% csrf_token %}
         {{ form.non_field_errors }}
 

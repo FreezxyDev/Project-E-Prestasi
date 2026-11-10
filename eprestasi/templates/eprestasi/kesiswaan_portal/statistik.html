@@ -53,7 +53,7 @@
     <div class="col-6 col-lg-3 col-xl">
         <div class="card stat-card h-100">
             <div class="stat-icon-badge amber"><i class="bi bi-hourglass-split"></i></div>
-            <div class="stat-label">Pending</div>
+            <div class="stat-label">Menunggu</div>
             <div class="stat-value">{{ ringkasan.pending }}</div>
             <div class="stat-sub">menunggu verifikasi</div>
         </div>
@@ -151,13 +151,23 @@
                     <div class="rank-sub text-truncate">{{ r.contoh }}</div>
                 </div>
                 <div class="rank-val">
-                    <span class="rank-pill {% if r.tingkat_label == 'Nasional' or r.tingkat_label == 'Internasional' %}nasional{% endif %}">{{ r.tingkat_label }}</span>
+                    <span class="rank-pill {% if r.tingkat >= 4 %}nasional{% endif %}">{{ r.tingkat_label }}</span>
                     <div class="rank-sub">{{ r.total }} prestasi</div>
                 </div>
             </div>
             {% empty %}
             <div class="empty-note">Belum ada prestasi terverifikasi.</div>
             {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-0 mb-3">
+    <div class="col-12">
+        <div class="card p-3 p-lg-4 h-100">
+            <div class="panel-title"><i class="bi bi-bar-chart"></i> Perolehan Prestasi</div>
+            <div class="panel-sub">Prestasi terverifikasi per jenis perolehan</div>
+            <div class="chart-box"><canvas id="chartPerolehan"></canvas></div>
         </div>
     </div>
 </div>
@@ -198,6 +208,12 @@
         type: 'doughnut',
         data: { labels: D.kategori.labels, datasets: [{ data: D.kategori.data, backgroundColor: palet, borderWidth: 2, borderColor: cssVar('--color-graphite-card') }] },
         options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } } },
+    });
+
+    new Chart(document.getElementById('chartPerolehan'), {
+        type: 'bar',
+        data: { labels: D.perolehan.labels, datasets: [{ data: D.perolehan.data, backgroundColor: cssVar('--chart-line'), borderRadius: 6, maxBarThickness: 22 }] },
+        options: { ...opsiDasar, indexAxis: 'y', scales: { x: sumbuY, y: sumbuX } },
     });
 
     new Chart(document.getElementById('chartBulan'), {

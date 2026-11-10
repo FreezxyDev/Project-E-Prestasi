@@ -51,17 +51,6 @@
             </div>
           </div>
 
-          {% if messages %}
-          <div class="login-messages" role="alert">
-            {% for message in messages %}
-            <div class="login-alert {% if message.tags == 'error' %}is-error{% endif %}">
-              <i class="bi {% if message.tags == 'error' %}bi-exclamation-circle-fill{% else %}bi-check-circle-fill{% endif %}"></i>
-              <span>{{ message }}</span>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-
           {% block content %}{% endblock %}
         </div>
       </div>
@@ -70,5 +59,6 @@
     </div>
   </div>
   {% block scripts %}{% endblock %}
+{% include 'eprestasi/_partials/toast.html' %}
 </body>
 </html>

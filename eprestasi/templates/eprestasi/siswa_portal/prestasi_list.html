@@ -1,4 +1,5 @@
 {% extends 'eprestasi/siswa_portal/base.html' %}
+{% load eprestasi_extras %}
 {% block body_class %}pg-siswa-riwayat{% endblock %}
 {% block title %}Riwayat{% endblock %}
 
@@ -10,9 +11,6 @@
         <h1>Riwayat</h1>
         <p>Semua pengajuan prestasi kamu beserta status verifikasinya.</p>
     </div>
-    {% if siswa.bisa_edit %}
-        <a href="{% url 'siswa_upload_prestasi' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Ajukan Prestasi</a>
-    {% endif %}
 </div>
 
 <!-- Tab status: angka mengikuti filter lain yang aktif -->
@@ -137,10 +135,10 @@
                                 {% endif %}
                             </td>
                             <td>{{ p.get_kategori_prestasi_display|capfirst }}</td>
-                            <td>{{ p.tingkat_prestasi|capfirst }}</td>
+                            <td>{{ p.label_tingkat }}</td>
                             <td>{{ p.tahun_ajaran.tahun_ajaran }}</td>
                             <td>{{ p.tanggal_upload|date:"d M Y" }}</td>
-                            <td><span class="badge-status {{ p.status }}">{{ p.status|upper }}</span></td>
+                            <td><span class="badge-status {{ p.status }}">{{ p.status|status_prestasi }}</span></td>
                             <td class="text-center">
                                 <a href="{% url 'siswa_prestasi_detail' p.id %}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> {% if p.status == 'perbaikan' %}Perbaiki{% else %}Detail{% endif %}

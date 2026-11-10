@@ -1,0 +1,11 @@
+{% load static %}{% comment %}
+Notifikasi popup global. Pasang SEKALI per halaman, tepat sebelum </body> (sudah ada di semua base template).
+Pesan Django (messages.success / messages.error / ...) otomatis tampil sebagai toast.
+Dari JavaScript: toast.success('...') / toast.error('...').
+Jangan merender {{ messages }} lagi di template lain, supaya tidak muncul dua kali.
+{% endcomment %}
+<div id="toast-region" class="toast-region" role="region" aria-label="Notifikasi" aria-live="polite" aria-relevant="additions"></div>
+{% if messages %}
+<div id="django-messages" hidden>{% for message in messages %}<span data-tag="{{ message.level_tag }}">{{ message }}</span>{% endfor %}</div>
+{% endif %}
+<script src="{% static 'js/toast.js' %}" defer></script>

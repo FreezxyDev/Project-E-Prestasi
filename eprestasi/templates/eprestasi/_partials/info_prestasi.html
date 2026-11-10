@@ -1,0 +1,14 @@
+{# Baris informasi prestasi (dipakai halaman detail siswa & verifikasi kesiswaan). Butuh: prestasi #}
+<dl class="dp-info">
+    <div><dt>Kategori</dt><dd>{{ prestasi.kategori_prestasi|capfirst }}</dd></div>
+    <div><dt>Subkategori</dt><dd>{{ prestasi.label_subkategori|default:"-" }}</dd></div>
+    <div><dt>Tingkat</dt><dd>{{ prestasi.label_tingkat }}</dd></div>
+    <div><dt>Perolehan</dt><dd>{% if prestasi.jenis_perolehan %}{{ prestasi.get_jenis_perolehan_display }}{% else %}<span class="text-muted">Belum diisi</span>{% endif %}</dd></div>
+    <div><dt>Wilayah</dt><dd>{{ prestasi.get_wilayah_prestasi_display }}</dd></div>
+    <div><dt>Tanggal Pelaksanaan</dt><dd>{% if prestasi.tanggal_mulai %}{{ prestasi.tanggal_mulai|date:"d M Y" }} &ndash; {% endif %}{{ prestasi.tanggal_prestasi|date:"d M Y" }}</dd></div>
+    <div><dt>Nomor Sertifikat</dt><dd>{{ prestasi.nomor_sertifikat|default:"-" }}</dd></div>
+    <div class="full"><dt>Penyelenggara</dt><dd>{{ prestasi.penyelenggara }}</dd></div>
+    {% if prestasi.tautan_pendukung %}
+    <div class="full"><dt>Tautan Pendukung</dt><dd><a href="{{ prestasi.tautan_pendukung }}" target="_blank" rel="noopener noreferrer nofollow">{{ prestasi.tautan_pendukung|truncatechars:70 }}</a></dd></div>
+    {% endif %}
+</dl>

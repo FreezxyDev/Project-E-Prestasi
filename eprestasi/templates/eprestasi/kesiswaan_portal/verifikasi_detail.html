@@ -24,7 +24,7 @@
 
     <div class="dp-tags">
         <span class="dp-tag"><i class="bi bi-tag"></i> {{ prestasi.kategori_prestasi|capfirst }}</span>
-        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.tingkat_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.label_tingkat }}</span>
         <span class="dp-tag"><i class="bi bi-geo-alt"></i> {{ prestasi.get_wilayah_prestasi_display }}</span>
         {% if prestasi.tampilkan_tag_puspresnas %}
             <span class="dp-tag puspresnas"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
@@ -63,15 +63,21 @@
     {# ================= KOLOM UTAMA ================= #}
     <div class="col-lg-8">
 
+        {% if duplikat_list %}
+        <div class="alert alert-warning small mb-3">
+            <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle"></i> Kemungkinan duplikat</div>
+            <div class="mb-2">Ada pengajuan lain dengan data yang mirip. Ini hanya peringatan: periksa apakah memang prestasi yang sama atau prestasi berbeda.</div>
+            <ul class="mb-0">
+                {% for d in duplikat_list %}
+                    <li><a href="{% url 'kesiswaan_verifikasi_detail' d.id %}">{{ d.nama_prestasi }}</a> &mdash; {{ d.siswa.nama }}, {{ d.tanggal_prestasi|date:"d M Y" }}{% if d.nomor_sertifikat %}, No. {{ d.nomor_sertifikat }}{% endif %} ({{ d.get_status_display }})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="card dp-card">
             <h6 class="dp-card-title"><i class="bi bi-info-circle"></i> Informasi Prestasi</h6>
-            <dl class="dp-info">
-                <div><dt>Kategori</dt><dd>{{ prestasi.kategori_prestasi|capfirst }}</dd></div>
-                <div><dt>Tingkat</dt><dd>{{ prestasi.tingkat_prestasi|capfirst }}</dd></div>
-                <div><dt>Wilayah</dt><dd>{{ prestasi.get_wilayah_prestasi_display }}</dd></div>
-                <div><dt>Tanggal Prestasi</dt><dd>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</dd></div>
-                <div class="full"><dt>Penyelenggara</dt><dd>{{ prestasi.penyelenggara }}</dd></div>
-            </dl>
+            {% include 'eprestasi/_partials/info_prestasi.html' %}
             <hr class="dp-divider">
             <div class="dp-label">Deskripsi</div>
             <p class="dp-desc">{{ prestasi.deskripsi|linebreaksbr }}</p>
@@ -108,6 +114,36 @@
                 <div class="dp-empty"><i class="bi bi-info-circle"></i> {% if prestasi.status == 'ditolak' %}Pengajuan ditolak. Dokumentasi telah dihapus.{% else %}Tidak ada foto dokumentasi.{% endif %}</div>
             {% endif %}
         </div>
+        {% if prestasi.status != 'ditolak' %}
+        <div class="card dp-card">
+            <h6 class="dp-card-title"><i class="bi bi-pencil-square"></i> Lengkapi Klasifikasi</h6>
+            <p class="text-muted small mb-3">Untuk prestasi lama atau data yang kosong. Setiap perubahan tercatat di riwayat.</p>
+            <form method="POST" action="{% url 'kesiswaan_lengkapi_data' prestasi.id %}">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small">{{ lengkapi_form.subkategori.label }}</label>
+                        {{ lengkapi_form.subkategori }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">{{ lengkapi_form.subkategori_lainnya.label }}</label>
+                        {{ lengkapi_form.subkategori_lainnya }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">{{ lengkapi_form.jenis_perolehan.label }}</label>
+                        {{ lengkapi_form.jenis_perolehan }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">{{ lengkapi_form.nomor_sertifikat.label }}</label>
+                        {{ lengkapi_form.nomor_sertifikat }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-primary mt-3"><i class="bi bi-save"></i> Simpan Klasifikasi</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% include 'eprestasi/_partials/riwayat_verifikasi.html' %}
     </div>
 
     {# ================= KOLOM SAMPING ================= #}

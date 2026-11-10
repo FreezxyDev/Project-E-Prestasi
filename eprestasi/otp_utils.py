@@ -20,7 +20,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import timedelta
-
+import resend
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -93,19 +93,49 @@ def _pesan(kode, nama):
     )
 
 
+
+
 def kirim_otp_email(email, kode, nama):
-    """Return True kalau berhasil dikirim."""
+    """Return True jika permintaan email diterima Resend."""
     try:
-        send_mail(
-            subject='Kode OTP Reset Password - E-Prestasi',
-            message=_pesan(kode, nama),
-            from_email=None,
-            recipient_list=[email],
-            fail_silently=False,
+        api_key = getattr(settings, 'RESEND_API_KEY', '')
+        from_email = getattr(settings, 'RESEND_FROM_EMAIL', '')
+
+        if not api_key or not from_email:
+            logger.error(
+                'RESEND_API_KEY atau RESEND_FROM_EMAIL belum dikonfigurasi.'
+            )
+            return False
+
+        resend.api_key = api_key
+
+        hasil = resend.Emails.send({
+            "from": from_email,
+            "to": [email],
+            "subject": "Kode OTP Reset Password - E-Prestasi",
+            "text": _pesan(kode, nama),
+        })
+
+        email_id = (
+            hasil.get('id') if isinstance(hasil, dict)
+            else getattr(hasil, 'id', None)
         )
-        return True
+
+        if email_id:
+            logger.info(
+                'Permintaan OTP diterima Resend untuk %s',
+                samarkan_email(email),
+            )
+            return True
+
+        logger.error('Resend tidak mengembalikan ID email.')
+        return False
+
     except Exception:
-        logger.exception('Gagal mengirim OTP lewat email ke %s', samarkan_email(email))
+        logger.exception(
+            'Gagal mengirim OTP lewat Resend ke %s',
+            samarkan_email(email),
+        )
         return False
 
 

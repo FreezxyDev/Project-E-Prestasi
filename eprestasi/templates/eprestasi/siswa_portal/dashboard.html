@@ -1,18 +1,17 @@
 {% extends 'eprestasi/siswa_portal/base.html' %}
+{% load eprestasi_extras %}
 {% block body_class %}pg-siswa-dashboard{% endblock %}
 {% block title %}Dashboard{% endblock %}
 
 
 {% block content %}
+{% include 'eprestasi/_partials/skeleton_page.html' with tipe='dashboard' kartu='123456' panel='123' %}
 
 <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
     <div>
         <h1>Halo, {{ siswa.nama }}</h1>
         <p>{{ siswa.kelas|default:"-" }} &middot; {{ siswa.jurusan|default:"-" }} &middot; NIS {{ siswa.nis }}</p>
     </div>
-    {% if siswa.bisa_edit %}
-        <a href="{% url 'siswa_upload_prestasi' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Ajukan Prestasi</a>
-    {% endif %}
 </div>
 
 {% if siswa.status == 'alumni' %}
@@ -86,9 +85,9 @@
             <a href="{% url 'siswa_prestasi_detail' p.id %}" class="recent-item">
                 <div class="min-w-0 flex-1">
                     <div class="recent-name text-truncate">{{ p.nama_prestasi }}</div>
-                    <div class="recent-sub">{{ p.tingkat_prestasi|capfirst }} &middot; diajukan {{ p.tanggal_upload|date:"d M Y" }}</div>
+                    <div class="recent-sub">{{ p.label_tingkat }} &middot; diajukan {{ p.tanggal_upload|date:"d M Y" }}</div>
                 </div>
-                <span class="badge-status {{ p.status }}">{{ p.status|upper }}</span>
+                <span class="badge-status {{ p.status }}">{{ p.status|status_prestasi }}</span>
             </a>
             {% empty %}
             <div class="empty-note">

@@ -5,7 +5,9 @@ from django.urls import reverse
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.db.models import Q, Count
+from django.db import transaction
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
 import json
 
@@ -58,12 +60,19 @@ def cari_siswa_api(request):
     return JsonResponse({'results': results, 'terlalu_pendek': False})
 
 
-def _generate_username(identifier):
+def _generate_username(identifier, bersihkan_akun_sisa=False):
     """
     Username akun dibuat otomatis dari NIS (siswa) / NIP (kesiswaan).
-    Jika identifier tersebut ternyata sudah dipakai sebagai username (kasus langka,
-    misal re-use NIS/NIP lama), tambahkan suffix angka supaya tetap unik.
+
+    Kalau username itu sudah dipakai:
+    - bersihkan_akun_sisa=True (khusus NIS siswa): akun lama bertipe siswa yang TIDAK punya
+      data Siswa sama sekali (sisa dari siswa yang pernah dihapus) dihapus dulu, sehingga username
+      tetap bersih tanpa akhiran. Akun yang masih terhubung ke data siswa tidak pernah disentuh.
+    - selain itu, tambahkan suffix angka supaya tetap unik (kasus langka, misal re-use NIS/NIP lama).
     """
+    if bersihkan_akun_sisa:
+        Users.objects.filter(username=identifier, role='siswa', siswa__isnull=True).delete()
+
     username = identifier
     suffix = 1
     while Users.objects.filter(username=username).exists():
@@ -238,7 +247,7 @@ def Create_siswa(request):
         form = SiswaAkunForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            username = _generate_username(data['nis'])
+            username = _generate_username(data['nis'], bersihkan_akun_sisa=True)
 
             # 1. Simpan Kredensial Login ke Tabel Users
             user_account = Users.objects.create(
@@ -467,6 +476,85 @@ def delete_kesiswaan(request, kesiswaan_id):
 
         messages.success(request, f'Akun kesiswaan dengan NIP {nip} telah berhasil dihapus!')
     return redirect('kesiswaan_list')
+
+
+# =========================================================
+# HAPUS MASSAL (checkbox di Kelola User)
+# =========================================================
+
+def _ids_terpilih(request):
+    """Ambil id dari checkbox (name="ids"); abaikan nilai yang bukan angka & duplikat."""
+    return sorted({int(i) for i in request.POST.getlist('ids') if i.isdigit()})
+
+
+def _kembali_ke(request, default_nama_url):
+    """Kembali ke halaman asal (dengan filter/pagination-nya) kalau 'next' aman, else ke daftar."""
+    tujuan = request.POST.get('next', '')
+    if tujuan and url_has_allowed_host_and_scheme(tujuan, allowed_hosts={request.get_host()}):
+        return redirect(tujuan)
+    return redirect(default_nama_url)
+
+
+def _ringkas_daftar(daftar, maks=10):
+    teks = ', '.join(daftar[:maks])
+    return teks + (f' dan {len(daftar) - maks} lainnya' if len(daftar) > maks else '')
+
+
+@role_required('admin', 'super_admin')
+def hapus_massal_siswa(request):
+    """Hapus banyak akun siswa sekaligus. Menghapus baris Users -> Siswa, prestasi, riwayat kelas,
+    notifikasi, dst. ikut terhapus lewat cascade (sama seperti hapus satu siswa)."""
+    if request.method != 'POST':
+        return redirect('siswa_list')
+    ids = _ids_terpilih(request)
+    if not ids:
+        messages.error(request, 'Pilih minimal satu siswa terlebih dahulu.')
+        return _kembali_ke(request, 'siswa_list')
+
+    terpilih = list(Siswa.objects.filter(id__in=ids).values_list('nis', 'nama', 'users_id'))
+    if not terpilih:
+        messages.error(request, 'Siswa yang dipilih tidak ditemukan (mungkin sudah dihapus).')
+        return _kembali_ke(request, 'siswa_list')
+
+    with transaction.atomic():
+        Users.objects.filter(id__in=[u for _, _, u in terpilih]).delete()
+
+    daftar = [f'{nama or "-"} ({nis})' for nis, nama, _ in terpilih]
+    catat_aktivitas(
+        request, 'akun_dihapus', f'Admin menghapus {len(terpilih)} siswa (aksi massal)',
+        'Akun siswa dihapus: ' + _ringkas_daftar(daftar), modul='siswa',
+    )
+    messages.success(request, f'{len(terpilih)} akun siswa berhasil dihapus.')
+    return _kembali_ke(request, 'siswa_list')
+
+
+@role_required('admin', 'super_admin')
+def hapus_massal_kesiswaan(request):
+    """Hapus banyak akun kesiswaan sekaligus. Akun milik pengguna yang sedang login dilewati."""
+    if request.method != 'POST':
+        return redirect('kesiswaan_list')
+    ids = _ids_terpilih(request)
+    if not ids:
+        messages.error(request, 'Pilih minimal satu akun kesiswaan terlebih dahulu.')
+        return _kembali_ke(request, 'kesiswaan_list')
+
+    saya = request.session.get('user_id')
+    terpilih = [t for t in Kesiswaan.objects.filter(id__in=ids).values_list('nip', 'nama', 'user_id')
+                if t[2] != saya]
+    if not terpilih:
+        messages.error(request, 'Tidak ada akun kesiswaan yang bisa dihapus dari pilihan ini.')
+        return _kembali_ke(request, 'kesiswaan_list')
+
+    with transaction.atomic():
+        Users.objects.filter(id__in=[u for _, _, u in terpilih]).delete()
+
+    daftar = [f'{nama or "-"} (NIP {nip})' for nip, nama, _ in terpilih]
+    catat_aktivitas(
+        request, 'akun_dihapus', f'Admin menghapus {len(terpilih)} akun kesiswaan (aksi massal)',
+        'Akun kesiswaan dihapus: ' + _ringkas_daftar(daftar), modul='kesiswaan',
+    )
+    messages.success(request, f'{len(terpilih)} akun kesiswaan berhasil dihapus.')
+    return _kembali_ke(request, 'kesiswaan_list')
 
 
 # =========================================================

@@ -24,7 +24,7 @@
 
     <div class="dp-tags">
         <span class="dp-tag"><i class="bi bi-tag"></i> {{ prestasi.kategori_prestasi|capfirst }}</span>
-        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.tingkat_prestasi|capfirst }}</span>
+        <span class="dp-tag"><i class="bi bi-bar-chart-steps"></i> {{ prestasi.label_tingkat }}</span>
         <span class="dp-tag"><i class="bi bi-geo-alt"></i> {{ prestasi.get_wilayah_prestasi_display }}</span>
         {% if prestasi.tampilkan_tag_puspresnas %}
             <span class="dp-tag puspresnas"><i class="bi bi-award-fill"></i> PUSPRESNAS</span>
@@ -65,17 +65,13 @@
 
         <div class="card dp-card">
             <h6 class="dp-card-title"><i class="bi bi-info-circle"></i> Informasi Prestasi</h6>
-            <dl class="dp-info">
-                <div><dt>Kategori</dt><dd>{{ prestasi.kategori_prestasi|capfirst }}</dd></div>
-                <div><dt>Tingkat</dt><dd>{{ prestasi.tingkat_prestasi|capfirst }}</dd></div>
-                <div><dt>Wilayah</dt><dd>{{ prestasi.get_wilayah_prestasi_display }}</dd></div>
-                <div><dt>Tanggal Prestasi</dt><dd>{{ prestasi.tanggal_prestasi|date:"d M Y" }}</dd></div>
-                <div class="full"><dt>Penyelenggara</dt><dd>{{ prestasi.penyelenggara }}</dd></div>
-            </dl>
+            {% include 'eprestasi/_partials/info_prestasi.html' %}
             <hr class="dp-divider">
             <div class="dp-label">Deskripsi</div>
             <p class="dp-desc">{{ prestasi.deskripsi|linebreaksbr }}</p>
         </div>
+
+        {% include 'eprestasi/_partials/riwayat_verifikasi.html' %}
 
         <div class="card dp-card">
             <h6 class="dp-card-title"><i class="bi bi-paperclip"></i> Sertifikat <span class="count">{{ sertifikat_list|length }}</span></h6>

@@ -1369,3 +1369,232 @@ a { color: inherit; text-decoration: none; }
   .kelola-panel { --bs-offcanvas-width: 100vw; }
   .page-shell .kelas-fill { min-width: 100px; }
 }
+
+/* =====================================================================
+   9. SKELETON LOADING HALAMAN
+   Overlay tampil sejak HTML pertama dirender, hilang saat halaman selesai dimuat
+   (script kecil di _partials/skeleton_page.html menambah class html.skel-done).
+   Pengaman tanpa JS: overlay hilang sendiri setelah 5 detik.
+   ===================================================================== */
+.skel {
+  display: block; border-radius: 8px; min-width: 0;
+  background: linear-gradient(90deg, var(--color-obsidian-button) 30%, var(--color-obsidian-hover) 50%, var(--color-obsidian-button) 70%);
+  background-size: 300% 100%; animation: skel-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skel-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@keyframes skel-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.skel-line { height: .8rem; border-radius: 6px; }
+.skel-line.lg { height: 1.1rem; }
+.skel-title { height: 1.8rem; border-radius: 8px; }
+.skel-hero-title { height: 3.6rem; border-radius: 12px; }
+.skel-circle { border-radius: 50%; flex: none; }
+.skel-btn { height: 2.5rem; border-radius: var(--radius-buttons); }
+.skel-input { height: 2.75rem; border-radius: var(--radius-inputs); }
+.skel-w-20 { width: 20%; } .skel-w-30 { width: 30%; } .skel-w-40 { width: 40%; } .skel-w-50 { width: 50%; }
+.skel-w-60 { width: 60%; } .skel-w-80 { width: 80%; } .skel-w-100 { width: 100%; }
+.skel-icon-sm { width: 34px; height: 34px; }
+.skel-icon-lg { width: 48px; height: 48px; }
+.skel-link { width: 4.5rem; }
+.skel-btn-sm { width: 5.5rem; }
+.skel-btn-md { width: 8.5rem; }
+.skel-btn-full { width: 100%; }
+.skel-grow { flex: 1; }
+.skel-block { flex: 1; min-height: 8rem; border-radius: var(--radius-cards); }
+.skel-card {
+  display: flex; flex-direction: column; gap: .7rem; padding: var(--spacing-20);
+  border: 1px solid var(--color-hairline); border-radius: var(--radius-cards); background: var(--color-graphite-card);
+}
+.skel-card.is-tall { min-height: 17rem; }
+.skel-stack { display: flex; flex-direction: column; gap: .7rem; }
+.skel-row { display: flex; align-items: center; gap: .75rem; }
+.skel-grid { display: grid; gap: var(--spacing-16); }
+.skel-grid-stat { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
+.skel-grid-panel { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.skel-grid-feat { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+
+.skel-page {
+  background: var(--color-onyx-canvas); overflow: hidden;
+  transition: opacity .3s ease, visibility .3s ease;
+  animation: skel-failsafe 0s linear 5s forwards;
+}
+.skel-page.skel-full { position: fixed; inset: 0; z-index: 3000; }
+.skel-page.skel-main { position: absolute; inset: 0; z-index: 5; padding: inherit; }   /* menutup .main-content, sidebar tetap terlihat */
+html.skel-done .skel-page { opacity: 0; visibility: hidden; pointer-events: none; }
+.page-shell .main-content { position: relative; }
+
+.skel-dash { display: flex; flex-direction: column; gap: var(--spacing-24); }
+.skel-dash-head { display: flex; flex-direction: column; gap: .55rem; }
+
+.skel-landing { display: flex; flex-direction: column; min-height: 100%; }
+.skel-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 3rem; border-bottom: 1px solid var(--color-hairline); }
+.skel-nav-links { display: flex; gap: 1.25rem; flex: 1; justify-content: center; }
+.skel-hero { display: flex; flex-direction: column; justify-content: center; gap: 1rem; padding: 6rem 3rem; max-width: 60rem; }
+.skel-band { padding: 0 3rem 2rem; margin-top: auto; }
+
+.skel-login { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); height: 100%; }
+.skel-login-hero { margin: var(--spacing-16); border-radius: var(--radius-cards); }
+.skel-login-side { display: flex; align-items: center; justify-content: center; padding: var(--spacing-24); }
+.skel-login-card { width: min(100%, 26rem); display: flex; flex-direction: column; gap: 1.1rem; }
+
+@media (max-width: 820px) {
+  .skel-nav { padding: 1rem; } .skel-nav-links { display: none; }
+  .skel-hero { padding: 2.5rem 1rem; } .skel-band { padding: 0 1rem 1.5rem; }
+  .skel-login { grid-template-columns: minmax(0, 1fr); }
+  .skel-login-hero { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel { animation: none; }
+  .skel-page { transition: none; }
+}
+
+/* =====================================================================
+   10. LAYOUT FORM DUA KOLOM
+   <div class="card p-4 form-card [form-sm|form-md]">
+     <form> <div class="form-layout">
+        <div class="form-subtitle"><i class="bi ..."></i> Judul kelompok</div>
+        <div class="form-field"> label + input </div>      (1 kolom)
+        <div class="form-field span-2"> ... </div>          (selebar baris)
+        <div class="form-actions"> tombol </div>
+     </div> </form>
+   Desktop: 2 kolom. Layar <= 767px: 1 kolom, tombol penuh lebar.
+   ===================================================================== */
+.page-shell .form-card { width: 100%; max-width: 60rem; }
+.page-shell .form-card.form-sm { max-width: 40rem; }
+.page-shell .form-card.form-md { max-width: 50rem; }
+.page-shell .form-card.mx-auto { margin-inline: auto; }
+.form-layout {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.75rem; row-gap: 1rem; align-items: start;
+}
+.form-layout > * { min-width: 0; }
+.form-layout .form-field { margin: 0; }
+.form-layout .span-2 { grid-column: 1 / -1; }
+.form-layout .form-label { display: block; margin-bottom: .3rem; font-weight: var(--fw-w480); }
+.form-layout .form-text { margin-top: .3rem; }
+.form-layout .errorlist, .form-layout .field-error { margin-top: .3rem; }
+.form-layout .form-subtitle {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: .5rem;
+  margin-top: .6rem; padding-bottom: .45rem; border-bottom: 1px solid var(--color-hairline);
+  font-size: .74rem; font-weight: var(--fw-w530); letter-spacing: .07em; text-transform: uppercase; color: var(--color-ash-text);
+}
+.form-layout .form-subtitle:first-child { margin-top: 0; }
+.form-layout .form-subtitle i { color: var(--color-cobalt); font-size: .95rem; }
+.form-layout .form-subtitle small { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: var(--fw-regular); }
+.form-layout .form-note { grid-column: 1 / -1; margin: 0; font-size: .8rem; color: var(--color-ash-text); }
+.form-layout .form-actions {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem;
+  margin-top: .6rem; padding-top: 1rem; border-top: 1px solid var(--color-hairline);
+}
+@media (max-width: 767px) {
+  .form-layout { grid-template-columns: minmax(0, 1fr); row-gap: .9rem; }
+  .form-layout .form-actions { flex-direction: column-reverse; }
+  .form-layout .form-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* =====================================================================
+   11. TOAST / NOTIFIKASI POPUP GLOBAL  (script: static/js/toast.js, partial: _partials/toast.html)
+   Kanan atas, slide-in dari kanan, hijau = berhasil, merah = gagal.
+   ===================================================================== */
+:root {
+  --toast-success: #15803d; --toast-error: #b91c1c; --toast-warning: #b45309; --toast-info: #1d4ed8;
+  --toast-fg: #ffffff;
+}
+.toast-region {
+  position: fixed; z-index: 4000;                       /* di atas sidebar, modal, dan skeleton */
+  top: calc(1rem + env(safe-area-inset-top, 0px)); right: 1rem;
+  width: min(24rem, calc(100vw - 2rem));
+  display: flex; flex-direction: column; gap: .6rem;     /* jarak konsisten, tidak bertumpuk */
+  pointer-events: none;                                  /* area kosong tidak menghalangi klik */
+}
+.app-toast {
+  position: relative; overflow: hidden; pointer-events: auto;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: .7rem;
+  padding: .8rem .8rem .95rem .95rem; border-radius: 14px;
+  color: var(--toast-fg); font-family: var(--font-arcadia); font-size: .875rem; line-height: 1.4; font-weight: var(--fw-w420);
+  box-shadow: 0 12px 30px rgba(11, 12, 14, .20), 0 2px 6px rgba(11, 12, 14, .12);
+  outline: 1px solid rgba(255, 255, 255, .10); outline-offset: -1px;
+  animation: toast-in .38s cubic-bezier(.21, 1.02, .73, 1) both;
+}
+.app-toast.is-success { background: var(--toast-success); }
+.app-toast.is-error   { background: var(--toast-error); }
+.app-toast.is-warning { background: var(--toast-warning); }
+.app-toast.is-info    { background: var(--toast-info); }
+.app-toast-ic { display: flex; margin-top: 1px; }
+.app-toast-msg { overflow-wrap: anywhere; padding-top: 1px; }
+.app-toast-x {
+  display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: -2px -2px 0 0;
+  border: 0; border-radius: 8px; background: transparent; color: rgba(255, 255, 255, .85); cursor: pointer; padding: 0;
+}
+.app-toast-x:hover { background: rgba(255, 255, 255, .18); color: #fff; }
+.app-toast-x:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.app-toast-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255, 255, 255, .55);
+  transform-origin: left center; animation: toast-bar var(--toast-ms, 2000ms) linear forwards;
+}
+.app-toast.is-paused .app-toast-bar { animation-play-state: paused; }
+.app-toast.is-leaving { animation: toast-out .3s cubic-bezier(.4, 0, 1, 1) forwards; pointer-events: none; }
+@keyframes toast-in  { from { opacity: 0; transform: translateX(calc(100% + 1.5rem)); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toast-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(calc(100% + 1.5rem)); } }
+@keyframes toast-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (max-width: 575px) {
+  .toast-region { top: calc(.75rem + env(safe-area-inset-top, 0px)); right: .75rem; left: .75rem; width: auto; }
+  .app-toast { font-size: .84rem; }
+}
+/* prefers-reduced-motion: aturan global di bagian 2 sudah mematikan semua animasi, jadi toast langsung
+   muncul/hilang tanpa gerakan. Bar hitung mundur ikut disembunyikan. */
+@media (prefers-reduced-motion: reduce) {
+  .app-toast-bar { display: none; }
+}
+
+/* =====================================================================
+   12. KARTU PROGRES IMPORT SISWA  (script: static/js/import-widget.js, partial: _partials/import_widget.html)
+   Kartu kecil di pojok kanan bawah, tampil di semua halaman admin. Status lewat data-status: proses | selesai | batal
+   ===================================================================== */
+.impw { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 3500; width: min(360px, calc(100vw - 2rem));
+  transform: translateY(24px); opacity: 0; transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease; }
+.impw[hidden] { display: none; }
+.impw.is-open { transform: none; opacity: 1; }
+.impw-card { --imp: var(--color-cobalt); --imp-soft: rgba(37, 99, 235, .12); position: relative; padding: .95rem 1rem 1rem;
+  border-radius: 16px; background: var(--surface, #fff); border: 1px solid var(--color-obsidian-hover, #e5e5e5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .16); }
+.impw-card[data-status="selesai"] { --imp: #15803d; --imp-soft: rgba(21, 128, 61, .13); }
+.impw-card[data-status="batal"]   { --imp: #b45309; --imp-soft: rgba(180, 83, 9, .14); }
+.impw-head { display: flex; gap: .7rem; align-items: center; padding-right: 1.6rem; }
+.impw-ic { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; color: var(--imp); background: var(--imp-soft); }
+.impw-card[data-status="proses"] .impw-ic i { animation: import-bob 1.2s ease-in-out infinite; }
+@keyframes import-bob { 0%, 100% { transform: translateY(2px); } 50% { transform: translateY(-2px); } }
+.impw-title { font-weight: var(--fw-w530); font-size: .92rem; line-height: 1.25; }
+.impw-sub { color: var(--color-ash-text); font-size: .78rem; line-height: 1.3; }
+.impw-close { position: absolute; top: .55rem; right: .55rem; border: 0; background: transparent; color: var(--color-ash-text);
+  width: 26px; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.impw-close:hover { background: var(--color-obsidian-hover); }
+.impw-count { display: flex; justify-content: space-between; margin: .8rem 0 .35rem; font-size: .8rem; color: var(--color-ash-text); font-variant-numeric: tabular-nums; }
+.impw-pct { font-weight: var(--fw-w530); color: var(--imp); }
+.impw-track { height: 8px; border-radius: 999px; background: var(--color-obsidian-hover); overflow: hidden; }
+.impw-fill { height: 100%; width: 0; border-radius: 999px; background: var(--imp); transition: width .35s ease, background-color .3s ease; }
+.impw-note { margin-top: .65rem; font-size: .74rem; line-height: 1.4; color: var(--warning); }
+.impw-note[hidden], .impw-close[hidden], .impw-confirm[hidden] { display: none; }
+.impw-detail { display: flex; flex-direction: column; gap: .4rem; margin-top: .7rem; }
+.impw-detail:empty { display: none; }
+.impw-item { display: flex; gap: .5rem; align-items: flex-start; padding: .5rem .65rem; border-radius: 10px; background: var(--color-obsidian-button); font-size: .78rem; line-height: 1.4; }
+.impw-item i { margin-top: 1px; color: var(--color-ash-text); }
+.impw-item.is-key i { color: var(--color-cobalt); }
+.impw-item.is-skip i { color: #b45309; }
+.impw-actions { display: flex; gap: .5rem; margin-top: .8rem; }
+.impw-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; padding: .5rem .8rem; border-radius: 10px;
+  font-size: .82rem; font-weight: var(--fw-w530); border: 1px solid transparent; cursor: pointer; text-decoration: none; }
+.impw-btn-main { background: var(--color-ivory-text, #0a0a0a); color: var(--surface, #fff); }
+.impw-btn-main:hover { color: var(--surface, #fff); opacity: .88; }
+.impw-btn-ghost { background: transparent; color: inherit; border-color: var(--color-obsidian-hover, #ddd); }
+.impw-btn-ghost:hover { background: var(--color-obsidian-hover); }
+.impw-btn-danger { background: #b91c1c; color: #fff; }
+.impw-btn-danger:hover { opacity: .9; }
+.impw-confirm { position: fixed; inset: 0; z-index: 3600; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, .45); }
+.impw-confirm-box { width: min(400px, 100%); padding: 1.4rem; border-radius: 16px; text-align: center; background: var(--surface, #fff); box-shadow: 0 20px 48px rgba(0, 0, 0, .28); }
+.impw-confirm-ic { width: 46px; height: 46px; margin: 0 auto .7rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #b45309; background: rgba(180, 83, 9, .14); }
+.impw-confirm-box h6 { margin: 0 0 .4rem; font-weight: var(--fw-w530); }
+.impw-confirm-text { margin: 0 0 1rem; font-size: .85rem; line-height: 1.5; color: var(--color-ash-text); }
+.impw-confirm-actions { display: flex; gap: .55rem; }
+@media (max-width: 575px) { .impw { right: .75rem; bottom: .75rem; width: calc(100vw - 1.5rem); } .impw-confirm-actions { flex-direction: column-reverse; } }
+@media (prefers-reduced-motion: reduce) { .impw { transition: none; } .impw-fill { transition: none; } }

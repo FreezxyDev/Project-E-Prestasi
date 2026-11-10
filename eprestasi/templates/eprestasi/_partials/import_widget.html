@@ -1,0 +1,37 @@
+{% load static %}
+{# Kartu progres import siswa (semua halaman admin). Script: static/js/import-widget.js #}
+{% if request.session.role == 'admin' or request.session.role == 'super_admin' %}
+<div id="importWidget" class="impw" hidden role="status" aria-live="polite"
+     data-csrf="{{ csrf_token }}"
+     data-url-mulai="{% url 'siswa_import_mulai' %}" data-url-proses="{% url 'siswa_import_proses' %}"
+     data-url-batal="{% url 'siswa_import_batal' %}" data-url-status="{% url 'siswa_import_status' %}"
+     data-url-tutup="{% url 'siswa_import_tutup' %}" data-url-hasil="{% url 'siswa_import_hasil' %}">
+    <div class="impw-card" data-status="proses">
+        <button type="button" class="impw-close" data-act="tutup" aria-label="Tutup" hidden><i class="bi bi-x-lg"></i></button>
+        <div class="impw-head">
+            <div class="impw-ic"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+            <div class="impw-headtext">
+                <div class="impw-title">Mengimpor data siswa</div>
+                <div class="impw-sub">Menyambungkan proses...</div>
+            </div>
+        </div>
+        <div class="impw-count"><span class="impw-num">0 / 0 siswa</span><span class="impw-pct">0%</span></div>
+        <div class="impw-track" role="progressbar" aria-label="Progres import" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="impw-fill"></div></div>
+        <div class="impw-note"><i class="bi bi-info-circle"></i> Proses tetap berjalan saat Anda berpindah halaman. Jangan tutup tab ini.</div>
+        <div class="impw-detail"></div>
+        <div class="impw-actions"></div>
+    </div>
+    <div class="impw-confirm" hidden>
+        <div class="impw-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="impwConfirmJudul">
+            <div class="impw-confirm-ic"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <h6 id="impwConfirmJudul">Hentikan import?</h6>
+            <p class="impw-confirm-text"></p>
+            <div class="impw-confirm-actions">
+                <button type="button" class="impw-btn impw-btn-ghost" data-act="lanjut">Lanjutkan Import</button>
+                <button type="button" class="impw-btn impw-btn-danger" data-act="stop">Ya, Hentikan</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'js/import-widget.js' %}"></script>
+{% endif %}

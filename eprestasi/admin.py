@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Users, Siswa, Kesiswaan, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi,
-    Kelas, RiwayatKelas, LogPerubahanKelas,
+    Kelas, RiwayatKelas, LogPerubahanKelas, Jurusan,
 )
 
 
@@ -38,6 +38,12 @@ admin.site.register(Dokumentasi)
 @admin.register(Sertifikat)
 class SertifikatAdmin(admin.ModelAdmin):
     list_select_related = ('prestasi',)   # __str__ memakai prestasi.nama_prestasi
+
+
+@admin.register(Jurusan)
+class JurusanAdmin(admin.ModelAdmin):
+    list_display = ('id', 'kode')
+    search_fields = ('kode',)
 
 
 @admin.register(Kelas)

@@ -1,0 +1,126 @@
+{# Bagian DATA prestasi (anak langsung dari <div class="form-layout">), dipakai form pengajuan & form perbaikan.
+   Butuh: form, data_subkategori, tingkat_luar_negeri (dari forms.konfigurasi_form_prestasi).
+   Deskripsi, tautan, dan field khusus lain dirender oleh template pemanggil. #}
+<div class="form-field span-2">
+    <label class="form-label">{{ form.nama_prestasi.label }}</label>
+    {{ form.nama_prestasi }}
+    {{ form.nama_prestasi.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.kategori_prestasi.label }}</label>
+    {{ form.kategori_prestasi }}
+    {{ form.kategori_prestasi.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.subkategori.label }}</label>
+    {{ form.subkategori }}
+    {{ form.subkategori.errors }}
+</div>
+<div class="form-field span-2" id="wrap-subkategori-lainnya">
+    <label class="form-label">{{ form.subkategori_lainnya.label }}</label>
+    {{ form.subkategori_lainnya }}
+    {{ form.subkategori_lainnya.errors }}
+</div>
+<div class="form-field span-2">
+    <label class="form-label">{{ form.penyelenggara.label }}</label>
+    {{ form.penyelenggara }}
+    {{ form.penyelenggara.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.wilayah_prestasi.label }}</label>
+    {{ form.wilayah_prestasi }}
+    {{ form.wilayah_prestasi.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.tingkat_prestasi.label }}</label>
+    {{ form.tingkat_prestasi }}
+    {{ form.tingkat_prestasi.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.jenis_perolehan.label }}</label>
+    {{ form.jenis_perolehan }}
+    {{ form.jenis_perolehan.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.nomor_sertifikat.label }}</label>
+    {{ form.nomor_sertifikat }}
+    {{ form.nomor_sertifikat.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.tanggal_mulai.label }}</label>
+    {{ form.tanggal_mulai }}
+    {{ form.tanggal_mulai.errors }}
+</div>
+<div class="form-field">
+    <label class="form-label">{{ form.tanggal_prestasi.label }}</label>
+    {{ form.tanggal_prestasi }}
+    {{ form.tanggal_prestasi.errors }}
+</div>
+
+{{ data_subkategori|json_script:"data-subkategori" }}
+{{ tingkat_luar_negeri|json_script:"data-tingkat-luar-negeri" }}
+<script>
+(function () {
+    var SUB = JSON.parse(document.getElementById('data-subkategori').textContent);
+    var LUAR = JSON.parse(document.getElementById('data-tingkat-luar-negeri').textContent);
+    var kat = document.getElementById('id_kategori_prestasi');
+    var sub = document.getElementById('id_subkategori');
+    var lainWrap = document.getElementById('wrap-subkategori-lainnya');
+    var wil = document.getElementById('id_wilayah_prestasi');
+    var tingkat = document.getElementById('id_tingkat_prestasi');
+    if (!kat || !sub || !wil || !tingkat) return;
+
+    var semuaTingkat = Array.prototype.map.call(tingkat.options, function (o) { return {v: o.value, t: o.textContent}; });
+
+    function toggleLainnya() {
+        var o = sub.options[sub.selectedIndex];
+        lainWrap.hidden = !(o && o.dataset.lainnya === '1');
+    }
+
+    function isiSubkategori() {
+        var dipilih = sub.value;
+        var daftar = SUB[kat.value] || [];
+        sub.innerHTML = '';
+        var ph = document.createElement('option');
+        ph.value = ''; ph.textContent = '-- Pilih subkategori --';
+        sub.appendChild(ph);
+        var grup = {};
+        daftar.forEach(function (s) {
+            var induk = sub;
+            if (s.kelompok) {
+                if (!grup[s.kelompok]) {
+                    grup[s.kelompok] = document.createElement('optgroup');
+                    grup[s.kelompok].label = s.kelompok;
+                    sub.appendChild(grup[s.kelompok]);
+                }
+                induk = grup[s.kelompok];
+            }
+            var o = document.createElement('option');
+            o.value = s.id; o.textContent = s.nama;
+            o.dataset.lainnya = s.lainnya ? '1' : '0';
+            if (String(s.id) === String(dipilih)) o.selected = true;
+            induk.appendChild(o);
+        });
+        toggleLainnya();
+    }
+
+    function isiTingkat() {
+        var dipilih = tingkat.value;
+        var luar = wil.value === 'luar_negeri';
+        tingkat.innerHTML = '';
+        semuaTingkat.forEach(function (t) {
+            if (luar && LUAR.indexOf(t.v) === -1) return;
+            var o = document.createElement('option');
+            o.value = t.v; o.textContent = t.t;
+            if (t.v === dipilih) o.selected = true;
+            tingkat.appendChild(o);
+        });
+    }
+
+    kat.addEventListener('change', function () { sub.value = ''; isiSubkategori(); });
+    sub.addEventListener('change', toggleLainnya);
+    wil.addEventListener('change', isiTingkat);
+    isiSubkategori();
+    isiTingkat();
+})();
+</script>

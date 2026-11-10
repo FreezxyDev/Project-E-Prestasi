@@ -2,10 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q, Count
 
-from .models import Siswa, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi
-from .forms import PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm, PrestasiEditForm
+from .models import Siswa, Tahun_ajaran, Prestasi, Sertifikat, Dokumentasi, TINGKAT_CHOICES
+from .forms import (
+    PrestasiUploadForm, SertifikatTambahanForm, DokumentasiTambahanForm, PrestasiEditForm,
+    konfigurasi_form_prestasi,
+)
+from .prestasi_utils import catat_riwayat
 from .decorators import role_required
 from .cloudinary_utils import hapus_semua_file_prestasi
 
@@ -54,44 +59,58 @@ def upload_prestasi(request):
         if form.is_valid():
             data = form.cleaned_data
 
-            prestasi = Prestasi.objects.create(
-                siswa=siswa,
-                tahun_ajaran=tahun_aktif,
-                nama_prestasi=data['nama_prestasi'],
-                tanggal_prestasi=data['tanggal_prestasi'],
-                penyelenggara=data['penyelenggara'],
-                tingkat_prestasi=data['tingkat_prestasi'],
-                wilayah_prestasi=data['wilayah_prestasi'],
-                deskripsi=data['deskripsi'],
-                kategori_prestasi=data['kategori_prestasi'],
-                status='pending',
-                # Puspresnas -- kode & dokumen dua-duanya opsional (di semua tingkat),
-                # siswa bisa isi salah satu atau dua-duanya.
-                kode_puspresnas=data.get('kode_puspresnas') or None,
-                dokumen_puspresnas=data.get('dokumen_puspresnas') or None,
-                # wilayah dokumen Puspresnas mengikuti wilayah prestasi
-                jenis_wilayah_puspresnas=data['wilayah_prestasi'] if data.get('dokumen_puspresnas') else None,
-                jenis_penyelenggara_puspresnas=data.get('jenis_penyelenggara_puspresnas') or None,
-            )
+            with transaction.atomic():
+                prestasi = Prestasi.objects.create(
+                    siswa=siswa,
+                    tahun_ajaran=tahun_aktif,
+                    nama_prestasi=data['nama_prestasi'],
+                    tanggal_prestasi=data['tanggal_prestasi'],
+                    tanggal_mulai=data.get('tanggal_mulai'),
+                    penyelenggara=data['penyelenggara'],
+                    tingkat_prestasi=data['tingkat_prestasi'],
+                    wilayah_prestasi=data['wilayah_prestasi'],
+                    deskripsi=data['deskripsi'],
+                    kategori_prestasi=data['kategori_prestasi'],
+                    subkategori=data['subkategori'],
+                    subkategori_lainnya=data.get('subkategori_lainnya') or '',
+                    jenis_perolehan=data['jenis_perolehan'],
+                    nomor_sertifikat=(data.get('nomor_sertifikat') or '').strip(),
+                    tautan_pendukung=data.get('tautan_pendukung') or '',
+                    status='pending',
+                    # Puspresnas -- kode & dokumen dua-duanya opsional (di semua tingkat),
+                    # siswa bisa isi salah satu atau dua-duanya.
+                    kode_puspresnas=data.get('kode_puspresnas') or None,
+                    dokumen_puspresnas=data.get('dokumen_puspresnas') or None,
+                    # wilayah dokumen Puspresnas mengikuti wilayah prestasi
+                    jenis_wilayah_puspresnas=data['wilayah_prestasi'] if data.get('dokumen_puspresnas') else None,
+                    jenis_penyelenggara_puspresnas=data.get('jenis_penyelenggara_puspresnas') or None,
+                )
 
-            # 2 bukti WAJIB, dibuat sekaligus bareng prestasinya.
-            Sertifikat.objects.create(
-                prestasi=prestasi,
-                file=data['file_sertifikat'],
-                deskripsi=data.get('deskripsi_sertifikat') or '-',
-            )
-            Dokumentasi.objects.create(
-                prestasi=prestasi,
-                foto=data['foto_dokumentasi'],
-                caption=data.get('caption_dokumentasi') or None,
-            )
+                # Bukti: hanya yang benar-benar dilampirkan (minimal satu sudah divalidasi form).
+                if data.get('file_sertifikat'):
+                    Sertifikat.objects.create(
+                        prestasi=prestasi,
+                        file=data['file_sertifikat'],
+                        deskripsi=data.get('deskripsi_sertifikat') or '-',
+                    )
+                if data.get('foto_dokumentasi'):
+                    Dokumentasi.objects.create(
+                        prestasi=prestasi,
+                        foto=data['foto_dokumentasi'],
+                        caption=data.get('caption_dokumentasi') or None,
+                    )
 
-            messages.success(request, 'Prestasi berhasil diunggah dan menunggu verifikasi kesiswaan.')
+                catat_riwayat(
+                    prestasi, 'diajukan', pelaku=siswa.nama or siswa.nis, role='siswa',
+                    status_baru='pending', catatan='Pengajuan prestasi oleh siswa.',
+                )
+
+            messages.success(request, 'Prestasi berhasil diajukan dan menunggu verifikasi kesiswaan.')
             return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
     else:
         form = PrestasiUploadForm()
 
-    context = {'form': form, 'siswa': siswa, 'active_menu': 'pengajuan'}
+    context = {'form': form, 'siswa': siswa, 'active_menu': 'pengajuan', **konfigurasi_form_prestasi()}
     return render(request, 'eprestasi/siswa_portal/upload_prestasi.html', context)
 
 
@@ -105,7 +124,7 @@ RIWAYAT_KOLOM = ['tanggal', 'prestasi', 'tingkat', 'status']
 RIWAYAT_PAGE_SIZE = 10
 STATUS_PILIHAN = [('pending', 'Pending'), ('diterima', 'Diterima'), ('perbaikan', 'Perbaikan'), ('ditolak', 'Ditolak')]
 KATEGORI_PILIHAN = [('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ('kejuaraan', 'Kejuaraan')]
-TINGKAT_PILIHAN = [('sekolah', 'Sekolah'), ('kabupaten/kota', 'Kabupaten/Kota'), ('provinsi', 'Provinsi'), ('nasional', 'Nasional'), ('internasional', 'Internasional')]
+TINGKAT_PILIHAN = list(TINGKAT_CHOICES)
 
 
 @role_required('siswa')
@@ -204,6 +223,7 @@ def prestasi_detail(request, prestasi_id):
         'prestasi': prestasi,
         'sertifikat_list': prestasi.sertifikat_set.all(),
         'dokumentasi_list': prestasi.dokumentasi_set.all(),
+        'riwayat_list': prestasi.riwayat_verifikasi.all(),
         'sertifikat_form': SertifikatTambahanForm(),
         'dokumentasi_form': DokumentasiTambahanForm(),
     }
@@ -247,6 +267,11 @@ def tambah_sertifikat(request, prestasi_id):
                 prestasi.jenis_perbaikan = None
                 prestasi.catatan_perbaikan = None
                 prestasi.save()
+                catat_riwayat(
+                    prestasi, 'diajukan_ulang', pelaku=siswa.nama or siswa.nis, role='siswa',
+                    status_sebelum='perbaikan', status_baru='pending',
+                    catatan='File bukti diunggah ulang.',
+                )
                 messages.success(
                     request,
                     'Sertifikat baru berhasil diunggah. Prestasi ini sudah dikirim ulang untuk diverifikasi kesiswaan.'
@@ -308,21 +333,33 @@ def edit_prestasi_data(request, prestasi_id):
         form = PrestasiEditForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            prestasi.nama_prestasi = data['nama_prestasi']
-            prestasi.kategori_prestasi = data['kategori_prestasi']
-            prestasi.tingkat_prestasi = data['tingkat_prestasi']
-            prestasi.wilayah_prestasi = data['wilayah_prestasi']
-            if prestasi.dokumen_puspresnas:
-                prestasi.jenis_wilayah_puspresnas = data['wilayah_prestasi']
-            prestasi.penyelenggara = data['penyelenggara']
-            prestasi.tanggal_prestasi = data['tanggal_prestasi']
-            prestasi.deskripsi = data['deskripsi']
+            with transaction.atomic():
+                prestasi.nama_prestasi = data['nama_prestasi']
+                prestasi.kategori_prestasi = data['kategori_prestasi']
+                prestasi.subkategori = data['subkategori']
+                prestasi.subkategori_lainnya = data.get('subkategori_lainnya') or ''
+                prestasi.jenis_perolehan = data['jenis_perolehan']
+                prestasi.nomor_sertifikat = (data.get('nomor_sertifikat') or '').strip()
+                prestasi.tanggal_mulai = data.get('tanggal_mulai')
+                prestasi.tautan_pendukung = data.get('tautan_pendukung') or ''
+                prestasi.tingkat_prestasi = data['tingkat_prestasi']
+                prestasi.wilayah_prestasi = data['wilayah_prestasi']
+                if prestasi.dokumen_puspresnas:
+                    prestasi.jenis_wilayah_puspresnas = data['wilayah_prestasi']
+                prestasi.penyelenggara = data['penyelenggara']
+                prestasi.tanggal_prestasi = data['tanggal_prestasi']
+                prestasi.deskripsi = data['deskripsi']
 
-            # Data sudah diperbaiki -- kembalikan ke antrean verifikasi kesiswaan.
-            prestasi.status = 'pending'
-            prestasi.jenis_perbaikan = None
-            prestasi.catatan_perbaikan = None
-            prestasi.save()
+                # Data sudah diperbaiki -- kembalikan ke antrean verifikasi kesiswaan.
+                prestasi.status = 'pending'
+                prestasi.jenis_perbaikan = None
+                prestasi.catatan_perbaikan = None
+                prestasi.save()
+                catat_riwayat(
+                    prestasi, 'diajukan_ulang', pelaku=siswa.nama or siswa.nis, role='siswa',
+                    status_sebelum='perbaikan', status_baru='pending',
+                    catatan='Data prestasi diperbaiki siswa.',
+                )
 
             messages.success(request, 'Data prestasi berhasil diperbarui dan dikirim ulang untuk diverifikasi.')
             return redirect('siswa_prestasi_detail', prestasi_id=prestasi.id)
@@ -330,6 +367,12 @@ def edit_prestasi_data(request, prestasi_id):
         form = PrestasiEditForm(initial={
             'nama_prestasi': prestasi.nama_prestasi,
             'kategori_prestasi': prestasi.kategori_prestasi,
+            'subkategori': prestasi.subkategori_id,
+            'subkategori_lainnya': prestasi.subkategori_lainnya,
+            'jenis_perolehan': prestasi.jenis_perolehan,
+            'nomor_sertifikat': prestasi.nomor_sertifikat,
+            'tanggal_mulai': prestasi.tanggal_mulai,
+            'tautan_pendukung': prestasi.tautan_pendukung,
             'tingkat_prestasi': prestasi.tingkat_prestasi,
             'wilayah_prestasi': prestasi.wilayah_prestasi,
             'penyelenggara': prestasi.penyelenggara,
@@ -342,6 +385,7 @@ def edit_prestasi_data(request, prestasi_id):
         'siswa': siswa,
         'prestasi': prestasi,
         'form': form,
+        **konfigurasi_form_prestasi(),
     }
     return render(request, 'eprestasi/siswa_portal/edit_prestasi.html', context)
 
