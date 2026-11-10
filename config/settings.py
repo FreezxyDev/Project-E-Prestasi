@@ -169,7 +169,14 @@ DEBUG = False
 
 # ==== Email (OTP lupa password) ====
 
-RESEND_API_KEY= os.environ.get('RESEND_API', '')  # Ganti dengan API key Resend Anda
-RESEND_FROM_EMAIL='E-Prestasi <noreply@eprestasi.freznx.my.id>'# ==== OTP ke no HP (WhatsApp via Fonnte) ====
+# ==== Email (OTP lupa password) ====
+
+RESEND_API_KEY = os.environ.get('RESEND_API', '')
+RESEND_FROM_EMAIL = os.environ.get(
+    'RESEND_FROM_EMAIL',
+    'E-Prestasi <noreply@eprestasi.freznx.my.id>'
+)
+
+# ==== OTP ke no HP (WhatsApp via Fonnte) ====
 OTP_HP_PROVIDER = os.environ.get('OTP_HP_PROVIDER', 'console')
 FONNTE_TOKEN = os.environ.get('FONNTE_TOKEN', '')
