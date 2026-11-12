@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/design.css' %}">
+<!-- Gambar hero dimuat dari Cloudinary: percepat koneksi -->
+<link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 </head>
 <body class="page-landing">
 {% include 'eprestasi/_partials/skeleton_page.html' with tipe='landing' %}
@@ -43,9 +45,7 @@
 
 <section id="hero">
   <!-- Background gambar dipasang di sini menggunakan tag static Django -->
-  <div class="hero-bg" style="background-image: url('{% static 'smkn11-bandung.jpg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
-  <div class="hero-overlay"></div>
-  <div class="wrap hero-in">
+<div class="hero-bg" style="background-image: url('https://res.cloudinary.com/yt2nmoa9/image/upload/f_auto,q_auto,w_1920/v1791249015/smkn11-bandung_plql4k.png'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>  <div class="wrap hero-in">
     <div class="eyebrow">SMKN 11 BANDUNG</div>
     <h1 class="headline">Showcase Your<br>Achievement.</h1>
     <p class="hero-sub">Ruang digital untuk mencatat, memverifikasi, dan menunjukkan perjalanan prestasi siswa.</p>
