@@ -34,8 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',  # Harus diletakkan sebelum staticfiles
     'django.contrib.staticfiles',
+    'cloudinary_storage',  # Harus diletakkan sebelum staticfiles
     'cloudinary',
     'eprestasi',
     'resend',  # Tambahkan aplikasi Resend
@@ -145,27 +145,28 @@ USE_TZ = True
 # ==============================================================================
 # STATIC FILES (CSS, JavaScript, Images)
 # ==============================================================================
-STATIC_URL = '/static/'
+# STATIC FILES
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    BASE_DIR / "eprestasi" / "static" /"css",
-    BASE_DIR / "eprestasi" / "static" /"js",
-    BASE_DIR / "eprestasi" / "static" /"img",
+    BASE_DIR /"eprestasi" / "static",
 ]
 
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-# ==============================================================================
-# KONFIGURASI CLOUDINARY VIA CLOUDINARY_URL
-# ==============================================================================
-CLOUDINARY_STORAGE = {
-    'CLOUDINARY_URL': os.environ.get('CLOUDINARY_URL')
+# MEDIA & STATIC STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
 }
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-# settings.py
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# CLOUDINARY
+CLOUDINARY_STORAGE = {
+    "CLOUDINARY_URL": os.environ.get("CLOUDINARY_URL"),
+}# settings.py
 
 # ==== Email (OTP lupa password) ====
 
