@@ -386,7 +386,7 @@ def kesiswaan_list(request):
         'active_menu': 'kesiswaan',
         'kesiswaan_list': Kesiswaan.objects.select_related('user').all().order_by('-id'),
     }
-    return render(request, 'eprestasi/kelola_user/list.html', context)
+    return render(request, 'eprestasi/kesiswaan/list.html', context)
 
 
 @role_required('admin', 'super_admin')

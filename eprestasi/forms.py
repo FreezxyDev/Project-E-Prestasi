@@ -1,3 +1,4 @@
+import re
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -318,8 +319,8 @@ class SiswaPasswordForm(forms.Form):
 TINGKAT_PRESTASI_CHOICES = TINGKAT_CHOICES
 
 WILAYAH_PRESTASI_CHOICES = [
-    ('dalam_negeri', 'Dalam Negeri'),
-    ('luar_negeri', 'Luar Negeri'),
+    ('Didalam Kementrian Pendidikan', 'Didalam Kementrian Pendidikan'),
+    ('Diluar Kementrian Pendidikan', 'Diluar Kementrian Pendidikan'),
 ]
 
 
@@ -776,7 +777,7 @@ class BuatKelasMassalForm(forms.Form):
     membuat "X RPL 1" dan "X RPL 2".
     """
     jurusan = forms.ChoiceField(
-        choices=DAFTAR_JURUSAN,
+        choices=lambda: list(DAFTAR_JURUSAN),
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     tingkat = forms.ChoiceField(
@@ -788,11 +789,21 @@ class BuatKelasMassalForm(forms.Form):
         label='Jumlah Kelas',
         widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: 2'})
     )
+    nama_kustom = forms.CharField(
+        required=False, max_length=20,
+        label='Nama Kustom',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: PPLG'})
+    )
 
     def __init__(self, *args, tahun_ajaran=None, **kwargs):
         self.tahun_ajaran = tahun_ajaran
         super().__init__(*args, **kwargs)
 
+    def clean_nama_kustom(self):
+        nilai = (self.cleaned_data.get('nama_kustom') or '').strip().upper()
+        if nilai and not re.fullmatch(r'[A-Z0-9]{1,20}', nilai):
+            raise ValidationError('Nama kustom hanya boleh huruf/angka tanpa spasi (contoh: PPLG).')
+        return nilai
 
 class SalinKelasForm(forms.Form):
     """Menyalin seluruh daftar Kelas dari satu tahun ajaran ke tahun ajaran lain."""

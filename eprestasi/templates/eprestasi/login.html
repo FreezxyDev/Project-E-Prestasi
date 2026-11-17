@@ -101,11 +101,45 @@
             </div>
           </div>
 
+          {% if kunci_detik %}
+          <div class="alert alert-danger" id="info-kunci">
+            Akun terkunci sampai <strong>{{ kunci_sampai }} WIB</strong>.
+            Sisa waktu: <strong id="hitung-mundur"></strong>
+          </div>
+
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              let sisa = {{ kunci_detik }};
+              let timer = null;
+              const el = document.getElementById('hitung-mundur');
+              const tombol = document.querySelector('.login-form button[type="submit"]');
+              if (tombol) tombol.disabled = true;
+
+              function tampil() {
+                if (sisa <= 0) {
+                  el.textContent = 'selesai, silakan coba login lagi';
+                  if (tombol) tombol.disabled = false;
+                  clearInterval(timer);
+                  return;
+                }
+                const m = Math.floor(sisa / 60);
+                const d = String(sisa % 60).padStart(2, '0');
+                el.textContent = m + ':' + d;
+                sisa--;
+              }
+
+              tampil();
+              timer = setInterval(tampil, 1000);
+            });
+          </script>
+          {% endif %}
+          
+
           <form method="POST" class="login-form">
             {% csrf_token %}
 
             <div class="form-group">
-              <label for="username-input">Username / NIS / NIP</label>
+              <label for="username-input">NIS / NIP</label>
               <input type="text" name="username" id="username-input" class="input-pill"
                 placeholder="Masukkan ID pengguna" autocomplete="username" required autofocus />
             </div>

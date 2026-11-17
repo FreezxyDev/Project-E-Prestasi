@@ -266,9 +266,9 @@ class Prestasi(models.Model):
 
     # Lokasi/wilayah penyelenggaraan prestasi: dalam negeri atau luar negeri.
     # Berlaku untuk SEMUA prestasi (wajib diisi di form upload).
-    wilayah_prestasi = models.CharField(max_length=20, default='dalam_negeri', choices=[
-        ('dalam_negeri', 'Dalam Negeri'),
-        ('luar_negeri', 'Luar Negeri'),
+    wilayah_prestasi = models.CharField(max_length=50, default='dalam_negeri', choices=[
+        ('didalam_kementrian_pendidikan', 'Didalam Kementrian Pendidikan'),
+        ('diluar_kementrian_pendidikan', 'Diluar Kementrian Pendidikan'),
     ])
 
     # Kode & Dokumen Puspresnas -- OPSIONAL, bisa diisi di semua tingkat prestasi.

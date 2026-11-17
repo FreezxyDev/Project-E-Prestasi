@@ -1,27 +1,40 @@
 {% extends 'eprestasi/base.html' %}
 {% load eprestasi_extras %}
-{% block title %}Kelola User Kesiswaan{% endblock %}
+
+{% block title %}Kelola taik{% endblock %}
 
 {% block content %}
 
 <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
     <div>
-        <h1>Kelola User Kesiswaan</h1>
-        <p>Manajemen data Kesiswaan aktif, nonaktif,.</p>
+        <h4>Kelola User</h4>
+        <p>Manajemen data siswa aktif, nonaktif, alumni, dan siswa yang sudah keluar.</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{% url 'tambah_kesiswaan' %}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg"></i> Tambah Akun Kesiswaan
+            <i class="bi bi-plus-lg"></i> Tambah Kesiswaan
         </a>
     </div>
 </div>
 
+<!-- Tab pemilih tabel Siswa / Kesiswaan -->
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'siswa_list' %}"><i class="bi bi-mortarboard"></i> Siswa</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'kesiswaan_list' %}"><i class="bi bi-person-badge"></i> Kesiswaan</a>
+    </li>
+</ul>
 
-<div class="card p-3"><div class="card p-3">
-    <div class="table-responsive">
+<div class="card data-region">
+
+
+    <div class="table-responsive real-content">
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
+                    <th>No</th>
                     <th>NIP</th>
                     <th>Username</th>
                     <th>Nama</th>
@@ -33,6 +46,7 @@
             <tbody>
             {% for kesiswaan in kesiswaan_list %}
                 <tr>
+                    <td class="text-muted">{{ forloop.counter }}</td>
                     <td class="fw-semibold">{{ kesiswaan.nip }}</td>
                     <td><code>{{ kesiswaan.user.username }}</code></td>
                     <td>{{ kesiswaan.nama|default:"-" }}</td>
@@ -45,26 +59,30 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <a href="{% url 'update_kesiswaan' kesiswaan.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'update_kesiswaan' kesiswaan.id %}" class="btn btn-sm btn-outline-primary" title="Edit Data">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form method="POST" action="{% url 'delete_kesiswaan' kesiswaan.id %}" class="d-inline"
-                              onsubmit="return confirm('Yakin ingin menghapus akun {{ kesiswaan.nip }}?')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+                        <button type="submit" form="deleteForm{{ kesiswaan.id }}" class="btn btn-sm btn-outline-danger" title="Hapus Data"
+                                onclick="return confirm('Yakin ingin menghapus akun {{ kesiswaan.nip }}?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">Belum ada akun kesiswaan.</td>
+                    <td colspan="7" class="text-center text-muted py-4">Belum ada akun kesiswaan.</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- Form hapus dipisah, sama seperti halaman siswa -->
+{% for kesiswaan in kesiswaan_list %}
+<form method="POST" action="{% url 'delete_kesiswaan' kesiswaan.id %}" id="deleteForm{{ kesiswaan.id }}" class="d-none">
+    {% csrf_token %}
+</form>
+{% endfor %}
 
 {% endblock %}

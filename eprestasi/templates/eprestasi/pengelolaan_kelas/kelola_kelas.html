@@ -1,3 +1,4 @@
+
 {% extends 'eprestasi/base.html' %}
 {% block title %}Kelola Daftar Kelas{% endblock %}
 
@@ -28,20 +29,23 @@
         </div>
     </form>
 </div>
-        <!-- Toolbar: search + filter -->
-        <div class="table-toolbar">
-            <div class="table-toolbar-search">
-                <i class="bi bi-search"></i>
-                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
-                       placeholder="Cari kelas...">
-            </div>
 
 <div class="row g-3">
+    <!-- KOLOM KIRI: TABEL KELAS + TOOLBAR SEARCH & FILTER -->
     <div class="col-12 col-lg-7">
         <div class="card p-3">
             <div class="small text-muted fw-semibold mb-2">DAFTAR KELAS &mdash; {{ tahun_ajaran_terpilih.tahun_ajaran }}</div>
+            
+            <!-- Toolbar Search & Filter Kelas -->
+            <div class="table-toolbar mb-3 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <div class="table-toolbar-search flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="searchKelas" class="form-control form-control-sm" placeholder="Cari nama kelas / jurusan...">
+                </div>
+            </div>
+
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" id="tabelKelas">
                     <thead>
                         <tr>
                             <th>Nama Kelas</th>
@@ -60,7 +64,7 @@
                             <td>{{ k.jumlah_siswa }}</td>
                             <td class="text-end">
                                 <form method="POST" action="{% url 'hapus_kelas' k.id %}" class="d-inline"
-                                      onsubmit="return confirm('Hapus kelas {{ k.nama_kelas }}? Hanya bisa dihapus jika belum ada siswa di dalamnya.');">
+                                    onsubmit="return confirm('Hapus kelas {{ k.nama_kelas }}? Hanya bisa dihapus jika belum ada siswa di dalamnya.');">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-outline-danger" {% if k.jumlah_siswa > 0 %}disabled{% endif %}>
                                         <i class="bi bi-trash"></i>
@@ -77,13 +81,13 @@
         </div>
     </div>
 
-
-        <div class="col-12 col-lg-5">
+    <!-- KOLOM KANAN: FORM BUAT KELAS MASSAL, TAMBAH JURUSAN, SALIN KELAS -->
+    <div class="col-12 col-lg-5">
+        <div class="card p-3">
             <div class="small text-muted fw-semibold mb-2">BUAT KELAS MASSAL</div>
             <p class="small text-muted">
                 Nama kelas dibuat dengan pola <strong>Tingkat + Nama Kustom + Nomor</strong>. Contoh: Jurusan RPL, Tingkat X,
-                Nama Kustom PPLG, Jumlah 2 &rarr; "X PPLG 1" dan "X PPLG 2" (tetap terhubung ke jurusan RPL).
-                Kalau Nama Kustom dikosongkan, dipakai kode jurusan ("X RPL 1").
+                Nama Kustom PPLG, Jumlah 2 &rarr; "X PPLG 1" dan "X PPLG 2".
             </p>
             <form method="POST" action="{% url 'buat_kelas_massal' %}" id="form-massal">
                 {% csrf_token %}
@@ -111,25 +115,6 @@
                 <div class="small text-muted mb-2">Hasil: <strong id="massal-preview">-</strong></div>
                 <button type="submit" class="btn btn-sm btn-primary w-100">Buat Kelas Massal</button>
             </form>
-            <script>
-            (function () {
-                var f = document.getElementById('form-massal');
-                var romawi = {'10': 'X', '11': 'XI', '12': 'XII'};
-                function q(n) { return f.querySelector('[name="' + n + '"]'); }
-                function preview() {
-                    var tingkat = romawi[q('tingkat').value] || '';
-                    var penanda = (q('nama_kustom').value || '').replace(/\s+/g, '').toUpperCase() || q('jurusan').value;
-                    var jumlah = parseInt(q('jumlah_kelas').value, 10) || 0;
-                    var out = [];
-                    for (var i = 1; i <= Math.min(jumlah, 3); i++) out.push(tingkat + ' ' + penanda + ' ' + i);
-                    if (jumlah > 3) out.push('... ' + tingkat + ' ' + penanda + ' ' + jumlah);
-                    document.getElementById('massal-preview').textContent = out.join(', ') || '-';
-                }
-                f.addEventListener('input', preview);
-                f.addEventListener('change', preview);
-                preview();
-            })();
-            </script>
 
             <hr class="my-3">
             <div class="small text-muted fw-semibold mb-2">TAMBAH JURUSAN BARU</div>
@@ -155,7 +140,58 @@
             </form>
         </div>
     </div>
+</div>
 
 {% endif %}
 
-{% endblock %}  
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Script Preview Buat Kelas Massal
+(function () {
+    var f = document.getElementById('form-massal');
+    if (!f) return;
+    var romawi = {'10': 'X', '11': 'XI', '12': 'XII'};
+    function q(n) { return f.querySelector('[name="' + n + '"]'); }
+    function preview() {
+        var tingkat = romawi[q('tingkat').value] || '';
+        var penanda = (q('nama_kustom').value || '').replace(/\s+/g, '').toUpperCase() || q('jurusan').value;
+        var jumlah = parseInt(q('jumlah_kelas').value, 10) || 0;
+        var out = [];
+        for (var i = 1; i <= Math.min(jumlah, 3); i++) out.push(tingkat + ' ' + penanda + ' ' + i);
+        if (jumlah > 3) out.push('... ' + tingkat + ' ' + penanda + ' ' + jumlah);
+        document.getElementById('massal-preview').textContent = out.join(', ') || '-';
+    }
+    f.addEventListener('input', preview);
+    f.addEventListener('change', preview);
+    preview();
+})();
+
+// Script Live Search untuk Tabel Kelas
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('searchKelas');
+    const tableRows = document.querySelectorAll('#tabelKelas tbody tr');
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const keyword = searchInput.value.toLowerCase().trim();
+
+            tableRows.forEach(row => {
+                // Abaikan baris "Belum ada kelas"
+                if (row.querySelector('td') && row.querySelector('td').getAttribute('colspan')) {
+                    return;
+                }
+
+                const rowText = row.textContent.toLowerCase();
+                if (rowText.includes(keyword)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
