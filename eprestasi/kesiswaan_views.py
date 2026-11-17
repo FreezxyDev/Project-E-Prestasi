@@ -12,7 +12,7 @@ from django.db.models.functions import Coalesce, TruncMonth
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
-from django.utils.dateparse import parse_date
+from django.contrib.auth.hashers import make_password
 from django.views.decorators.http import require_POST
 from django.utils.http import url_has_allowed_host_and_scheme
 from eprestasi.models import NotifikasiDibaca, NotifikasiSiswa
@@ -23,13 +23,14 @@ from eprestasi.models import (
     SubkategoriPrestasi, KategoriPrestasi, PEROLEHAN_CHOICES, URUTAN_TINGKAT, LABEL_TINGKAT_PRESTASI,
 )
 from eprestasi.forms import (
-    KesiswaanProfilForm, VerifikasiPrestasiForm, LengkapiDataPrestasiForm, TINGKAT_PRESTASI_CHOICES,
+    KesiswaanPasswordForm, KesiswaanProfilForm, VerifikasiPrestasiForm, LengkapiDataPrestasiForm, TINGKAT_PRESTASI_CHOICES,
 )
 from eprestasi.prestasi_utils import cari_duplikat, catat_riwayat
 from eprestasi.cloudinary_utils import hapus_sertifikat_prestasi, hapus_semua_file_prestasi
 from eprestasi.log_utils import catat_aktivitas
+from eprestasi import validasi as vld   # alias 'vld': nama 'v' sudah dipakai variabel lokal di file ini
+from eprestasi.view_utils import PAGE_SIZE, build_sort_toggle as _build_sort_toggle
 
-PAGE_SIZE = 10
 
 
 # ==========================================
@@ -143,20 +144,16 @@ FILTER_LANJUTAN = [
 ]
 
 
-def _build_sort_toggle(current_sort, columns):
-    toggle = {}
-    for col in columns:
-        asc, desc = f'{col}_asc', f'{col}_desc'
-        toggle[col] = desc if current_sort == asc else asc
-    return toggle
-
-
 def _baca_filter(request):
     """Baca semua parameter filter dari querystring (sudah di-strip)."""
-    f = {k: request.GET.get(k, '').strip() for k in ['q', 'status'] + FILTER_LANJUTAN}
-    # tanggal yang tidak valid dibuang, bukan bikin halaman error
+    f = {k: vld.rapikan_spasi(request.GET.get(k, ''))[:100] for k in ['q', 'status'] + FILTER_LANJUTAN}
+    # nilai yang seharusnya angka tapi bukan angka ASCII (mis. "²", "٣") dibuang: int() akan error
+    for k in ('tingkat_siswa', 'tahun', 'subkategori', 'verifikator'):
+        if f[k].isdigit() and not f[k].isascii():
+            f[k] = ''
+    # tanggal yang tidak valid (termasuk "2026-13-45") dibuang, bukan bikin halaman error
     for k in ('tanggal_dari', 'tanggal_sampai', 'upload_dari', 'upload_sampai', 'verif_dari', 'verif_sampai'):
-        if f[k] and parse_date(f[k]) is None:
+        if f[k] and vld.ke_tanggal_aman(f[k]) is None:
             f[k] = ''
     return f
 
@@ -208,7 +205,7 @@ def _terapkan_filter(qs, f, kesiswaan, abaikan=()):
         ('verif_dari', 'tanggal_verifikasi__date__gte'), ('verif_sampai', 'tanggal_verifikasi__date__lte'),
     ):
         if f[kunci]:
-            qs = qs.filter(**{lookup: parse_date(f[kunci])})
+            qs = qs.filter(**{lookup: vld.ke_tanggal_aman(f[kunci])})
 
     if f['verifikator'] == 'saya':
         qs = qs.filter(kesiswaan=kesiswaan)
@@ -256,8 +253,8 @@ def _chip_filter(request, f, opsi):
 
 def _opsi_filter(tahun_id=''):
     kelas_qs = Kelas.objects.all()
-    if tahun_id and str(tahun_id).isdigit():
-        kelas_qs = kelas_qs.filter(tahun_ajaran_id=int(tahun_id))
+    if vld.ke_int_aman(tahun_id):
+        kelas_qs = kelas_qs.filter(tahun_ajaran_id=vld.ke_int_aman(tahun_id))
     nama_kelas = kelas_qs.order_by('nama_kelas').values_list('nama_kelas', flat=True).distinct()
 
     return {
@@ -419,37 +416,59 @@ def lengkapi_profil(request):
         return redirect('logout')
 
     sudah_lengkap_sebelumnya = kesiswaan.profil_lengkap
+    form = KesiswaanProfilForm(initial={
+        'nama': kesiswaan.nama, 'no_hp': kesiswaan.no_hp, 'jabatan': kesiswaan.jabatan,
+    })
+    form_password = KesiswaanPasswordForm(user=kesiswaan.user, kesiswaan=kesiswaan)
 
     if request.method == 'POST':
-        form = KesiswaanProfilForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            kesiswaan.nama = data['nama']
-            kesiswaan.no_hp = data['no_hp']
-            kesiswaan.jabatan = data['jabatan']
-            kesiswaan.save(update_fields=['nama', 'no_hp', 'jabatan'])
+        # ---- Ganti password (hanya kalau profil sudah lengkap) ----
+        if request.POST.get('aksi') == 'password' and sudah_lengkap_sebelumnya:
+            form_password = KesiswaanPasswordForm(request.POST, user=kesiswaan.user, kesiswaan=kesiswaan)
+            if form_password.is_valid():
+                user = kesiswaan.user
+                user.password = make_password(form_password.cleaned_data['password_baru'])
+                user.save(update_fields=['password', 'updated_at'])
+                request.session.cycle_key()   # sesi lama tidak bisa dipakai ulang; user tetap login
+                catat_aktivitas(
+                    request, 'akun_diubah', 'Kesiswaan mengganti password sendiri',
+                    f'NIP {kesiswaan.nip} ({kesiswaan.nama}) mengganti passwordnya.', modul='kesiswaan',
+                )
+                messages.success(request, 'Password berhasil diganti.')
+                return redirect('kesiswaan_lengkapi_profil')
+            if 'password_lama' in form_password.errors:
+                catat_aktivitas(
+                    request, 'akun_diubah', 'Percobaan ganti password gagal',
+                    f'NIP {kesiswaan.nip} salah memasukkan password saat ini.',
+                    modul='kesiswaan', status_log='gagal',
+                )
 
-            # Nama di sidebar/topbar dibaca dari session.
-            request.session['nama'] = kesiswaan.nama
+        # ---- Simpan profil ----
+        else:
+            form = KesiswaanProfilForm(request.POST)
+            if form.is_valid():
+                data = form.cleaned_data
+                kesiswaan.nama = data['nama']
+                kesiswaan.no_hp = data['no_hp']
+                kesiswaan.jabatan = data['jabatan']
+                kesiswaan.save(update_fields=['nama', 'no_hp', 'jabatan'])
 
-            catat_aktivitas(
-                request,
-                'akun_diubah',
-                'Kesiswaan memperbarui profil' if sudah_lengkap_sebelumnya else 'Kesiswaan melengkapi profil',
-                f'NIP {kesiswaan.nip} ({kesiswaan.nama}) menyimpan profilnya.',
-                modul='kesiswaan',
-            )
-            messages.success(request, 'Profil berhasil disimpan.')
-            return redirect('kesiswaan_dashboard')
-    else:
-        form = KesiswaanProfilForm(initial={
-            'nama': kesiswaan.nama,
-            'no_hp': kesiswaan.no_hp,
-            'jabatan': kesiswaan.jabatan,
-        })
+                # Nama di sidebar/topbar dibaca dari session.
+                request.session['nama'] = kesiswaan.nama
+
+                catat_aktivitas(
+                    request,
+                    'akun_diubah',
+                    'Kesiswaan memperbarui profil' if sudah_lengkap_sebelumnya else 'Kesiswaan melengkapi profil',
+                    f'NIP {kesiswaan.nip} ({kesiswaan.nama}) menyimpan profilnya.',
+                    modul='kesiswaan',
+                )
+                messages.success(request, 'Profil berhasil disimpan.')
+                return redirect('kesiswaan_dashboard')
 
     context = {
         'form': form,
+        'form_password': form_password,
         'kesiswaan': kesiswaan,
         'active_menu': 'profil',
         'wajib_diisi': not sudah_lengkap_sebelumnya,
@@ -477,15 +496,8 @@ def daftar_siswa(request):
         .order_by('kelas', 'nama')
     )
 
-    filter_kelas = request.GET.get(
-        'kelas',
-        ''
-    ).strip()
-
-    filter_nama = request.GET.get(
-        'nama',
-        ''
-    ).strip()
+    filter_kelas = vld.rapikan_spasi(request.GET.get('kelas', ''))[:100]
+    filter_nama = vld.rapikan_spasi(request.GET.get('nama', ''))[:100]
 
     if filter_kelas:
         siswa_list = siswa_list.filter(
@@ -788,7 +800,7 @@ def data_prestasi(request):
     context['chips'] = [c for c in context['chips'] if c['key'] != 'tahun']
 
     tahun_id = context['f']['tahun']
-    tahun_terpilih = Tahun_ajaran.objects.filter(id=int(tahun_id)).first() if tahun_id.isdigit() else None
+    tahun_terpilih = Tahun_ajaran.objects.filter(id=vld.ke_int_aman(tahun_id)).first() if vld.ke_int_aman(tahun_id) else None
 
     if tahun_terpilih:
         prestasi_tahun = Prestasi.objects.filter(tahun_ajaran=tahun_terpilih)
@@ -828,12 +840,10 @@ def statistik(request):
 
     tahun_aktif = Tahun_ajaran.objects.filter(status='aktif').first()
     if 'tahun' in request.GET:
-        tahun_id = request.GET['tahun'].strip()          # kosong = semua tahun
+        tahun_id = vld.ke_int_aman(request.GET['tahun'])   # kosong / tidak valid = semua tahun
     else:
-        tahun_id = str(tahun_aktif.id) if tahun_aktif else ''
-    tahun_terpilih = (
-        Tahun_ajaran.objects.filter(id=int(tahun_id)).first() if tahun_id.isdigit() else None
-    )
+        tahun_id = tahun_aktif.id if tahun_aktif else None
+    tahun_terpilih = Tahun_ajaran.objects.filter(id=tahun_id).first() if tahun_id else None
 
     qs = _anotasi_kelas_riwayat(Prestasi.objects.select_related('siswa'))
     if tahun_terpilih:
@@ -928,7 +938,7 @@ def statistik(request):
         'kesiswaan': kesiswaan,
         'active_menu': 'statistik',
         'tahun_terpilih': tahun_terpilih,
-        'tahun_id': tahun_id,
+        'tahun_id': str(tahun_id) if tahun_id else '',   # template membandingkan sebagai teks
         'tahun_list': list(Tahun_ajaran.objects.order_by('-id')),
         'tahun_ajaran_aktif': tahun_aktif,
         'total_siswa': total_siswa,

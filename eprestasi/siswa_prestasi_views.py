@@ -123,7 +123,7 @@ RIWAYAT_SORT = {
 RIWAYAT_KOLOM = ['tanggal', 'prestasi', 'tingkat', 'status']
 RIWAYAT_PAGE_SIZE = 10
 STATUS_PILIHAN = [('pending', 'Pending'), ('diterima', 'Diterima'), ('perbaikan', 'Perbaikan'), ('ditolak', 'Ditolak')]
-KATEGORI_PILIHAN = [('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ('kejuaraan', 'Kejuaraan')]
+KATEGORI_PILIHAN = [('akademik', 'Akademik'), ('non-akademik', 'Non-Akademik'), ]
 TINGKAT_PILIHAN = list(TINGKAT_CHOICES)
 
 

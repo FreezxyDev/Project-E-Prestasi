@@ -35,6 +35,12 @@
                 {{ form.password.errors }}
             </div>
 
+            <div class="form-field">
+                <label class="form-label">Konfirmasi Password{% if mode == 'edit' %} Baru{% endif %}</label>
+                {{ form.konfirmasi_password }}
+                {{ form.konfirmasi_password.errors }}
+            </div>
+
             {% if mode == 'edit' %}
             <div class="form-subtitle"><i class="bi bi-person-lines-fill"></i> Data Profil <small>diisi user kesiswaan sendiri</small></div>
             <div class="form-field">

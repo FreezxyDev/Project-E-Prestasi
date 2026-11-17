@@ -1,7 +1,7 @@
 """
 Helper terpusat untuk mencatat Log Aktivitas.
-Dipakai oleh views.py, kesiswaan_views.py, import_views.py, kelas_views.py,
-dan siswa_prestasi_views.py supaya format pencatatan seragam di seluruh
+Dipakai oleh admin_views.py, siswa_views.py, kesiswaan_views.py,
+dan modul view lainnya supaya format pencatatan seragam di seluruh
 sistem (dipakai halaman Log Aktivitas & widget "Aktivitas Terbaru" Dashboard).
 """
 from .models import LogAktivitas

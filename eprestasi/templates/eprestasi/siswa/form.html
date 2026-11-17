@@ -86,6 +86,12 @@
                 {{ form.password.errors }}
             </div>
 
+            <div class="form-field">
+                <label class="form-label">Konfirmasi Password{% if mode == 'edit' %} Baru{% endif %}</label>
+                {{ form.konfirmasi_password }}
+                {{ form.konfirmasi_password.errors }}
+            </div>
+
             <div class="form-actions">
                 <a href="{% url 'siswa_list' %}" class="btn btn-outline-secondary">Batal</a>
                 <button type="submit" class="btn btn-primary">

@@ -8,6 +8,7 @@ from django.contrib.auth.hashers import check_password
 from django.db import transaction
 from django.utils import timezone
 
+from .forms import LoginForm
 from .models import (
     Users,
     Siswa,
@@ -15,6 +16,7 @@ from .models import (
     LoginAttempt,
     NPSN_SMKN_11_BANDUNG,
 )
+from .view_utils import pesan_error_form
 
 logger = logging.getLogger(__name__)
 
@@ -293,13 +295,15 @@ def login_view(request):
 
     if request.method == 'POST':
 
-        username_input = request.POST.get(
-            'username', ''
-        ).strip()
+        # Validasi input: wajib diisi, panjang wajar, karakter tak terlihat dibuang.
+        # Isian kosong ditolak dengan pesan jelas dan TIDAK dihitung sebagai percobaan gagal.
+        form = LoginForm(request.POST)
+        if not form.is_valid():
+            pesan_error_form(request, form)
+            return redirect('login')   # tetap pola PRG
 
-        password_input = request.POST.get(
-            'password', ''
-        )
+        username_input = form.cleaned_data['username']
+        password_input = form.cleaned_data['password']
 
         # -------------------------------------------------
         # 3. CARI USER DULU, BARU TENTUKAN KUNCI

@@ -22,7 +22,20 @@ TINGKAT_CHOICES = [
 URUTAN_TINGKAT = {kode: i for i, (kode, _) in enumerate(TINGKAT_CHOICES, start=1)}
 LABEL_TINGKAT_PRESTASI = dict(TINGKAT_CHOICES)
 # Prestasi di luar negeri hanya masuk akal untuk tingkat regional/internasional.
-TINGKAT_LUAR_NEGERI = ('regional', 'internasional')
+TINGKAT_LUAR_NEGERI = ('regional', 'internasional')   # tidak lagi dipakai form (wilayah kini berbasis Kementerian)
+
+# Wilayah penyelenggaraan prestasi = di dalam / di luar Kementerian Pendidikan.
+# SUMBER TUNGGAL: dipakai model dan form, jadi nilai yang tersimpan selalu sama.
+WILAYAH_PRESTASI_CHOICES = [
+    ('didalam_kementrian_pendidikan', 'Didalam Kementrian Pendidikan'),
+    ('diluar_kementrian_pendidikan', 'Diluar Kementrian Pendidikan'),
+]
+# Nilai lama (sebelum wilayah berbasis Kementerian). Hanya agar data lama tetap tampil benar;
+# TIDAK ditawarkan di form.
+WILAYAH_PRESTASI_LAMA = [
+    ('dalam_negeri', 'Dalam Negeri (data lama)'),
+    ('luar_negeri', 'Luar Negeri (data lama)'),
+]
 
 PEROLEHAN_CHOICES = [
     ('juara_umum', 'Juara Umum'),
@@ -259,27 +272,26 @@ class Prestasi(models.Model):
     kategori_prestasi = models.CharField(max_length=100, choices=[
         ('akademik','akademik'),
         ('non-akademik','non-akademik'),
-        ('kejuaraan','kejuaraan'),
     ])
     tanggal_upload = models.DateTimeField(auto_now_add=True)
     tanggal_verifikasi = models.DateTimeField(null=True, blank=True)
 
-    # Lokasi/wilayah penyelenggaraan prestasi: dalam negeri atau luar negeri.
+    # Wilayah penyelenggaraan prestasi: didalam / diluar Kementerian Pendidikan.
     # Berlaku untuk SEMUA prestasi (wajib diisi di form upload).
-    wilayah_prestasi = models.CharField(max_length=50, default='dalam_negeri', choices=[
-        ('didalam_kementrian_pendidikan', 'Didalam Kementrian Pendidikan'),
-        ('diluar_kementrian_pendidikan', 'Diluar Kementrian Pendidikan'),
-    ])
+    wilayah_prestasi = models.CharField(
+        max_length=50, default='didalam_kementrian_pendidikan',
+        choices=WILAYAH_PRESTASI_CHOICES + WILAYAH_PRESTASI_LAMA,
+    )
 
     # Kode & Dokumen Puspresnas -- OPSIONAL, bisa diisi di semua tingkat prestasi.
     # Puspresnas (Pusat Prestasi Nasional, Kemendikbud) punya sistem klasifikasi
     # berdasarkan wilayah penyelenggaraan dan jenis penyelenggara.
     kode_puspresnas = models.CharField(max_length=100, blank=True, null=True)
     dokumen_puspresnas = CloudinaryField('dokumen_puspresnas', resource_type='auto', blank=True, null=True)
-    jenis_wilayah_puspresnas = models.CharField(max_length=50, blank=True, null=True, choices=[
-        ('dalam_negeri', 'Dalam Negeri'),
-        ('luar_negeri', 'Luar Negeri'),
-    ])
+    jenis_wilayah_puspresnas = models.CharField(
+        max_length=50, blank=True, null=True,
+        choices=WILAYAH_PRESTASI_CHOICES + WILAYAH_PRESTASI_LAMA,   # mengikuti wilayah prestasi
+    )
     jenis_penyelenggara_puspresnas = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('kementerian', 'Kementerian'),
         ('non_kementerian', 'Non-Kementerian (Swasta)'),

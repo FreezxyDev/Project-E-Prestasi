@@ -55,19 +55,13 @@
 </div>
 
 {{ data_subkategori|json_script:"data-subkategori" }}
-{{ tingkat_luar_negeri|json_script:"data-tingkat-luar-negeri" }}
 <script>
 (function () {
     var SUB = JSON.parse(document.getElementById('data-subkategori').textContent);
-    var LUAR = JSON.parse(document.getElementById('data-tingkat-luar-negeri').textContent);
     var kat = document.getElementById('id_kategori_prestasi');
     var sub = document.getElementById('id_subkategori');
     var lainWrap = document.getElementById('wrap-subkategori-lainnya');
-    var wil = document.getElementById('id_wilayah_prestasi');
-    var tingkat = document.getElementById('id_tingkat_prestasi');
-    if (!kat || !sub || !wil || !tingkat) return;
-
-    var semuaTingkat = Array.prototype.map.call(tingkat.options, function (o) { return {v: o.value, t: o.textContent}; });
+    if (!kat || !sub) return;
 
     function toggleLainnya() {
         var o = sub.options[sub.selectedIndex];
@@ -101,23 +95,8 @@
         toggleLainnya();
     }
 
-    function isiTingkat() {
-        var dipilih = tingkat.value;
-        var luar = wil.value === 'luar_negeri';
-        tingkat.innerHTML = '';
-        semuaTingkat.forEach(function (t) {
-            if (luar && LUAR.indexOf(t.v) === -1) return;
-            var o = document.createElement('option');
-            o.value = t.v; o.textContent = t.t;
-            if (t.v === dipilih) o.selected = true;
-            tingkat.appendChild(o);
-        });
-    }
-
     kat.addEventListener('change', function () { sub.value = ''; isiSubkategori(); });
     sub.addEventListener('change', toggleLainnya);
-    wil.addEventListener('change', isiTingkat);
     isiSubkategori();
-    isiTingkat();
 })();
 </script>
